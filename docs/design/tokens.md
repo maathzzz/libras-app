@@ -58,7 +58,8 @@ As demais cores estão literais no HTML e na paleta do script (`green`, `red`, `
 | `disabledEdge`  | `#DFE9EF`                | Borda inferior do desabilitado, toggle desligado |
 | `disabledText`  | `#6B8695`                | Texto do desabilitado                        |
 | `track`         | `#E2ECF2`                | Trilho de barras de progresso                |
-| `locked`        | `#D3E0E8`                | Borda de nó bloqueado da trilha (fundo `#E8F0F5`) |
+| `locked`        | `#D3E0E8`                | Borda de nó bloqueado da trilha              |
+| `lockedSurface` | `#E8F0F5`                | Fundo de nó bloqueado da trilha              |
 | `overlay`       | `rgba(16, 36, 46, 0.35)` | Fundo atrás de bottom sheets                 |
 | `shadow`        | `#06212E`                | Base escura usada nas misturas de sombra     |
 
@@ -108,6 +109,7 @@ O espaçamento entre letras do design está em `em`; no app foi convertido para 
 | `buttonSmall` | 700  | 13      | 0.08em, maiúsculas                            |
 | `link`        | 600  | 13      | cor `textSubtle` (botão "Voltar")             |
 | `pill`        | 700  | 13      |                                               |
+| `label`       | 700  | 11      | line-height 1.3 (rótulo dos nós da trilha)    |
 | `tab`         | 700  | 11      |                                               |
 
 ## Espaçamentos (`spacing`)
@@ -175,6 +177,8 @@ Nocturne: `sm` 4, `md` 8, `lg` 14. O protótipo usa cantos mais arredondados:
 | `sizes.buttonLg`         | 54    | Botão principal                                              |
 | `sizes.buttonMd`         | 48    | Botão secundário                                             |
 | `sizes.progressSm/Md`    | 10/12 | Progresso da lição / meta diária                             |
+| `sizes.trailNode`        | 64    | Nó circular da trilha                                        |
+| `sizes.trailNodeHalo`    | 6     | Halo do nó atual da trilha                                   |
 | `opacity.disabled`       | 0.45  | `.btn:disabled` do Nocturne                                  |
 | `duration.press`         | 70 ms | `.press` (`transition .07s`)                                 |
 | `duration.progress`      | 450 ms| Animação de largura do progresso                             |

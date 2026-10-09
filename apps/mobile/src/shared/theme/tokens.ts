@@ -38,6 +38,7 @@ const palette = {
   slate300: '#D3E0E8',
   slate200: '#DFE9EF',
   slate150: '#E2ECF2',
+  slate125: '#E8F0F5',
   slate100: '#EEF4F8',
   slate50: '#F1F6F9',
   sky50: '#F2F9FD',
@@ -89,6 +90,7 @@ export const colors = {
   disabledText: palette.slate500,
   track: palette.slate150,
   locked: palette.slate300,
+  lockedSurface: palette.slate125,
 
   overlay: 'rgba(16, 36, 46, 0.35)',
   shadow: palette.inkDeep,
@@ -174,6 +176,9 @@ export const sizes = {
   iconSm: 14,
   iconMd: 16,
   iconLg: 22,
+  trailNode: 64,
+  // Soft ring that highlights the current node of the trail.
+  trailNodeHalo: 6,
 } as const;
 
 export const opacity = {

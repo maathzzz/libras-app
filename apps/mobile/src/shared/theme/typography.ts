@@ -51,6 +51,7 @@ export const textStyles = {
   }),
   link: style('semibold', fontSize.md, { color: colors.textSubtle }),
   pill: style('bold', fontSize.md),
+  label: style('bold', fontSize.xs, { lineHeight: fontSize.xs * 1.3 }),
   tab: style('bold', fontSize.xs),
 } satisfies Record<string, TextStyle>;
 
