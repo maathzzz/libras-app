@@ -1,0 +1,4 @@
+{
+  "extends": "@libras/tsconfig/base.json",
+  "include": ["src"]
+}
