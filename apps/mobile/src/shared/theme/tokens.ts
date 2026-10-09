@@ -179,10 +179,20 @@ export const sizes = {
   iconSm: 14,
   iconMd: 16,
   iconLg: 22,
+  iconXl: 52,
   trailNode: 64,
   // Soft ring that highlights the current node of the trail.
   trailNodeHalo: 6,
   verdictIcon: 34,
+  // Lesson reward: the soft circle behind the check and the area the confetti spreads over.
+  rewardBurst: 92,
+  confettiAreaWidth: 240,
+  confettiAreaHeight: 110,
+  confettiDot: 9,
+  confettiStrokeLength: 14,
+  confettiStrokeWidth: 5,
+  // One day of the week in the streak card.
+  weekMark: 30,
   // Largest frame of a sign shown on its own, so a single picture does not fill the screen.
   signFrameMax: 200,
 } as const;
@@ -195,4 +205,8 @@ export const duration = {
   press: 70,
   progress: 450,
   sheet: 250,
+  // Each half of the pulse on the streak tile when the streak grows.
+  pulse: 180,
+  // Delay between the reward's sections as they come in.
+  stagger: 120,
 } as const;

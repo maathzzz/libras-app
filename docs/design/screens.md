@@ -16,7 +16,7 @@ Componentes marcados com ✅ já existem em `apps/mobile/src/shared/ui`. Os dema
 | `IconButton`         | Fechar (lição, bottom sheet)                                             | ✅ |
 | `ScreenTitle`        | Kicker + título + descrição                                              | ✅ |
 | `Icon`               | Ícones via `expo-symbols`                                                | ✅ |
-| `StatTile`           | Valor grande + rótulo em caixa tonal (Precisão, Tempo, Dias)             | — |
+| `StatTile`           | Valor grande + rótulo em caixa tonal (Precisão, Tempo, Dias)             | ✅ |
 | `OptionRow`          | Ícone em caixa + título + descrição + valor à direita (nível, meta, trilha em coluna) | — usa `Card` |
 | `SignSketch`         | Esboço da mão. No app, é o `SignImage` (`expo-image` + placeholder com o alt) | ✅ `SignImage` |
 | `TabBar`             | 3 abas com ícone + rótulo (Trilhas, Alfabeto, Ajustes)                   | — Expo Router `Tabs` |
@@ -25,7 +25,7 @@ Componentes marcados com ✅ já existem em `apps/mobile/src/shared/ui`. Os dema
 | `SegmentedControl`   | Botões lado a lado (velocidade do vídeo)                                 | — fora do MVP |
 | `SettingsGroup`      | Card com linhas separadas por divisor                                    | — |
 | `TrailNode`          | Nó circular 64pt (feito, atual, bloqueado) sobre um caminho              | — |
-| `WeekStreak`         | 7 marcas da semana                                                       | — |
+| `WeekStreak`         | 7 marcas da semana                                                       | ✅ `features/streak` |
 | `TextField`          | Busca r14 sobre `surfaceSubtle`                                          | — |
 
 ## Telas
@@ -78,6 +78,8 @@ Resumo da lição com XP ganho e streak.
 * variante "Resumo": `Card` com linhas de pontuação e total;
 * card de conquista (warning), `Card` com `WeekStreak`, `Button` primário ("VOLTAR À TRILHA") e secundário ("REVISAR OS SINAIS").
 
+No app: variante "Explosão". O tile PRECISÃO mostra os acertos ("5/6"). XP e streak vêm do BFF; enquanto a lição é enviada, aparecem só acertos e tempo. Sem rede, a lição vai para a fila offline e a tela avisa que ela será enviada depois.
+
 ### 11. Alfabeto manual
 Consulta de datilologia e números. Mostra a barra de abas.
 **Componentes:** `ScreenTitle`, `TextField` de busca, grade 4×N de `Card` tocáveis (`SignSketch` + letra), seção "Números" com a mesma grade, nota de rodapé `caption`, `TabBar`.
@@ -95,6 +97,7 @@ Perfil e preferências. Mostra a barra de abas.
 O protótipo inclui itens que o CLAUDE.md coloca fora do escopo ou que conflitam com as regras do app. Eles não devem ser implementados sem decisão explícita:
 
 * **Conquistas** (card "CONQUISTA DESBLOQUEADA" na recompensa, menção na apresentação): fora do escopo.
+* **"Revisar os sinais"** (recompensa): no protótipo, refaz a lição. Fica de fora até existir um modo de revisão, porque refazer contaria como uma nova conclusão (XP e streak).
 * **Vídeo do sinal** ("VER MOVIMENTO", "Velocidade do vídeo do sinal"): o MVP usa só imagens. Um sinal com movimento é uma sequência de imagens.
 * **Som nos exercícios** (ajuste "Retorno sonoro"): o app não depende de áudio. O feedback é visual e háptico.
 * **Bônus de XP por precisão e sequência** (variante "Resumo"): o XP é calculado no BFF. Confirmar a regra antes de exibir o detalhamento.

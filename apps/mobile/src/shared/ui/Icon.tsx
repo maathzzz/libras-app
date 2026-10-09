@@ -25,6 +25,7 @@ const iconSizes = {
   sm: sizes.iconSm,
   md: sizes.iconMd,
   lg: sizes.iconLg,
+  xl: sizes.iconXl,
 } as const;
 
 // Icons are decorative: the surrounding control carries the accessible label.

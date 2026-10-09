@@ -39,3 +39,10 @@ export async function apiRequest<TSchema extends z.ZodType>(
 
   return schema.parse(await response.json());
 }
+
+// A request that may work if sent again later: no network (fetch rejects with a TypeError)
+// or a server failure. A 4xx will fail the same way again.
+export function isRetryableError(error: unknown): boolean {
+  if (error instanceof ApiError) return error.status >= 500;
+  return error instanceof TypeError;
+}

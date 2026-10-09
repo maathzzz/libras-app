@@ -1,6 +1,6 @@
 import type { HomeResponse } from '@libras/contracts';
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
+import { router } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,12 +21,10 @@ export function HomeScreen() {
   const load = useHomeStore((state) => state.load);
   const refresh = useHomeStore((state) => state.refresh);
 
-  // Reloads on every focus so streak and XP are fresh when coming back from a lesson.
-  useFocusEffect(
-    useCallback(() => {
-      void load();
-    }, [load]),
-  );
+  // Later reloads are explicit (reloadHome): after a lesson is sent, streak and XP change.
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>

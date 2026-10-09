@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { useSyncPendingSessions } from '@/features/lesson';
 import { useAppFonts } from '@/shared/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -10,6 +11,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useAppFonts();
   const ready = fontsLoaded || fontError !== null;
+  useSyncPendingSessions();
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();

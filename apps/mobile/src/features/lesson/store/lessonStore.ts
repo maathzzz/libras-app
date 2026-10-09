@@ -1,4 +1,4 @@
-import type { ExerciseAnswer, LessonBundle } from '@libras/contracts';
+import type { CompleteLessonRequest, ExerciseAnswer, LessonBundle } from '@libras/contracts';
 import * as Crypto from 'expo-crypto';
 import { create } from 'zustand';
 
@@ -7,6 +7,7 @@ import { prefetchImages } from '@/shared/lib/prefetchImages';
 import { getLesson } from '../api/getLesson';
 import { gradeAnswer } from '../exercises/grading';
 import { exerciseImages } from '../exercises/signImages';
+import { useCompletionStore } from './completionStore';
 
 type LessonStatus = 'idle' | 'loading' | 'preparing' | 'playing' | 'finished' | 'error';
 
@@ -28,6 +29,8 @@ type LessonSession = {
   correctCount: number;
   /** Sent with the session so a retried submission is processed only once by the BFF. */
   idempotencyKey: string | null;
+  /** When the first exercise was shown, in ms; the completion screen shows the time spent. */
+  startedAt: number | null;
 };
 
 type LessonState = LessonSession & {
@@ -35,6 +38,7 @@ type LessonState = LessonSession & {
   select: (answer: ExerciseAnswer) => void;
   check: () => Verdict | null;
   advance: () => 'next' | 'finished';
+  submit: () => void;
   reset: () => void;
 };
 
@@ -47,6 +51,7 @@ const initialSession: LessonSession = {
   answers: {},
   correctCount: 0,
   idempotencyKey: null,
+  startedAt: null,
 };
 
 export const useLessonStore = create<LessonState>()((set, get) => ({
@@ -71,7 +76,7 @@ export const useLessonStore = create<LessonState>()((set, get) => ({
     set({ status: 'preparing', lesson });
     const urls = lesson.exercises.flatMap(exerciseImages).map((image) => image.url);
     await prefetchImages(urls, prefetchTimeoutMs);
-    if (isCurrent()) set({ status: 'playing' });
+    if (isCurrent()) set({ status: 'playing', startedAt: Date.now() });
   },
 
   select: (answer) => {
@@ -103,6 +108,28 @@ export const useLessonStore = create<LessonState>()((set, get) => ({
 
     set({ currentIndex: currentIndex + 1, selection: null, verdict: null });
     return 'next';
+  },
+
+  // Reads the session synchronously: the lesson screen resets it right after, when the
+  // app moves to the completion screen, which follows the submission there.
+  submit: () => {
+    const { lesson, idempotencyKey, answers, correctCount, startedAt } = get();
+    if (!lesson || !idempotencyKey) return;
+
+    const request: CompleteLessonRequest = {
+      lessonId: lesson.id,
+      idempotencyKey,
+      answers: lesson.exercises.flatMap((exercise) => {
+        const answer = answers[exercise.id];
+        return answer ? [{ exerciseId: exercise.id, answer }] : [];
+      }),
+    };
+    const summary = {
+      correct: correctCount,
+      total: lesson.exercises.length,
+      durationMs: startedAt === null ? 0 : Date.now() - startedAt,
+    };
+    void useCompletionStore.getState().submit(request, summary);
   },
 
   reset: () => set(initialSession),

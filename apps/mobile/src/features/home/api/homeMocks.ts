@@ -1,25 +1,6 @@
-import type { HomeResponse, StreakStatus, StreakSummary, Trail } from '@libras/contracts';
+import type { HomeResponse, Trail } from '@libras/contracts';
 
-// To check one streak status on the device, pin it here (e.g. 'broken'). With `null`,
-// every load (opening the tab or pulling to refresh) moves on to the next status.
-const pinnedStreakStatus: StreakStatus | null = null;
-
-const mockStreaks: Record<StreakStatus, StreakSummary> = {
-  at_risk: { current: 7, longest: 12, status: 'at_risk' },
-  done_today: { current: 8, longest: 12, status: 'done_today' },
-  broken: { current: 0, longest: 12, status: 'broken' },
-};
-
-const statusCycle: readonly StreakStatus[] = ['at_risk', 'done_today', 'broken'];
-let loadCount = 0;
-
-function nextMockStatus(): StreakStatus {
-  if (pinnedStreakStatus) return pinnedStreakStatus;
-
-  const status = statusCycle[loadCount % statusCycle.length] ?? 'at_risk';
-  loadCount += 1;
-  return status;
-}
+import { getMockStats } from '@/shared/api/mockServer';
 
 // Mirrors the design's "Primeiros contatos" trail. The "Prova do módulo" node is left
 // out: contracts have no exercise type for it yet.
@@ -67,6 +48,9 @@ export const mockTrail = {
   ],
 } satisfies Trail;
 
+// Streak and XP come from the mock shared with the lesson completion, so finishing a
+// lesson shows up here. The starting streak status is set in shared/api/mockServer.ts.
 export function mockHome(): HomeResponse {
-  return { trail: mockTrail, streak: mockStreaks[nextMockStatus()], totalXp: 1240 };
+  const { streak, totalXp } = getMockStats();
+  return { trail: mockTrail, streak, totalXp };
 }

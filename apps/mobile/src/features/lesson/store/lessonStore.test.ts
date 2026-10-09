@@ -4,6 +4,7 @@ import { prefetchImages } from '@/shared/lib/prefetchImages';
 
 import { getLesson } from '../api/getLesson';
 import { mockLesson } from '../api/lessonMocks';
+import { useCompletionStore } from './completionStore';
 import { useLessonStore } from './lessonStore';
 
 jest.mock('expo-crypto', () => ({ randomUUID: jest.fn() }));
@@ -14,6 +15,7 @@ const getLessonMock = jest.mocked(getLesson);
 const prefetchMock = jest.mocked(prefetchImages);
 const randomUUIDMock = jest.mocked(Crypto.randomUUID);
 const initialState = useLessonStore.getState();
+const completionSubmitMock = jest.fn();
 const lesson = mockLesson('saudacoes-bom-dia');
 
 function correctAnswerFor(index: number) {
@@ -28,12 +30,16 @@ async function startPlaying() {
 }
 
 let uuidCount = 0;
+// The idempotency key must be a UUID to pass the CompleteLessonRequest contract.
+const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
 beforeEach(() => {
   useLessonStore.setState(initialState, true);
+  useCompletionStore.setState({ submit: completionSubmitMock });
+  completionSubmitMock.mockReset();
   getLessonMock.mockReset().mockResolvedValue(lesson);
   prefetchMock.mockReset().mockResolvedValue(undefined);
-  randomUUIDMock.mockImplementation(() => `uuid-${(uuidCount += 1)}`);
+  randomUUIDMock.mockImplementation(() => uuid((uuidCount += 1)));
 });
 
 describe('start', () => {
@@ -157,5 +163,47 @@ describe('advance', () => {
       status: 'finished',
       correctCount: lesson.exercises.length,
     });
+  });
+});
+
+describe('submit', () => {
+  function answerAll(wrongIndexes: number[] = []) {
+    lesson.exercises.forEach((exercise, index) => {
+      const answer = wrongIndexes.includes(index)
+        ? { type: exercise.type, optionId: 'wrong-option' }
+        : correctAnswerFor(index);
+      useLessonStore.getState().select(answer);
+      useLessonStore.getState().check();
+      useLessonStore.getState().advance();
+    });
+  }
+
+  it('hands the session to the completion with the answers in exercise order', async () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    await startPlaying();
+    answerAll([1]);
+    now.mockReturnValue(1_000_000 + 134_000);
+
+    useLessonStore.getState().submit();
+
+    const { idempotencyKey } = useLessonStore.getState();
+    expect(completionSubmitMock).toHaveBeenCalledWith(
+      {
+        lessonId: lesson.id,
+        idempotencyKey,
+        answers: lesson.exercises.map((exercise, index) => ({
+          exerciseId: exercise.id,
+          answer: index === 1 ? { type: exercise.type, optionId: 'wrong-option' } : correctAnswerFor(index),
+        })),
+      },
+      { correct: lesson.exercises.length - 1, total: lesson.exercises.length, durationMs: 134_000 },
+    );
+    now.mockRestore();
+  });
+
+  it('sends nothing without a lesson', () => {
+    useLessonStore.getState().submit();
+
+    expect(completionSubmitMock).not.toHaveBeenCalled();
   });
 });

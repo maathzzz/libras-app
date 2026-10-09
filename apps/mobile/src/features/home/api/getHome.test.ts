@@ -1,3 +1,5 @@
+import { getMockStats, recordMockCompletion, resetMockServer } from '@/shared/api/mockServer';
+
 import { getHome } from './getHome';
 
 async function resolveGetHome() {
@@ -7,6 +9,7 @@ async function resolveGetHome() {
 }
 
 beforeEach(() => {
+  resetMockServer('at_risk');
   jest.useFakeTimers();
 });
 
@@ -26,13 +29,13 @@ describe('getHome', () => {
     expect(onResolved).toHaveBeenCalledTimes(1);
   });
 
-  it('walks through the three streak statuses, one per load', async () => {
-    const statuses = [];
-    for (let load = 0; load < 4; load += 1) {
-      statuses.push((await resolveGetHome()).streak.status);
-    }
+  it('shows the streak and XP of the shared mock, including a completed lesson', async () => {
+    const before = await resolveGetHome();
+    recordMockCompletion('9b2f6c1e-3d4a-4f5b-8c6d-7e8f9a0b1c2d', 50);
+    const after = await resolveGetHome();
 
-    expect(new Set(statuses.slice(0, 3))).toEqual(new Set(['done_today', 'at_risk', 'broken']));
-    expect(statuses[3]).toBe(statuses[0]);
+    expect(after.totalXp).toBe(before.totalXp + 50);
+    expect(after.streak).toEqual(getMockStats().streak);
+    expect(after.streak.status).toBe('done_today');
   });
 });

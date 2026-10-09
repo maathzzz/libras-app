@@ -49,6 +49,11 @@ export const textStyles = {
     letterSpacing: em(fontSize.md, 0.08),
     textTransform: 'uppercase',
   }),
+  // Label under a big number ("ACERTOS", "TEMPO").
+  statLabel: style('bold', fontSize.xxs, {
+    letterSpacing: em(fontSize.xxs, 0.07),
+    textTransform: 'uppercase',
+  }),
   link: style('semibold', fontSize.md, { color: colors.textSubtle }),
   pill: style('bold', fontSize.md),
   label: style('bold', fontSize.xs, { lineHeight: fontSize.xs * 1.3 }),

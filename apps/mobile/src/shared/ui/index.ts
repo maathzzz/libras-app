@@ -11,3 +11,4 @@ export { ProgressBar } from './ProgressBar';
 export { Screen } from './Screen';
 export { ScreenTitle } from './ScreenTitle';
 export { SignImage } from './SignImage';
+export { StatTile, type StatTileTone } from './StatTile';

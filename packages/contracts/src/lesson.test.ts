@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { LessonBundle } from './lesson';
+import { CompleteLessonRequest, CompleteLessonResponse, LessonBundle } from './lesson';
 
 const exercise = (id: string) => ({
   id,
@@ -32,5 +32,54 @@ describe('LessonBundle', () => {
 
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(['exercises', 1, 'id']);
+  });
+});
+
+const request = {
+  lessonId: 'l1',
+  idempotencyKey: '9b2f6c1e-3d4a-4f5b-8c6d-7e8f9a0b1c2d',
+  answers: [
+    { exerciseId: 'ex-1', answer: { type: 'word_to_sign', optionId: 'a' } },
+    { exerciseId: 'ex-2', answer: { type: 'sign_to_word', optionId: 'b' } },
+  ],
+};
+
+describe('CompleteLessonRequest', () => {
+  it('accepts a valid request', () => {
+    expect(CompleteLessonRequest.parse(request)).toEqual(request);
+  });
+
+  it('rejects a request without answers', () => {
+    expect(CompleteLessonRequest.safeParse({ ...request, answers: [] }).success).toBe(false);
+  });
+
+  it('rejects an idempotency key that is not a UUID', () => {
+    expect(CompleteLessonRequest.safeParse({ ...request, idempotencyKey: 'key-1' }).success).toBe(
+      false,
+    );
+  });
+
+  it('rejects two answers to the same exercise', () => {
+    const [first] = request.answers;
+    const result = CompleteLessonRequest.safeParse({ ...request, answers: [first, first] });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(['answers', 1, 'exerciseId']);
+  });
+});
+
+describe('CompleteLessonResponse', () => {
+  const response = {
+    xpEarned: 50,
+    streak: { current: 8, longest: 12, status: 'done_today' },
+    streakIncreased: true,
+  };
+
+  it('accepts a valid response', () => {
+    expect(CompleteLessonResponse.parse(response)).toEqual(response);
+  });
+
+  it('rejects negative XP', () => {
+    expect(CompleteLessonResponse.safeParse({ ...response, xpEarned: -1 }).success).toBe(false);
   });
 });

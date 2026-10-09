@@ -19,10 +19,10 @@ export function LessonPlayer() {
   const currentIndex = useLessonStore((state) => state.currentIndex);
   const selection = useLessonStore((state) => state.selection);
   const verdict = useLessonStore((state) => state.verdict);
-  const correctCount = useLessonStore((state) => state.correctCount);
   const select = useLessonStore((state) => state.select);
   const check = useLessonStore((state) => state.check);
   const advance = useLessonStore((state) => state.advance);
+  const submit = useLessonStore((state) => state.submit);
 
   const exercise = lesson?.exercises[currentIndex];
   if (!lesson || !exercise) return null;
@@ -38,10 +38,8 @@ export function LessonPlayer() {
 
   const onContinue = () => {
     if (advance() === 'next') return;
-    router.replace({
-      pathname: '/lesson/complete',
-      params: { correct: String(correctCount), total: String(total) },
-    });
+    submit();
+    router.replace('/lesson/complete');
   };
 
   return (
