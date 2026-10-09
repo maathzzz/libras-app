@@ -164,11 +164,11 @@ Expo (development build), Expo Router, TypeScript estrito, Zustand, `react-nativ
 ### Estrutura
 
 ```
-app/                     # Rotas do Expo Router — apenas composição de telas
-  (auth)/
-  (tabs)/
-  lesson/\[lessonId].tsx
 src/
+  app/                   # Rotas do Expo Router — apenas composição de telas
+    (auth)/
+    (tabs)/
+    lesson/\[lessonId].tsx
   features/
     auth/
     home/
@@ -189,8 +189,8 @@ src/
 
 ### Regras de arquitetura
 
-* Arquivos em `app/` só compõem telas a partir das features. Nenhuma lógica, chamada de API ou estado neles.
-* Uma feature importa apenas de `shared` e do `index.ts` de outras features. Nunca importe arquivos internos de outra feature.
+* Arquivos em `src/app/` só compõem telas a partir das features. Nenhuma lógica, chamada de API ou estado neles.
+* Uma feature importa apenas de `shared` e do `index.ts` de outras features. Nunca importe arquivos internos de outra feature. Essas fronteiras são verificadas pelo `eslint-plugin-boundaries` (`apps/mobile/eslint.config.mjs`).
 * Componentes não chamam a API diretamente: chamam ações do store (`load`, `refresh`, `submit`), que usam as funções de `api/`.
 * Toda chamada ao BFF passa por `shared/api/client.ts`, que injeta o token e tipa a resposta com `contracts`.
 * O app usa o Supabase **apenas** para autenticação. Dados de negócio vêm sempre do BFF.
