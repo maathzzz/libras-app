@@ -1,25 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
-
-import { colors, fontSize, fontWeight, radius, spacing } from '@/shared/theme';
+import { Pill } from '@/shared/ui';
 
 export function StreakBadge() {
-  return (
-    <View style={styles.badge} accessibilityLabel="Sequência de 0 dias">
-      <Text style={styles.label}>Sequência: 0 dias</Text>
-    </View>
-  );
+  return <Pill label="0" icon="streak" tone="warning" accessibilityLabel="Sequência de 0 dias" />;
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-  },
-  label: {
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.bold,
-    color: colors.streak,
-  },
-});

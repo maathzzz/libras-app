@@ -4,7 +4,7 @@ export function ProfileScreen() {
   return (
     <Screen>
       <AppText variant="title">Perfil</AppText>
-      <AppText variant="muted">Seus dados aparecerão aqui.</AppText>
+      <AppText color="textMuted" align="center">Seus dados aparecerão aqui.</AppText>
     </Screen>
   );
 }

@@ -1,32 +1,34 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, type AccessibilityRole, type TextStyle } from 'react-native';
 
-import { colors, fontSize, fontWeight } from '@/shared/theme';
+import { colors, textStyles, type ColorToken, type TextVariant } from '@/shared/theme';
 
 type AppTextProps = {
   children: ReactNode;
-  variant?: 'title' | 'body' | 'muted';
+  variant?: TextVariant;
+  color?: ColorToken;
+  align?: TextStyle['textAlign'];
+  numberOfLines?: number;
+  accessibilityRole?: AccessibilityRole;
 };
 
-export function AppText({ children, variant = 'body' }: AppTextProps) {
-  return <Text style={styles[variant]}>{children}</Text>;
+export function AppText({
+  children,
+  variant = 'body',
+  color,
+  align,
+  numberOfLines,
+  accessibilityRole,
+}: AppTextProps) {
+  return (
+    <Text
+      accessibilityRole={accessibilityRole}
+      numberOfLines={numberOfLines}
+      style={[styles[variant], color && { color: colors[color] }, align && { textAlign: align }]}
+    >
+      {children}
+    </Text>
+  );
 }
 
-const styles = StyleSheet.create({
-  title: {
-    fontSize: fontSize.title,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  body: {
-    fontSize: fontSize.body,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  muted: {
-    fontSize: fontSize.body,
-    color: colors.textMuted,
-    textAlign: 'center',
-  },
-});
+const styles = StyleSheet.create(textStyles);
