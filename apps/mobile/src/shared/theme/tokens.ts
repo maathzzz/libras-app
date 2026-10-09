@@ -197,6 +197,15 @@ export const sizes = {
   signFrameMax: 200,
   // A letter or number opened from the alphabet grid.
   handSignFrame: 140,
+  // Initials of the learner on the settings profile card.
+  avatar: 46,
+  switchWidth: 46,
+  switchHeight: 27,
+  switchThumb: 21,
+  // Icon or number box at the left of an option in a list.
+  optionLeading: 40,
+  // Hand shown on the welcome screen.
+  welcomeHero: 224,
 } as const;
 
 export const opacity = {
@@ -211,4 +220,5 @@ export const duration = {
   pulse: 180,
   // Delay between the reward's sections as they come in.
   stagger: 120,
+  toggle: 180,
 } as const;

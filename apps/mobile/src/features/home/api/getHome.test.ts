@@ -37,5 +37,13 @@ describe('getHome', () => {
     expect(after.totalXp).toBe(before.totalXp + 50);
     expect(after.streak).toEqual(getMockStats().streak);
     expect(after.streak.status).toBe('done_today');
+    expect(after.today.completedLessons).toBe(before.today.completedLessons + 1);
+  });
+
+  it('counts a lesson sent twice only once for the day', async () => {
+    recordMockCompletion('9b2f6c1e-3d4a-4f5b-8c6d-7e8f9a0b1c2d', 50);
+    recordMockCompletion('9b2f6c1e-3d4a-4f5b-8c6d-7e8f9a0b1c2d', 50);
+
+    expect((await resolveGetHome()).today.completedLessons).toBe(1);
   });
 });

@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { restoreSession, useAuthStatus } from '@/features/auth';
 import { useSyncPendingSessions } from '@/features/lesson';
 import { useAppFonts } from '@/shared/theme';
 
@@ -10,8 +11,14 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useAppFonts();
-  const ready = fontsLoaded || fontError !== null;
+  const authStatus = useAuthStatus();
+  const ready = (fontsLoaded || fontError !== null) && authStatus !== 'restoring';
+  const signedIn = authStatus === 'signedIn';
   useSyncPendingSessions();
+
+  useEffect(() => {
+    void restoreSession();
+  }, []);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
@@ -22,14 +29,20 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="lesson/[lessonId]" options={{ presentation: 'fullScreenModal' }} />
-        {/* No swipe back: the lesson it came from was already replaced. */}
-        <Stack.Screen
-          name="lesson/complete"
-          options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
-        />
+        {/* Flipping a guard swaps the whole area: signing in or out needs no navigation. */}
+        <Stack.Protected guard={signedIn}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="lesson/[lessonId]" options={{ presentation: 'fullScreenModal' }} />
+          {/* No swipe back: the lesson it came from was already replaced. */}
+          <Stack.Screen
+            name="lesson/complete"
+            options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
+          />
+          <Stack.Screen name="daily-goal" />
+        </Stack.Protected>
+        <Stack.Protected guard={!signedIn}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
       </Stack>
     </GestureHandlerRootView>
   );

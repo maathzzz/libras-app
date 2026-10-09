@@ -12,6 +12,7 @@ import { HomeStats } from './HomeStats';
 import { findNextLesson, hasStartedTrail } from './homeView';
 import { NextLessonCard } from './NextLessonCard';
 import { StreakCard } from './StreakCard';
+import { TodayGoalCard } from './TodayGoalCard';
 import { TrailPath } from './TrailPath';
 
 export function HomeScreen() {
@@ -75,6 +76,7 @@ function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
         />
       )}
       <StreakCard streak={home.streak} />
+      <TodayGoalCard today={home.today} />
       <TrailPath units={trail.units} onOpenLesson={openLesson} />
     </ScrollView>
   );

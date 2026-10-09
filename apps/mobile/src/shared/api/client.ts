@@ -1,5 +1,7 @@
 import type { z } from 'zod';
 
+import { getAccessToken } from './session';
+
 const baseUrl = process.env.EXPO_PUBLIC_API_URL;
 
 export class ApiError extends Error {
@@ -27,9 +29,13 @@ export async function apiRequest<TSchema extends z.ZodType>(
     throw new Error('EXPO_PUBLIC_API_URL não configurada');
   }
 
+  // The BFF takes the user from this token, never from the body.
+  const token = getAccessToken();
+  const auth: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
   const response = await fetch(`${baseUrl}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', ...headers },
+    headers: { 'Content-Type': 'application/json', ...auth, ...headers },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
 

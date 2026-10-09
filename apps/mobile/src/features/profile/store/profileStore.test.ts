@@ -1,0 +1,73 @@
+import type { ProfileResponse } from '@libras/contracts';
+
+import { reloadHome } from '@/features/home';
+
+import { getProfile, updateProfile } from '../api/profileApi';
+import { useProfileStore } from './profileStore';
+
+jest.mock('../api/profileApi', () => ({ getProfile: jest.fn(), updateProfile: jest.fn() }));
+jest.mock('@/features/home', () => ({ reloadHome: jest.fn() }));
+
+const getProfileMock = jest.mocked(getProfile);
+const updateProfileMock = jest.mocked(updateProfile);
+const initialState = useProfileStore.getState();
+
+const profile: ProfileResponse = {
+  name: 'Ana Souza',
+  dailyGoal: 3,
+  startLevel: 'beginner',
+  timezone: 'America/Sao_Paulo',
+};
+
+beforeEach(() => {
+  useProfileStore.setState(initialState, true);
+  jest.clearAllMocks();
+});
+
+describe('useProfileStore', () => {
+  it('loads the profile', async () => {
+    getProfileMock.mockResolvedValue(profile);
+
+    await useProfileStore.getState().load();
+
+    expect(useProfileStore.getState().profile).toEqual(profile);
+  });
+
+  it('keeps the last profile when a reload fails', async () => {
+    useProfileStore.setState({ profile });
+    getProfileMock.mockRejectedValue(new TypeError('Network request failed'));
+
+    await useProfileStore.getState().load();
+
+    expect(useProfileStore.getState().profile).toEqual(profile);
+  });
+
+  it('reloads the home after the daily goal changes', async () => {
+    updateProfileMock.mockResolvedValue({ ...profile, dailyGoal: 5 });
+
+    await expect(useProfileStore.getState().update({ dailyGoal: 5 })).resolves.toBe(true);
+
+    expect(useProfileStore.getState()).toMatchObject({
+      profile: { dailyGoal: 5 },
+      saving: false,
+    });
+    expect(reloadHome).toHaveBeenCalled();
+  });
+
+  it('does not reload the home for other changes', async () => {
+    updateProfileMock.mockResolvedValue({ ...profile, name: 'Ana' });
+
+    await useProfileStore.getState().update({ name: 'Ana' });
+
+    expect(reloadHome).not.toHaveBeenCalled();
+  });
+
+  it('reports a change that could not be saved', async () => {
+    useProfileStore.setState({ profile });
+    updateProfileMock.mockRejectedValue(new TypeError('Network request failed'));
+
+    await expect(useProfileStore.getState().update({ dailyGoal: 5 })).resolves.toBe(false);
+
+    expect(useProfileStore.getState()).toMatchObject({ profile, saving: false });
+  });
+});

@@ -14,6 +14,15 @@ const icons = {
   trail: { ios: 'map', android: 'route', web: 'route' },
   alphabet: { ios: 'textformat.abc', android: 'abc', web: 'abc' },
   profile: { ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' },
+  settings: { ios: 'gearshape', android: 'settings', web: 'settings' },
+  hand: { ios: 'hand.raised.fill', android: 'back_hand', web: 'back_hand' },
+  add: { ios: 'plus', android: 'add', web: 'add' },
+  chart: { ios: 'chart.bar.fill', android: 'bar_chart', web: 'bar_chart' },
+  person: { ios: 'person', android: 'person', web: 'person' },
+  mail: { ios: 'envelope', android: 'mail', web: 'mail' },
+  password: { ios: 'lock', android: 'lock', web: 'lock' },
+  show: { ios: 'eye', android: 'visibility', web: 'visibility' },
+  hide: { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof icons;

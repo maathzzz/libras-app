@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { DailyGoal } from './profile';
 import { StreakSummary } from './streak';
 
 // Unlocking is decided by the BFF; the app only renders the status it receives.
@@ -29,10 +30,18 @@ export const Trail = z.object({
 });
 export type Trail = z.infer<typeof Trail>;
 
+// Lessons finished today (in the learner's timezone) against the daily goal.
+export const TodayProgress = z.object({
+  completedLessons: z.number().int().nonnegative(),
+  dailyGoal: DailyGoal,
+});
+export type TodayProgress = z.infer<typeof TodayProgress>;
+
 // GET /v1/home
 export const HomeResponse = z.object({
   trail: Trail,
   streak: StreakSummary,
   totalXp: z.number().int().nonnegative(),
+  today: TodayProgress,
 });
 export type HomeResponse = z.infer<typeof HomeResponse>;

@@ -17,22 +17,27 @@ Componentes marcados com ✅ já existem em `apps/mobile/src/shared/ui`. Os dema
 | `ScreenTitle`        | Kicker + título + descrição                                              | ✅ |
 | `Icon`               | Ícones via `expo-symbols`                                                | ✅ |
 | `StatTile`           | Valor grande + rótulo em caixa tonal (Precisão, Tempo, Dias)             | ✅ |
-| `OptionRow`          | Ícone em caixa + título + descrição + valor à direita (nível, meta, trilha em coluna) | — usa `Card` |
+| `OptionRow`          | Ícone em caixa + título + descrição + valor à direita (nível, meta, trilha em coluna) | ✅ |
 | `SignSketch`         | Esboço da mão. No app, é o `SignImage` (`expo-image` + placeholder com o alt) | ✅ `SignImage` |
 | `TabBar`             | 3 abas com ícone + rótulo (Trilhas, Alfabeto, Ajustes)                   | — Expo Router `Tabs` |
 | `BottomSheet`        | Painel inferior r24 (veredito do exercício, detalhe da letra)            | ✅ |
-| `Switch`             | Toggle 46×27, verde quando ligado                                        | — |
+| `Switch`             | Toggle 46×27, verde quando ligado                                        | ✅ |
 | `SegmentedControl`   | Botões lado a lado (velocidade do vídeo)                                 | — fora do MVP |
-| `SettingsGroup`      | Card com linhas separadas por divisor                                    | — |
+| `SettingsGroup`      | Card com linhas separadas por divisor                                    | ✅ `features/settings` |
 | `TrailNode`          | Nó circular 64pt (feito, atual, bloqueado) sobre um caminho              | — |
 | `WeekStreak`         | 7 marcas da semana                                                       | ✅ `features/streak` |
-| `TextField`          | Busca r14 sobre `surfaceSubtle`                                          | — |
+| `TextField`          | Busca r14 sobre `surfaceSubtle`                                          | ✅ (formulários; a busca do alfabeto ainda usa o próprio input) |
 
 ## Telas
 
 ### 1. Boas-vindas
 Apresenta o app e leva ao onboarding ou ao login.
 **Componentes:** ilustração (`SignSketch` sobre fundo em gradiente), título `hero`, texto `body`, `Pill` ×3 (tags), `Button` primário ("COMEÇAR AGORA"), `Button` secundário ("JÁ TENHO CONTA").
+
+No app: "COMEÇAR AGORA" abre o onboarding e "JÁ TENHO CONTA" abre o Login. É a primeira tela de quem não tem sessão, inclusive depois de sair da conta. A ilustração usa o ícone de mão sobre fundo sólido até os gradientes serem definidos.
+
+### 1b. Login (não existe no design)
+Formulário de e-mail e senha no estilo das telas de onboarding: `ScreenTitle`, `TextField` ×2 (com ícone e mostrar/ocultar senha), `Button` primário ("ENTRAR") e ghost ("Voltar"). A autenticação está mockada até o projeto Supabase ser configurado (`features/auth/api/authApi.ts`). O token fica no `expo-secure-store` e o `client.ts` o envia no header `Authorization`.
 
 ### 2. Nível de conhecimento (onboarding, passo 2 de 3)
 O usuário escolhe por onde a trilha começa.
@@ -41,6 +46,8 @@ O usuário escolhe por onde a trilha começa.
 ### 3. Meta diária (onboarding, passo 3 de 3)
 O usuário escolhe quantas lições por dia contam para a sequência.
 **Componentes:** `ScreenTitle`, 4 opções (`Card` tocável com número em caixa, título, descrição e XP à direita), `Button` primário ("CRIAR MINHA TRILHA").
+
+No app: os passos são Criar conta (1 de 3), Nível (2 de 3) e Meta diária (3 de 3). A tela de conta não existe no design: tem nome, e-mail e senha, com ícone em cada campo e o botão de mostrar/ocultar senha. Ela só valida os campos. A conta é criada no "CRIAR MINHA TRILHA" da meta, então voltar entre os passos nunca cria duas contas. A meta é só um alvo pessoal, então o texto diz que uma lição já mantém a sequência. A coluna de XP foi removida, porque o XP de uma lição depende dos acertos. A mesma tela de meta abre pelos Ajustes ("Alterar").
 
 ### 4. Trilhas (início)
 Tela principal: stats, próxima lição, meta do dia e trilha de módulos. Mostra a barra de abas.
@@ -92,6 +99,8 @@ Mostra o sinal de uma letra ou número.
 Perfil e preferências. Mostra a barra de abas.
 **Componentes:** `ScreenTitle`, `Card` de perfil (avatar com iniciais em gradiente, nome, XP e streak, botão pill "Editar"), `SettingsGroup` "HÁBITO DE ESTUDO" (lembrete diário com `Switch`, meta diária com botão "Alterar"), `SettingsGroup` "LIÇÕES", nota de créditos em `surfaceSubtle`, `Button` perigo ("SAIR DA CONTA"), `TabBar`.
 
+No app: aba "Ajustes" (a aba "Perfil" continua com a tela provisória). O avatar é sólido até os gradientes serem definidos. Nome e meta vêm do perfil (`GET /v1/profile`, mockado). "Editar" abre a aba Perfil. "Alterar" abre a tela de meta diária. "SAIR DA CONTA" pede confirmação, apaga a sessão e volta às Boas-vindas. O lembrete diário agenda uma notificação local às 20:00 (`expo-notifications`). O grupo "LIÇÕES" (som, velocidade do vídeo, alto contraste) aparece na tela, mas é só visual: os controles não são salvos nem aplicados.
+
 ## Divergências com o escopo do MVP (CLAUDE.md)
 
 O protótipo inclui itens que o CLAUDE.md coloca fora do escopo ou que conflitam com as regras do app. Eles não devem ser implementados sem decisão explícita:
@@ -101,6 +110,6 @@ O protótipo inclui itens que o CLAUDE.md coloca fora do escopo ou que conflitam
 * **Vídeo do sinal** ("VER MOVIMENTO", "Velocidade do vídeo do sinal"): o MVP usa só imagens. Um sinal com movimento é uma sequência de imagens.
 * **Som nos exercícios** (ajuste "Retorno sonoro"): o app não depende de áudio. O feedback é visual e háptico.
 * **Bônus de XP por precisão e sequência** (variante "Resumo"): o XP é calculado no BFF. Confirmar a regra antes de exibir o detalhamento.
-* **Meta diária de N lições** ("3 de 5 lições", "Faltam 2 lições para manter a sequência"): pelo CLAUDE.md, o streak exige **uma** lição por dia. A meta diária precisa ser alinhada com a regra do streak.
+* **Meta diária de N lições** ("3 de 5 lições", "Faltam 2 lições para manter a sequência"): resolvido. A meta é só um alvo pessoal, exibido no card "Meta de hoje" da home (`HomeResponse.today`). O streak continua exigindo **uma** lição por dia, então os textos não ligam a meta à sequência.
 * **Prova do módulo** (trilha): não há tipo de exercício correspondente em `contracts`.
 * **Alvos de toque menores que 44pt** no design (fechar 30, toggle 46×27, botão "Editar", chips): os componentes do app garantem 44×44.

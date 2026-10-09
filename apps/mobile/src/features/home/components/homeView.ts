@@ -1,4 +1,10 @@
-import type { StreakSummary, Trail, TrailLesson, TrailUnit } from '@libras/contracts';
+import type {
+  StreakSummary,
+  TodayProgress,
+  Trail,
+  TrailLesson,
+  TrailUnit,
+} from '@libras/contracts';
 
 const xpFormat = new Intl.NumberFormat('pt-BR');
 
@@ -60,6 +66,17 @@ export function streakCopy({ status, longest }: StreakSummary) {
     return { title: 'Comece sua sequência', hint: 'Conclua uma lição hoje para começar.' };
   }
   return { title: 'Sua sequência zerou', hint: 'Conclua uma lição hoje para começar de novo.' };
+}
+
+// The daily goal is a personal target: reaching it or not never changes the streak.
+export function todayGoalCopy({ completedLessons, dailyGoal }: TodayProgress) {
+  const done = Math.min(completedLessons, dailyGoal);
+  const left = dailyGoal - done;
+  return {
+    progress: `${done} de ${lessonsLabel(dailyGoal)}`,
+    hint: left === 0 ? 'Meta de hoje concluída!' : `Faltam ${lessonsLabel(left)} para a sua meta.`,
+    ratio: done / dailyGoal,
+  };
 }
 
 export function lessonAccessibilityLabel(lesson: TrailLesson): string {

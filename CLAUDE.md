@@ -9,6 +9,7 @@ Aplicativo gamificado para ensino de Libras (inspirado no Duolingo). Monorepo co
 
 * Retenção exclusivamente por **streak**: o usuário mantém a sequência completando ao menos uma lição por dia.
 * XP é apenas uma pontuação acumulada.
+* A **meta diária** (1, 3, 5 ou 8 lições) é só um alvo pessoal, exibido no progresso do dia. Ela não altera a regra do streak.
 * Conteúdo visual composto **somente por imagens** (sem vídeos, sem áudio).
 
 **Fora do escopo — não implementar sem solicitação explícita:**
@@ -178,6 +179,8 @@ src/
       exercises/         # Um componente por tipo de exercício + registry
       components/
       index.ts           # API pública da feature
+    onboarding/          # Boas-vindas, nível e meta diária
+    settings/            # Ajustes
     streak/
     profile/
   shared/
