@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Exercise } from './exercises';
+import { Exercise, ExerciseAnswer } from './exercises';
 
 const image = (name: string) => ({ url: `https://cdn.example/${name}.png`, alt: `Sinal de ${name}` });
 
@@ -58,5 +58,21 @@ describe('Exercise', () => {
 
   it('rejects fewer than two options', () => {
     expect(Exercise.safeParse({ ...signToWord, options: [signToWord.options[0]] }).success).toBe(false);
+  });
+});
+
+describe('ExerciseAnswer', () => {
+  it('accepts an answer for a known exercise type', () => {
+    const answer = { type: 'sign_to_word', optionId: 'a' };
+
+    expect(ExerciseAnswer.parse(answer)).toEqual(answer);
+  });
+
+  it('rejects an answer for an unknown exercise type', () => {
+    expect(ExerciseAnswer.safeParse({ type: 'video_quiz', optionId: 'a' }).success).toBe(false);
+  });
+
+  it('rejects an answer without an option', () => {
+    expect(ExerciseAnswer.safeParse({ type: 'word_to_sign', optionId: '' }).success).toBe(false);
   });
 });

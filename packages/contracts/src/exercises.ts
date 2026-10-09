@@ -48,3 +48,19 @@ export const Exercise = z.discriminatedUnion('type', [SignToWordExercise, WordTo
 export type Exercise = z.infer<typeof Exercise>;
 
 export type ExerciseType = Exercise['type'];
+
+// What the learner chose. Graded locally for instant feedback and again by the BFF.
+export const SignToWordAnswer = z.object({
+  type: z.literal('sign_to_word'),
+  optionId: z.string().min(1),
+});
+export type SignToWordAnswer = z.infer<typeof SignToWordAnswer>;
+
+export const WordToSignAnswer = z.object({
+  type: z.literal('word_to_sign'),
+  optionId: z.string().min(1),
+});
+export type WordToSignAnswer = z.infer<typeof WordToSignAnswer>;
+
+export const ExerciseAnswer = z.discriminatedUnion('type', [SignToWordAnswer, WordToSignAnswer]);
+export type ExerciseAnswer = z.infer<typeof ExerciseAnswer>;

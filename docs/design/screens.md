@@ -18,9 +18,9 @@ Componentes marcados com ✅ já existem em `apps/mobile/src/shared/ui`. Os dema
 | `Icon`               | Ícones via `expo-symbols`                                                | ✅ |
 | `StatTile`           | Valor grande + rótulo em caixa tonal (Precisão, Tempo, Dias)             | — |
 | `OptionRow`          | Ícone em caixa + título + descrição + valor à direita (nível, meta, trilha em coluna) | — usa `Card` |
-| `SignSketch`         | Esboço da mão. No app, será `SignImage` com `expo-image`                 | — |
+| `SignSketch`         | Esboço da mão. No app, é o `SignImage` (`expo-image` + placeholder com o alt) | ✅ `SignImage` |
 | `TabBar`             | 3 abas com ícone + rótulo (Trilhas, Alfabeto, Ajustes)                   | — Expo Router `Tabs` |
-| `BottomSheet`        | Painel inferior r24 (veredito do exercício, detalhe da letra)            | — |
+| `BottomSheet`        | Painel inferior r24 (veredito do exercício, detalhe da letra)            | ✅ |
 | `Switch`             | Toggle 46×27, verde quando ligado                                        | — |
 | `SegmentedControl`   | Botões lado a lado (velocidade do vídeo)                                 | — fora do MVP |
 | `SettingsGroup`      | Card com linhas separadas por divisor                                    | — |

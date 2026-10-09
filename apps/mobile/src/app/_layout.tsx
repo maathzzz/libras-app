@@ -23,6 +23,11 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="lesson/[lessonId]" options={{ presentation: 'fullScreenModal' }} />
+        {/* No swipe back: the lesson it came from was already replaced. */}
+        <Stack.Screen
+          name="lesson/complete"
+          options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
+        />
       </Stack>
     </GestureHandlerRootView>
   );

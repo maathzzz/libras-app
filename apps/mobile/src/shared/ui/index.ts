@@ -1,4 +1,5 @@
 export { AppText } from './AppText';
+export { BottomSheet, type BottomSheetTone } from './BottomSheet';
 export { Button, type ButtonVariant } from './Button';
 export { Card, type CardTone } from './Card';
 export { Header } from './Header';
@@ -9,3 +10,4 @@ export { Pill, type PillTone } from './Pill';
 export { ProgressBar } from './ProgressBar';
 export { Screen } from './Screen';
 export { ScreenTitle } from './ScreenTitle';
+export { SignImage } from './SignImage';

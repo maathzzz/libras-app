@@ -92,6 +92,9 @@ export const colors = {
   locked: palette.slate300,
   lockedSurface: palette.slate125,
 
+  // Gray square shown while a sign image loads or when it is missing.
+  imagePlaceholder: palette.slate150,
+
   overlay: 'rgba(16, 36, 46, 0.35)',
   shadow: palette.inkDeep,
 } as const;
@@ -179,6 +182,9 @@ export const sizes = {
   trailNode: 64,
   // Soft ring that highlights the current node of the trail.
   trailNodeHalo: 6,
+  verdictIcon: 34,
+  // Largest frame of a sign shown on its own, so a single picture does not fill the screen.
+  signFrameMax: 200,
 } as const;
 
 export const opacity = {
@@ -188,4 +194,5 @@ export const opacity = {
 export const duration = {
   press: 70,
   progress: 450,
+  sheet: 250,
 } as const;
