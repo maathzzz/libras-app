@@ -23,7 +23,6 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="lesson/[lessonId]" options={{ presentation: 'fullScreenModal' }} />
-        <Stack.Screen name="design-demo" />
       </Stack>
     </GestureHandlerRootView>
   );

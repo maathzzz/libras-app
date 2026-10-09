@@ -1,74 +1,72 @@
-import type { HomeResponse, TrailUnit } from '@libras/contracts';
+import type { HomeResponse, StreakStatus, StreakSummary, Trail } from '@libras/contracts';
 
-// Mirrors the two home states of the design ("Trilhas" and "Trilhas, novo usuário").
-// The "Prova do módulo" node is left out: contracts have no exercise type for it yet.
+// To check one streak status on the device, pin it here (e.g. 'broken'). With `null`,
+// every load (opening the tab or pulling to refresh) moves on to the next status.
+const pinnedStreakStatus: StreakStatus | null = null;
 
-export const returningUserHome = {
-  streak: { current: 7, status: 'at_risk' },
-  totalXp: 1240,
-  dailyGoal: { target: 1, completedToday: 0 },
-  trail: {
-    id: 'primeiros-contatos',
-    title: 'Primeiros contatos',
-    position: 1,
-    totalTrails: 6,
-    units: [
-      {
-        id: 'alfabeto-a-f',
-        title: 'Alfabeto A–F',
-        status: 'done',
-        totalLessons: 6,
-        completedLessons: 6,
-      },
-      {
-        id: 'saudacoes',
-        title: 'Saudações',
-        status: 'current',
-        totalLessons: 5,
-        completedLessons: 1,
-      },
-      {
-        id: 'numeros-0-10',
-        title: 'Números 0–10',
-        status: 'locked',
-        totalLessons: 5,
-        completedLessons: 0,
-      },
-      {
-        id: 'cotidiano',
-        title: 'Cotidiano',
-        status: 'locked',
-        totalLessons: 6,
-        completedLessons: 0,
-      },
-    ],
-  },
-  nextLesson: {
-    lessonId: 'saudacoes-2',
-    unitTitle: 'Saudações',
-    lessonNumber: 2,
-    newSignsCount: 6,
-    xpReward: 40,
-  },
-} satisfies HomeResponse;
+const mockStreaks: Record<StreakStatus, StreakSummary> = {
+  at_risk: { current: 7, longest: 12, status: 'at_risk' },
+  done_today: { current: 8, longest: 12, status: 'done_today' },
+  broken: { current: 0, longest: 12, status: 'broken' },
+};
 
-export const newUserHome = {
-  streak: { current: 0, status: 'broken' },
-  totalXp: 0,
-  dailyGoal: { target: 1, completedToday: 0 },
-  trail: {
-    ...returningUserHome.trail,
-    units: returningUserHome.trail.units.map((unit, index): TrailUnit => ({
-      ...unit,
-      status: index === 0 ? 'current' : 'locked',
-      completedLessons: 0,
-    })),
-  },
-  nextLesson: {
-    lessonId: 'alfabeto-a-f-1',
-    unitTitle: 'Alfabeto A–F',
-    lessonNumber: 1,
-    newSignsCount: 6,
-    xpReward: 40,
-  },
-} satisfies HomeResponse;
+const statusCycle: readonly StreakStatus[] = ['at_risk', 'done_today', 'broken'];
+let loadCount = 0;
+
+function nextMockStatus(): StreakStatus {
+  if (pinnedStreakStatus) return pinnedStreakStatus;
+
+  const status = statusCycle[loadCount % statusCycle.length] ?? 'at_risk';
+  loadCount += 1;
+  return status;
+}
+
+// Mirrors the design's "Primeiros contatos" trail. The "Prova do módulo" node is left
+// out: contracts have no exercise type for it yet.
+export const mockTrail = {
+  id: 'primeiros-contatos',
+  title: 'Primeiros contatos',
+  position: 1,
+  totalTrails: 6,
+  units: [
+    {
+      id: 'alfabeto-a-f',
+      title: 'Alfabeto A–F',
+      lessons: [
+        { id: 'alfabeto-a-b', title: 'A e B', status: 'completed' },
+        { id: 'alfabeto-c-d', title: 'C e D', status: 'completed' },
+        { id: 'alfabeto-e-f', title: 'E e F', status: 'completed' },
+      ],
+    },
+    {
+      id: 'saudacoes',
+      title: 'Saudações',
+      lessons: [
+        { id: 'saudacoes-oi-tchau', title: 'Oi e tchau', status: 'completed' },
+        { id: 'saudacoes-bom-dia', title: 'Bom dia', status: 'available' },
+        { id: 'saudacoes-obrigado', title: 'Obrigado', status: 'locked' },
+        { id: 'saudacoes-por-favor', title: 'Por favor', status: 'locked' },
+      ],
+    },
+    {
+      id: 'numeros-0-10',
+      title: 'Números 0–10',
+      lessons: [
+        { id: 'numeros-0-5', title: '0 a 5', status: 'locked' },
+        { id: 'numeros-6-10', title: '6 a 10', status: 'locked' },
+      ],
+    },
+    {
+      id: 'cotidiano',
+      title: 'Cotidiano',
+      lessons: [
+        { id: 'cotidiano-comer-beber', title: 'Comer e beber', status: 'locked' },
+        { id: 'cotidiano-casa', title: 'Casa', status: 'locked' },
+      ],
+    },
+  ],
+} satisfies Trail;
+
+export function mockHome(): HomeResponse {
+  return { trail: mockTrail, streak: mockStreaks[nextMockStatus()], totalXp: 1240 };
+}

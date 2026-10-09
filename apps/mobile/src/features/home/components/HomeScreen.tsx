@@ -8,10 +8,10 @@ import { colors, spacing } from '@/shared/theme';
 import { AppText, Button, ScreenTitle } from '@/shared/ui';
 
 import { useHomeStore } from '../store/homeStore';
-import { DailyGoalCard } from './DailyGoalCard';
 import { HomeStats } from './HomeStats';
-import { hasStartedTrail } from './homeCopy';
+import { findNextLesson, hasStartedTrail } from './homeView';
 import { NextLessonCard } from './NextLessonCard';
+import { StreakCard } from './StreakCard';
 import { TrailPath } from './TrailPath';
 
 export function HomeScreen() {
@@ -49,17 +49,13 @@ type HomeContentProps = {
   onRefresh: () => void;
 };
 
-function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
-  const { trail, nextLesson } = home;
-  const hasStarted = hasStartedTrail(trail);
+function openLesson(lessonId: string) {
+  router.push({ pathname: '/lesson/[lessonId]', params: { lessonId } });
+}
 
-  const startLesson = nextLesson
-    ? () =>
-        router.push({
-          pathname: '/lesson/[lessonId]',
-          params: { lessonId: nextLesson.lessonId },
-        })
-    : undefined;
+function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
+  const { trail } = home;
+  const next = findNextLesson(trail);
 
   return (
     <ScrollView
@@ -68,20 +64,20 @@ function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
       }
     >
-      <HomeStats streak={home.streak} totalXp={home.totalXp} dailyGoal={home.dailyGoal} />
+      <HomeStats streak={home.streak} totalXp={home.totalXp} />
       <ScreenTitle
         kicker={`Trilha ${trail.position} de ${trail.totalTrails}`}
         title={trail.title}
       />
-      {nextLesson && startLesson && (
-        <NextLessonCard lesson={nextLesson} isFirstLesson={!hasStarted} onStart={startLesson} />
+      {next && (
+        <NextLessonCard
+          next={next}
+          isFirstLesson={!hasStartedTrail(trail)}
+          onStart={() => openLesson(next.lesson.id)}
+        />
       )}
-      <DailyGoalCard
-        goal={home.dailyGoal}
-        streakStatus={home.streak.status}
-        hasStarted={hasStarted}
-      />
-      <TrailPath units={trail.units} onStartLesson={startLesson} />
+      <StreakCard streak={home.streak} />
+      <TrailPath units={trail.units} onOpenLesson={openLesson} />
     </ScrollView>
   );
 }

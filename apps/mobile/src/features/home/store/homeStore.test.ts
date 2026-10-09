@@ -1,37 +1,39 @@
 import { HomeResponse } from '@libras/contracts';
 
-import { fetchHome } from '../api/homeApi';
-import { newUserHome, returningUserHome } from '../api/homeMocks';
+import { getHome } from '../api/getHome';
+import { mockHome } from '../api/homeMocks';
 import { useHomeStore } from './homeStore';
 
-jest.mock('../api/homeApi');
+jest.mock('../api/getHome');
 
-const fetchHomeMock = jest.mocked(fetchHome);
+const getHomeMock = jest.mocked(getHome);
 const initialState = useHomeStore.getState();
+const home = mockHome();
 
 beforeEach(() => {
   useHomeStore.setState(initialState, true);
-  fetchHomeMock.mockReset();
+  getHomeMock.mockReset();
 });
 
-describe('home mocks', () => {
-  it('satisfy the HomeResponse contract', () => {
-    expect(HomeResponse.safeParse(returningUserHome).success).toBe(true);
-    expect(HomeResponse.safeParse(newUserHome).success).toBe(true);
+describe('home mock', () => {
+  it('satisfies the HomeResponse contract', () => {
+    expect(HomeResponse.safeParse(home).success).toBe(true);
   });
 });
 
 describe('useHomeStore', () => {
-  it('loads the home', async () => {
-    fetchHomeMock.mockResolvedValue(returningUserHome);
+  it('is loading until the home arrives', async () => {
+    getHomeMock.mockResolvedValue(home);
 
-    await useHomeStore.getState().load();
+    const loading = useHomeStore.getState().load();
+    expect(useHomeStore.getState().status).toBe('loading');
+    await loading;
 
-    expect(useHomeStore.getState()).toMatchObject({ status: 'ready', home: returningUserHome });
+    expect(useHomeStore.getState()).toMatchObject({ status: 'ready', home });
   });
 
   it('shows an error when the first load fails', async () => {
-    fetchHomeMock.mockRejectedValue(new Error('offline'));
+    getHomeMock.mockRejectedValue(new Error('offline'));
 
     await useHomeStore.getState().load();
 
@@ -39,22 +41,22 @@ describe('useHomeStore', () => {
   });
 
   it('keeps the last home when a reload fails', async () => {
-    fetchHomeMock.mockResolvedValueOnce(returningUserHome);
-    fetchHomeMock.mockRejectedValueOnce(new Error('offline'));
+    getHomeMock.mockResolvedValueOnce(home);
+    getHomeMock.mockRejectedValueOnce(new Error('offline'));
 
     await useHomeStore.getState().load();
     await useHomeStore.getState().load();
 
-    expect(useHomeStore.getState()).toMatchObject({ status: 'ready', home: returningUserHome });
+    expect(useHomeStore.getState()).toMatchObject({ status: 'ready', home });
   });
 
   it('clears the refreshing flag after a refresh', async () => {
-    fetchHomeMock.mockResolvedValue(newUserHome);
+    getHomeMock.mockResolvedValue(home);
 
     const refreshing = useHomeStore.getState().refresh();
     expect(useHomeStore.getState().refreshing).toBe(true);
     await refreshing;
 
-    expect(useHomeStore.getState()).toMatchObject({ refreshing: false, home: newUserHome });
+    expect(useHomeStore.getState()).toMatchObject({ refreshing: false, home });
   });
 });

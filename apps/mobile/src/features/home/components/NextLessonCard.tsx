@@ -1,21 +1,20 @@
-import type { NextLesson } from '@libras/contracts';
 import { StyleSheet, View } from 'react-native';
 
 import { colors, depth, radius, raised, spacing } from '@/shared/theme';
 import { AppText, Button } from '@/shared/ui';
 
-import { nextLessonCopy } from './homeCopy';
+import { nextLessonCopy, type NextLesson } from './homeView';
 
 type NextLessonCardProps = {
-  lesson: NextLesson;
+  next: NextLesson;
   isFirstLesson: boolean;
   onStart: () => void;
 };
 
 // The design paints this card with an accent → teal gradient; it stays solid until
 // gradients are decided (docs/design/tokens.md).
-export function NextLessonCard({ lesson, isFirstLesson, onStart }: NextLessonCardProps) {
-  const copy = nextLessonCopy(lesson, isFirstLesson);
+export function NextLessonCard({ next, isFirstLesson, onStart }: NextLessonCardProps) {
+  const copy = nextLessonCopy(next, isFirstLesson);
 
   return (
     <View style={styles.card}>

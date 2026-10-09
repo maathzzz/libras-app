@@ -5,25 +5,17 @@ import { StreakBadge } from '@/features/streak';
 import { spacing } from '@/shared/theme';
 import { Pill } from '@/shared/ui';
 
-import { formatXp, lessonsLabel } from './homeCopy';
+import { formatXp } from './homeView';
 
-type HomeStatsProps = Pick<HomeResponse, 'streak' | 'totalXp' | 'dailyGoal'>;
+type HomeStatsProps = Pick<HomeResponse, 'streak' | 'totalXp'>;
 
-export function HomeStats({ streak, totalXp, dailyGoal }: HomeStatsProps) {
+export function HomeStats({ streak, totalXp }: HomeStatsProps) {
   const xp = formatXp(totalXp);
-  const { completedToday, target } = dailyGoal;
 
   return (
     <View style={styles.row}>
       <StreakBadge days={streak.current} />
       <Pill label={xp} icon="xp" accessibilityLabel={`${xp} XP`} />
-      <View style={styles.spacer} />
-      <Pill
-        label={`${completedToday}/${target}`}
-        icon="goal"
-        tone="info"
-        accessibilityLabel={`${completedToday} de ${lessonsLabel(target)} hoje`}
-      />
     </View>
   );
 }
@@ -33,8 +25,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-  },
-  spacer: {
-    flex: 1,
   },
 });

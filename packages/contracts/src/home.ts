@@ -3,21 +3,21 @@ import { z } from 'zod';
 import { StreakSummary } from './streak';
 
 // Unlocking is decided by the BFF; the app only renders the status it receives.
-export const UnitStatus = z.enum(['done', 'current', 'locked']);
-export type UnitStatus = z.infer<typeof UnitStatus>;
+export const LessonStatus = z.enum(['locked', 'available', 'completed']);
+export type LessonStatus = z.infer<typeof LessonStatus>;
 
-export const TrailUnit = z
-  .object({
-    id: z.string().min(1),
-    title: z.string().min(1),
-    status: UnitStatus,
-    totalLessons: z.number().int().positive(),
-    completedLessons: z.number().int().nonnegative(),
-  })
-  .refine((unit) => unit.completedLessons <= unit.totalLessons, {
-    path: ['completedLessons'],
-    message: 'completedLessons cannot exceed totalLessons',
-  });
+export const TrailLesson = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  status: LessonStatus,
+});
+export type TrailLesson = z.infer<typeof TrailLesson>;
+
+export const TrailUnit = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  lessons: z.array(TrailLesson).min(1),
+});
 export type TrailUnit = z.infer<typeof TrailUnit>;
 
 export const Trail = z.object({
@@ -29,29 +29,10 @@ export const Trail = z.object({
 });
 export type Trail = z.infer<typeof Trail>;
 
-export const NextLesson = z.object({
-  lessonId: z.string().min(1),
-  unitTitle: z.string().min(1),
-  lessonNumber: z.number().int().positive(),
-  newSignsCount: z.number().int().nonnegative(),
-  xpReward: z.number().int().nonnegative(),
-});
-export type NextLesson = z.infer<typeof NextLesson>;
-
-// Lessons that count towards today's goal. The streak only needs one lesson per day.
-export const DailyGoal = z.object({
-  target: z.number().int().positive(),
-  completedToday: z.number().int().nonnegative(),
-});
-export type DailyGoal = z.infer<typeof DailyGoal>;
-
 // GET /v1/home
 export const HomeResponse = z.object({
+  trail: Trail,
   streak: StreakSummary,
   totalXp: z.number().int().nonnegative(),
-  dailyGoal: DailyGoal,
-  trail: Trail,
-  // null once every lesson of the trail is completed.
-  nextLesson: NextLesson.nullable(),
 });
 export type HomeResponse = z.infer<typeof HomeResponse>;

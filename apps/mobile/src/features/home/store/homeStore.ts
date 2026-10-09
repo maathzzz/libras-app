@@ -1,7 +1,7 @@
 import type { HomeResponse } from '@libras/contracts';
 import { create } from 'zustand';
 
-import { fetchHome } from '../api/homeApi';
+import { getHome } from '../api/getHome';
 
 type HomeStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -22,7 +22,7 @@ export const useHomeStore = create<HomeState>()((set, get) => ({
     if (!get().home) set({ status: 'loading' });
 
     try {
-      set({ status: 'ready', home: await fetchHome() });
+      set({ status: 'ready', home: await getHome() });
     } catch {
       // A failed reload keeps the last home on screen; the error state is only for a first load.
       if (!get().home) set({ status: 'error' });

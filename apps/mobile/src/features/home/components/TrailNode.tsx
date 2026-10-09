@@ -1,4 +1,4 @@
-import type { TrailUnit, UnitStatus } from '@libras/contracts';
+import type { LessonStatus, TrailLesson } from '@libras/contracts';
 import { Pressable, StyleSheet, View, type BoxShadowValue, type ViewStyle } from 'react-native';
 
 import {
@@ -12,10 +12,10 @@ import {
 } from '@/shared/theme';
 import { AppText, Icon, type IconName } from '@/shared/ui';
 
-import { unitAccessibilityLabel } from './homeCopy';
+import { lessonAccessibilityLabel } from './homeView';
 
 type TrailNodeProps = {
-  unit: TrailUnit;
+  lesson: TrailLesson;
   onPress?: (() => void) | undefined;
 };
 
@@ -27,15 +27,15 @@ type NodeLook = {
   labelColor: ColorToken;
 };
 
-const looks: Record<UnitStatus, NodeLook> = {
-  done: {
+const looks: Record<LessonStatus, NodeLook> = {
+  completed: {
     background: colors.success,
     edge: colors.successDark,
     icon: 'check',
     iconColor: 'onColor',
     labelColor: 'text',
   },
-  current: {
+  available: {
     background: colors.accent,
     edge: colors.accentDark,
     icon: 'play',
@@ -65,9 +65,9 @@ function nodeShadow(edge: string, offsetY: number, highlighted: boolean): ViewSt
   return { boxShadow: highlighted ? [...shadows, halo] : shadows };
 }
 
-export function TrailNode({ unit, onPress }: TrailNodeProps) {
-  const look = looks[unit.status];
-  const highlighted = unit.status === 'current';
+export function TrailNode({ lesson, onPress }: TrailNodeProps) {
+  const look = looks[lesson.status];
+  const highlighted = lesson.status === 'available';
   const icon = <Icon name={look.icon} size="lg" color={look.iconColor} />;
   const circle = [styles.circle, { backgroundColor: look.background }];
 
@@ -76,8 +76,8 @@ export function TrailNode({ unit, onPress }: TrailNodeProps) {
       {onPress ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={unitAccessibilityLabel(unit)}
-          accessibilityHint="Abre a próxima lição"
+          accessibilityLabel={lessonAccessibilityLabel(lesson)}
+          accessibilityHint="Abre a lição"
           onPress={onPress}
           style={({ pressed }) => [
             circle,
@@ -91,14 +91,14 @@ export function TrailNode({ unit, onPress }: TrailNodeProps) {
       ) : (
         <View
           accessible
-          accessibilityLabel={unitAccessibilityLabel(unit)}
+          accessibilityLabel={lessonAccessibilityLabel(lesson)}
           style={[circle, nodeShadow(look.edge, depth.md, highlighted)]}
         >
           {icon}
         </View>
       )}
       <AppText variant="label" color={look.labelColor} align="center" numberOfLines={2}>
-        {unit.title}
+        {lesson.title}
       </AppText>
     </View>
   );
