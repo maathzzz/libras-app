@@ -11,6 +11,9 @@ const icons = {
   check: { ios: 'checkmark', android: 'check', web: 'check' },
   locked: { ios: 'lock.fill', android: 'lock', web: 'lock' },
   play: { ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' },
+  trail: { ios: 'map', android: 'route', web: 'route' },
+  alphabet: { ios: 'textformat.abc', android: 'abc', web: 'abc' },
+  profile: { ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof icons;

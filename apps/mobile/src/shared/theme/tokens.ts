@@ -195,6 +195,8 @@ export const sizes = {
   weekMark: 30,
   // Largest frame of a sign shown on its own, so a single picture does not fill the screen.
   signFrameMax: 200,
+  // A letter or number opened from the alphabet grid.
+  handSignFrame: 140,
 } as const;
 
 export const opacity = {

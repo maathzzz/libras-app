@@ -10,18 +10,21 @@ import { AppText } from './AppText';
 type SignImageProps = {
   image: SignImageData;
   size: number;
+  // Small frames have no room for the alt text: the placeholder is only the gray square,
+  // and the alt still reaches screen readers through the label.
+  compact?: boolean;
 };
 
 type LoadState = 'loading' | 'loaded' | 'failed';
 
 // Every sign image in the app goes through here, so a missing or broken picture still
 // leaves a square of the same size that says, through its alt text, which sign it is.
-export function SignImage({ image, size }: SignImageProps) {
+export function SignImage({ image, size, compact = false }: SignImageProps) {
   // Keyed by url so a new image starts loading from scratch instead of keeping the old state.
-  return <SignImageFrame key={image.url} image={image} size={size} />;
+  return <SignImageFrame key={image.url} image={image} size={size} compact={compact} />;
 }
 
-function SignImageFrame({ image, size }: SignImageProps) {
+function SignImageFrame({ image, size, compact }: SignImageProps) {
   const [state, setState] = useState<LoadState>('loading');
 
   return (
@@ -35,7 +38,7 @@ function SignImageFrame({ image, size }: SignImageProps) {
         state !== 'loaded' && styles.placeholder,
       ]}
     >
-      {state !== 'loaded' && (
+      {state !== 'loaded' && !compact && (
         <AppText variant="caption" color="textMuted" align="center">
           {image.alt}
         </AppText>
