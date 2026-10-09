@@ -20,5 +20,10 @@
   "type": "module",
   "devDependencies": {
     "prettier": "^3.9.9"
+  },
+  "dependencies": {
+    "expo": "~57.0.27",
+    "react": "19.2.3",
+    "react-native": "0.86.3"
   }
 }
