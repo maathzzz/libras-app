@@ -39,6 +39,11 @@ export default function RootLayout() {
             options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
           />
           <Stack.Screen name="daily-goal" />
+          {/* On the root stack so the sheet covers the tab bar and reaches the screen edge. */}
+          <Stack.Screen
+            name="hand-sign/[signId]"
+            options={{ presentation: 'transparentModal', animation: 'fade' }}
+          />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="(auth)" />

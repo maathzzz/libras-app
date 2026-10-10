@@ -54,3 +54,7 @@ export const numbers: readonly HandSign[] = numberHints.map((hint, value) => ({
   image: placeholderImage(`number-${value}`, `Configuração de mão do número ${value}`),
   hint,
 }));
+
+export function findHandSign(id: string): HandSign | undefined {
+  return [...letters, ...numbers].find((sign) => sign.id === id);
+}

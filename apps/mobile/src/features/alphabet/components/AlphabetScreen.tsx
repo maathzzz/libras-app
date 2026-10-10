@@ -1,3 +1,4 @@
+import { router, useIsFocused } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +8,6 @@ import { AppText, ScreenTitle } from '@/shared/ui';
 
 import type { HandSign } from '../content/handSigns';
 import { searchHandSigns } from '../content/searchHandSigns';
-import { HandSignSheet } from './HandSignSheet';
 import { HandSignTile } from './HandSignTile';
 
 const gutter = spacing['2xl'];
@@ -16,7 +16,9 @@ const gap = spacing.sm;
 
 export function AlphabetScreen() {
   const [query, setQuery] = useState('');
-  const [openSign, setOpenSign] = useState<HandSign | null>(null);
+  const [openedSignId, setOpenedSignId] = useState<string | null>(null);
+  // The sheet is a separate route: while it is up this screen loses focus, and regains it on close.
+  const sheetOpen = !useIsFocused();
   const { width } = useWindowDimensions();
   const tileWidth = (width - gutter * 2 - gap * (columns - 1)) / columns;
   const results = searchHandSigns(query);
@@ -30,8 +32,11 @@ export function AlphabetScreen() {
           key={`${index}-${sign.id}`}
           sign={sign}
           width={tileWidth}
-          selected={openSign?.id === sign.id}
-          onPress={() => setOpenSign(sign)}
+          selected={sheetOpen && openedSignId === sign.id}
+          onPress={() => {
+            setOpenedSignId(sign.id);
+            router.push({ pathname: '/hand-sign/[signId]', params: { signId: sign.id } });
+          }}
         />
       ))}
     </View>
@@ -79,7 +84,6 @@ export function AlphabetScreen() {
           </View>
         )}
       </ScrollView>
-      <HandSignSheet sign={openSign} onClose={() => setOpenSign(null)} />
     </SafeAreaView>
   );
 }

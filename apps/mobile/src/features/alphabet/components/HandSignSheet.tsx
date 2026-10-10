@@ -1,41 +1,42 @@
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Redirect, router } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { colors, radius, sizes, spacing } from '@/shared/theme';
 import { AppText, BottomSheet, Button, IconButton, SignImage } from '@/shared/ui';
 
-import type { HandSign } from '../content/handSigns';
+import { findHandSign, type HandSign } from '../content/handSigns';
 
 type HandSignSheetProps = {
-  sign: HandSign | null;
-  onClose: () => void;
+  signId: string;
 };
 
 const kickers = { letter: 'Datilologia', number: 'Número' } as const;
 
-// A modal rather than a plain BottomSheet so the panel and its backdrop also cover the tab bar.
-export function HandSignSheet({ sign, onClose }: HandSignSheetProps) {
+// Rendered as a transparent-modal route instead of a React Native Modal: on Android the Modal
+// window stopped short of the system navigation bar, leaving the sheet floating above it.
+export function HandSignSheet({ signId }: HandSignSheetProps) {
+  const sign = findHandSign(signId);
+  if (!sign) return <Redirect href="/alphabet" />;
+
   return (
-    <Modal
-      visible={sign !== null}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      navigationBarTranslucent
-      onRequestClose={onClose}
-    >
+    <View style={styles.screen}>
       {/* Screen readers use the close button instead of this full-screen tap target. */}
       <Pressable
         accessible={false}
         importantForAccessibility="no"
         style={styles.backdrop}
-        onPress={onClose}
+        onPress={close}
       />
-      {sign && <SheetContent sign={sign} onClose={onClose} />}
-    </Modal>
+      <SheetContent sign={sign} />
+    </View>
   );
 }
 
-function SheetContent({ sign, onClose }: { sign: HandSign; onClose: () => void }) {
+function close() {
+  router.back();
+}
+
+function SheetContent({ sign }: { sign: HandSign }) {
   return (
     <BottomSheet>
       <View style={styles.titleRow}>
@@ -47,7 +48,7 @@ function SheetContent({ sign, onClose }: { sign: HandSign; onClose: () => void }
             {sign.label}
           </AppText>
         </View>
-        <IconButton icon="close" accessibilityLabel="Fechar" onPress={onClose} filled />
+        <IconButton icon="close" accessibilityLabel="Fechar" onPress={close} filled />
       </View>
       <View style={styles.imageArea}>
         <SignImage image={sign.image} size={sizes.handSignFrame} />
@@ -55,12 +56,15 @@ function SheetContent({ sign, onClose }: { sign: HandSign; onClose: () => void }
       <AppText variant="body" color="textMuted">
         {sign.hint}
       </AppText>
-      <Button label="Entendi" onPress={onClose} />
+      <Button label="Entendi" onPress={close} />
     </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   backdrop: {
     ...StyleSheet.absoluteFill,
     backgroundColor: colors.overlay,
