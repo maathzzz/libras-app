@@ -38,6 +38,7 @@ export default function RootLayout() {
             name="lesson/complete"
             options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
           />
+          <Stack.Screen name="study/[studyId]" options={{ presentation: 'fullScreenModal' }} />
           <Stack.Screen name="daily-goal" />
           {/* On the root stack so the sheet covers the tab bar and reaches the screen edge. */}
           <Stack.Screen

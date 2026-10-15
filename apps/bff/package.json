@@ -1,0 +1,30 @@
+{
+  "name": "bff",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env src/main.ts",
+    "build": "tsx scripts/build.ts",
+    "start": "node --enable-source-maps dist/main.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@libras/contracts": "workspace:*",
+    "fastify": "^5.12.7",
+    "fastify-type-provider-zod": "^7.0.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@libras/eslint-config": "workspace:*",
+    "@libras/tsconfig": "workspace:*",
+    "@types/node": "^24.19.2",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.39.5",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

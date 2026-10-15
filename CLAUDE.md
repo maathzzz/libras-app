@@ -11,6 +11,7 @@ Aplicativo gamificado para ensino de Libras (inspirado no Duolingo). Monorepo co
 * XP é apenas uma pontuação acumulada.
 * A **meta diária** (1, 3, 5 ou 8 lições) é só um alvo pessoal, exibido no progresso do dia. Ela não altera a regra do streak.
 * Conteúdo visual composto **somente por imagens** (sem vídeos, sem áudio).
+* **Estudos**: páginas de conteúdo que ensinam, passo a passo, o assunto de uma trilha antes das lições. Ficam na aba "Estudar", agrupados por trilha. São recomendados, mas **não bloqueiam lições, não dão XP e não contam para o streak**. Usam apenas texto e imagens. Na interface o nome é "Estudo"; no código, `study` (para não confundir com `lesson`, que é a sessão de exercícios). O estudo de exemplo é o "Alfabeto manual"; os das demais trilhas serão definidos junto com o planejamento de cada trilha.
 
 **Fora do escopo — não implementar sem solicitação explícita:**
 
@@ -62,6 +63,7 @@ Fonte única de verdade dos dados trocados entre app e BFF.
 * Toda rota do BFF tem schemas de request e response definidos aqui.
 * Exercícios são uma `z.discriminatedUnion('type', \[...])`. Tipos atuais: `sign\_to\_word`, `word\_to\_sign`, `fingerspelling`, `match\_pairs`, `handshape`.
 * Imagens são representadas por `SignImage` (`url` + `alt`). Um sinal com movimento usa uma lista de imagens em sequência.
+* Estudos ficam em `study.ts`. Os blocos de uma página também são uma `z.discriminatedUnion('type', \[...])` (`StudyBlock`). Tipos atuais: `text`, `sign` (rótulo + `SignImageSequence` + dica opcional) e `tip`.
 * Ao alterar um contrato, atualize o BFF e o app na mesma tarefa.
 
 ## BFF (apps/bff)
@@ -76,7 +78,7 @@ Node.js LTS, TypeScript estrito, Fastify, `fastify-type-provider-zod`, Drizzle O
 src/
   modules/
     profile/          # Perfil e fuso horário
-    curriculum/       # Unidades, lições, exercícios, sinais
+    curriculum/       # Unidades, lições, exercícios, sinais, estudos
     progress/         # Sessões de lição, XP, streak
       domain/         # Entidades, value objects, interfaces de repositório
       application/    # Casos de uso
@@ -129,10 +131,18 @@ src/
 5. Persistir sessão, progresso e `user\_stats` em uma única transação.
 6. Retornar XP ganho, streak atual e se o streak aumentou.
 
+**Estudos** (módulo `curriculum`):
+
+* São conteúdo de leitura: `GetStudies` (lista por trilha) e `GetStudy` (páginas de um estudo). Não há escrita, correção, XP nem streak.
+* Fazem parte do cache de currículo invalidado por `content\_version`.
+* Não bloqueiam lições: a liberação das lições continua decidida só pelo progresso de exercícios.
+* Marcar um estudo como visto fica para depois. Quando for feito, a escrita vai para o módulo `progress` e exige `Idempotency-Key`.
+
 ### HTTP
 
 * Rotas versionadas em `/v1`.
 * Endpoints são moldados pelas telas do app (ex.: `GET /v1/home` agrega trilha, streak e XP).
+* Estudos: `GET /v1/studies` (aba "Estudar", `StudiesResponse`) e `GET /v1/studies/:studyId` (`StudyGuide`). Id desconhecido retorna 404.
 * Toda rota autenticada valida o JWT do Supabase no plugin de auth. O `userId` vem do token, nunca do corpo da requisição.
 * Escritas sensíveis exigem o header `Idempotency-Key`.
 * Formato de erro padronizado: `{ "error": { "code": string, "message": string } }`.
@@ -142,6 +152,7 @@ src/
 * Toda alteração de schema é feita por migration em `supabase/migrations`. Nunca altere o banco manualmente.
 * Tabelas ficam no schema `app`, que não é exposto pela Data API do Supabase. O app nunca acessa o banco diretamente.
 * O `payload jsonb` de `exercises` é validado com o schema de `contracts` antes da gravação.
+* Estudos ficam em `app.studies` (`id`, `trail\_id`, `position`, `title`, `description`, `pages jsonb`). O `pages` é validado com `StudyPage` de `contracts` antes da gravação, como o `payload` de `exercises`.
 * Conexão via pooler do Supabase em modo transação, com prepared statements desativados.
 
 ### Configuração
@@ -170,6 +181,7 @@ src/
     (auth)/
     (tabs)/
     lesson/\[lessonId].tsx
+    study/\[studyId].tsx  # Leitor de um estudo (tela cheia)
   features/
     auth/
     home/
@@ -179,6 +191,7 @@ src/
       exercises/         # Um componente por tipo de exercício + registry
       components/
       index.ts           # API pública da feature
+    study/               # Aba "Estudar" e leitor de páginas de estudo
     onboarding/          # Boas-vindas, nível e meta diária
     settings/            # Ajustes
     streak/
@@ -212,6 +225,14 @@ src/
 3. Corrigir respostas localmente para feedback instantâneo.
 4. Enviar a sessão com uma `Idempotency-Key` gerada no início da lição.
 5. Em caso de falha de rede, enfileirar o envio no MMKV e reenviar quando houver conexão.
+
+### Estudos
+
+* A feature `features/study/` tem a aba "Estudar" (`StudiesScreen`, lista por trilha) e o leitor (`StudyScreen`, rota `study/\[studyId]`, uma página por vez com "Continuar"/"Voltar" e os segmentos do `Header`).
+* Ao abrir um estudo, buscar o `StudyGuide` e fazer `Image.prefetch()` das imagens antes de mostrar a primeira página.
+* Cada tipo de bloco é um `case` em `features/study/components/StudyBlockView.tsx`. Para adicionar um tipo: criar o schema em `contracts` e o `case` correspondente; o `switch` não tem `default`, então o typecheck aponta o caso que falta.
+* Nada é enviado ao BFF ao concluir: "Concluir" só fecha o leitor.
+* Enquanto o BFF não existe, `api/studyMocks.ts` traz o estudo "Alfabeto manual", que reaproveita as letras exportadas por `features/alphabet`. O texto é provisório e precisa de revisão por especialista em Libras.
 
 ### Imagens
 

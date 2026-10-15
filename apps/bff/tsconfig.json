@@ -1,0 +1,8 @@
+{
+  "extends": "@libras/tsconfig/base.json",
+  "compilerOptions": {
+    // TypeScript 6 no longer includes every @types package by default.
+    "types": ["node"]
+  },
+  "include": ["src", "scripts"]
+}

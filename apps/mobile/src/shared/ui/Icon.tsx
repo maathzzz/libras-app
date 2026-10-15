@@ -23,6 +23,8 @@ const icons = {
   password: { ios: 'lock', android: 'lock', web: 'lock' },
   show: { ios: 'eye', android: 'visibility', web: 'visibility' },
   hide: { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' },
+  study: { ios: 'book.fill', android: 'menu_book', web: 'menu_book' },
+  tip: { ios: 'lightbulb.fill', android: 'lightbulb', web: 'lightbulb' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof icons;

@@ -12,6 +12,7 @@ Oferecer um caminho simples e constante para aprender Libras no celular:
 - **Streak** como único mecanismo de retenção: completar ao menos uma lição por dia mantém a sequência.
 - **XP** como pontuação acumulada.
 - **Meta diária** (1, 3, 5 ou 8 lições) como alvo pessoal, exibido no progresso do dia. Ela não muda a regra do streak.
+- **Estudos por trilha**: páginas de conteúdo, na aba "Estudar", que ensinam o assunto passo a passo antes das lições. São recomendados, mas não bloqueiam lições nem dão XP.
 - **Alfabeto e números** sempre disponíveis para consulta.
 
 O conteúdo visual é composto **apenas por imagens**. Um sinal com movimento é mostrado como uma sequência de imagens.
@@ -55,12 +56,12 @@ docs/
 
 ## Status atual
 
-| Parte                | Situação                                                                                                   |
-| -------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `apps/mobile`        | Telas de início, lição, recompensa, alfabeto, ajustes, onboarding e login implementadas com dados mockados |
-| `packages/contracts` | Schemas de home, lição, exercícios, perfil e streak                                                        |
-| `apps/bff`           | Ainda não criado                                                                                           |
-| `supabase/`          | Ainda não criado                                                                                           |
+| Parte                | Situação                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `apps/mobile`        | Telas de início, lição, recompensa, estudo, alfabeto, ajustes, onboarding e login implementadas com dados mockados |
+| `packages/contracts` | Schemas de home, lição, exercícios, estudo, perfil, streak e formato de erro                                       |
+| `apps/bff`           | Esqueleto: Fastify, env, error handler, `GET /health`, `LocalDate`, `Clock` e `Result`. Sem módulos ainda          |
+| `supabase/`          | Ainda não criado                                                                                                   |
 
 Enquanto o BFF e o Supabase não existem, as funções em `features/*/api/` do app retornam mocks validados pelos mesmos schemas de `contracts`. Quando os endpoints estiverem prontos, apenas essas funções mudam.
 

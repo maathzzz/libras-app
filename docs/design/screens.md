@@ -101,6 +101,22 @@ Perfil e preferências. Mostra a barra de abas.
 
 No app: aba "Ajustes" (a aba "Perfil" continua com a tela provisória). O avatar é sólido até os gradientes serem definidos. Nome e meta vêm do perfil (`GET /v1/profile`, mockado). "Editar" abre a aba Perfil. "Alterar" abre a tela de meta diária. "SAIR DA CONTA" pede confirmação, apaga a sessão e volta às Boas-vindas. O lembrete diário agenda uma notificação local às 20:00 (`expo-notifications`). O grupo "LIÇÕES" (som, velocidade do vídeo, alto contraste) aparece na tela, mas é só visual: os controles não são salvos nem aplicados.
 
+### 14. Estudar (não existe no design)
+Lista dos estudos, agrupados por trilha. Mostra a barra de abas, entre "Trilhas" e "Alfabeto".
+**Componentes:** `ScreenTitle` ("Estudar"), por trilha um kicker "TRILHA" + título `heading`, e um `Card` tocável por estudo (ícone `study` em caixa `accentSoft`, título, descrição e "N páginas"). Tem estados de carregando e de erro com "Tentar de novo".
+
+Dados de `GET /v1/studies` (mockado). Estudar é recomendado: nada aqui bloqueia ou libera lições.
+
+### 15. Estudo: páginas (não existe no design)
+Leitor em tela cheia, uma página por vez.
+**Componentes:** `Header` (fechar, um segmento por página), kicker accent "ALFABETO MANUAL · PÁGINA X DE N", título `title`, blocos da página e rodapé com `Button` primário ("CONTINUAR", "CONCLUIR" na última) e `Button` ghost "VOLTAR" a partir da 2ª página.
+Blocos:
+* `text`: parágrafo `body`;
+* `sign`: card `accentSoft`, dois por linha, com rótulo em `heading`, a imagem (ou sequência) do sinal e a dica opcional. Segue a §6 "Sinal novo" em versão compacta;
+* `tip`: `Card` warning com ícone de lâmpada.
+
+Dados de `GET /v1/studies/:studyId` (mockado). "Concluir" só fecha o leitor: não envia nada, não dá XP e não conta para o streak.
+
 ## Divergências com o escopo do MVP (CLAUDE.md)
 
 O protótipo inclui itens que o CLAUDE.md coloca fora do escopo ou que conflitam com as regras do app. Eles não devem ser implementados sem decisão explícita:
