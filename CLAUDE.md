@@ -7,7 +7,7 @@ Aplicativo gamificado para ensino de Libras (inspirado no Duolingo). Monorepo co
 
 ## Escopo do MVP
 
-* Retenção exclusivamente por **streak**: o usuário mantém a sequência completando ao menos uma lição por dia.
+* Retenção por **streak**: o usuário mantém a sequência completando ao menos uma lição por dia.
 * XP é apenas uma pontuação acumulada.
 * A **meta diária** (1, 3, 5 ou 8 lições) é só um alvo pessoal, exibido no progresso do dia. Ela não altera a regra do streak.
 * Conteúdo visual composto **somente por imagens** (sem vídeos, sem áudio).
