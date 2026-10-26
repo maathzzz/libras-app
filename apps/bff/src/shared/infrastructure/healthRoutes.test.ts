@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildApp } from '../../app';
+import { createInMemoryContainer } from '../../testing/inMemoryContainer';
 import { FixedClock } from '../application/FixedClock';
 
 describe('GET /health', () => {
   it('answers ok with the server time', async () => {
     const clock = new FixedClock(new Date('2026-03-15T12:00:00Z'));
-    const app = buildApp({ clock }, { logger: false });
+    const app = buildApp(createInMemoryContainer(clock), { logger: false });
 
     const response = await app.inject({ method: 'GET', url: '/health' });
 

@@ -4,10 +4,9 @@ import { createDatabase } from './shared/infrastructure/db/client';
 import { loadEnv } from './shared/infrastructure/env';
 
 const env = loadEnv();
-// No connection is opened until the first query. The Drizzle repositories will receive
-// `database.db` through createContainer.
+// No connection is opened until the first query.
 const database = createDatabase(env.DATABASE_URL);
-const app = buildApp(createContainer(), {
+const app = buildApp(createContainer(database.db), {
   logger: { level: env.NODE_ENV === 'production' ? 'info' : 'debug' },
 });
 app.addHook('onClose', () => database.close());

@@ -133,3 +133,20 @@ describe('LocalDate.toString', () => {
     expect(LocalDate.of(2026, 1, 5).toString()).toBe('2026-01-05');
   });
 });
+
+describe('LocalDate.parse', () => {
+  it('reads back what toString writes', () => {
+    expect(LocalDate.parse('2026-01-05').equals(LocalDate.of(2026, 1, 5))).toBe(true);
+    expect(LocalDate.parse('2028-02-29').toString()).toBe('2028-02-29');
+  });
+
+  it('rejects other formats', () => {
+    expect(() => LocalDate.parse('2026-1-5')).toThrow(RangeError);
+    expect(() => LocalDate.parse('2026-01-05T00:00:00Z')).toThrow(RangeError);
+    expect(() => LocalDate.parse('')).toThrow(RangeError);
+  });
+
+  it('rejects a date that does not exist', () => {
+    expect(() => LocalDate.parse('2026-02-29')).toThrow(RangeError);
+  });
+});

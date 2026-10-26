@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { buildApp } from '../../app';
+import { createInMemoryContainer } from '../../testing/inMemoryContainer';
 import { FixedClock } from '../application/FixedClock';
 
 function buildTestApp() {
   const clock = new FixedClock(new Date('2026-03-15T12:00:00Z'));
-  const app = buildApp({ clock }, { logger: false });
+  const app = buildApp(createInMemoryContainer(clock), { logger: false });
 
   app.post(
     '/echo',

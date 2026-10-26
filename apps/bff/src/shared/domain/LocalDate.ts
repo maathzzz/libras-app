@@ -18,6 +18,13 @@ export class LocalDate {
     return date;
   }
 
+  // The inverse of toString(), for dates read back from Postgres `date` columns.
+  static parse(iso: string): LocalDate {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!match) throw new RangeError(`Invalid date: ${iso}`);
+    return LocalDate.of(Number(match[1]), Number(match[2]), Number(match[3]));
+  }
+
   // Uses the Intl API: Node ships with full ICU, so IANA zones work without a date library
   // and the zone database is updated together with the runtime.
   // Throws RangeError for an unknown zone.

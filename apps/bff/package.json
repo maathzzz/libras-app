@@ -8,6 +8,7 @@
     "build": "tsx scripts/build.ts",
     "start": "node --enable-source-maps dist/main.js",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:seed:generate": "tsx scripts/seed/generateSeed.ts"

@@ -4,5 +4,5 @@
     // TypeScript 6 no longer includes every @types package by default.
     "types": ["node"]
   },
-  "include": ["src", "scripts"]
+  "include": ["src", "scripts", "vitest.config.ts", "vitest.integration.config.ts"]
 }
