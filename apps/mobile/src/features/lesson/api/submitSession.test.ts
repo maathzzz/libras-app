@@ -23,6 +23,7 @@ function session(idempotencyKey: string, wrong = 0): CompleteLessonRequest {
             : exercise.correctOptionId,
       },
     })),
+    localDate: '2026-03-14',
   };
 }
 

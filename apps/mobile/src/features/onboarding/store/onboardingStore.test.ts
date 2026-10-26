@@ -38,7 +38,6 @@ describe('createAccount', () => {
       name: 'Ana Souza',
       startLevel: 'basic',
       dailyGoal: 5,
-      timezone: expect.any(String),
     });
   });
 

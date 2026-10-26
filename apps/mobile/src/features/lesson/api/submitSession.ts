@@ -44,7 +44,8 @@ function isPerfectLesson({ lessonId, answers }: CompleteLessonRequest): boolean 
 // Mocked until the BFF exposes POST /v1/lessons/:lessonId/completion. Then only this
 // function changes, to:
 //   apiRequest(`/v1/lessons/${lessonId}/completion`, CompleteLessonResponse, {
-//     method: 'POST', headers: { 'Idempotency-Key': idempotencyKey }, body: { answers },
+//     method: 'POST', headers: { 'Idempotency-Key': idempotencyKey },
+//     body: { answers, localDate },
 //   })
 export async function submitSession(
   session: CompleteLessonRequest,

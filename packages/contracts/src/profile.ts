@@ -14,8 +14,6 @@ export const ProfileResponse = z.object({
   name: z.string().trim().min(1).max(60),
   dailyGoal: DailyGoal,
   startLevel: StartLevel,
-  // IANA zone ("America/Sao_Paulo"): the streak's "day" is the local date in it.
-  timezone: z.string().min(1),
 });
 export type ProfileResponse = z.infer<typeof ProfileResponse>;
 

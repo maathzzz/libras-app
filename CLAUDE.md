@@ -84,7 +84,7 @@ Node.js LTS, TypeScript estrito, Fastify, `fastify-type-provider-zod`, Drizzle O
 ```
 src/
   modules/
-    profile/          # Perfil e fuso horário
+    profile/          # Perfil
     curriculum/       # Unidades, lições, exercícios, sinais, estudos
     progress/         # Sessões de lição, XP, streak
       domain/         # Entidades, value objects, interfaces de repositório
@@ -119,13 +119,15 @@ src/
 
 **Streak** (`modules/progress/domain/Streak.ts`):
 
-* O "dia" é a data local no fuso horário salvo no perfil do usuário (`LocalDate`).
+* O "dia" é a data local do dispositivo (`LocalDate`), no formato `YYYY-MM-DD`. O app a envia no header `X-Local-Date` em todas as requisições e no corpo da conclusão (`localDate`). O BFF não conhece o fuso do usuário.
+* O BFF rejeita uma `localDate` mais de 1 dia à frente da data UTC do `Clock` (UTC+14 é o fuso mais adiantado). Datas no passado são aceitas, porque a fila offline envia lições atrasadas.
 * Ao concluir uma lição:
 
   * última atividade hoje → sem alteração;
   * última atividade ontem → `current + 1`;
+  * data da conclusão anterior à última atividade → sem alteração (o streak nunca retrocede);
   * caso contrário → reinicia em 1.
-* Última atividade depois de hoje (troca de fuso para oeste) → tratada como hoje: sem alteração e status `done\_today`. Trocar de fuso nunca quebra o streak.
+* Última atividade depois de hoje (lição antiga vinda da fila offline ou data do aparelho que voltou) → tratada como hoje: status `done\_today`.
 * `longest` é sempre o maior valor já atingido.
 * Status na leitura: `done\_today`, `at\_risk` (última atividade ontem) ou `broken`. Quando `broken`, o valor exibido é 0.
 * O streak é calculado na leitura (lazy). Não crie cron para quebrar streaks.
@@ -141,11 +143,12 @@ src/
 **Conclusão de lição** (`CompleteLesson`):
 
 1. Se a `Idempotency-Key` já foi processada para o usuário, retornar o resultado anterior.
-2. Recorrigir as respostas no servidor com `AnswerGrader` (`modules/progress/domain/AnswerGrader.ts`). O servidor é a fonte da verdade. Resposta ausente ou duplicada para um exercício conta como incorreta; resposta para exercício fora da lição é ignorada.
-3. Calcular o XP.
-4. Aplicar a regra do streak.
-5. Persistir sessão, progresso e `user\_stats` em uma única transação.
-6. Retornar XP ganho, streak atual e se o streak aumentou.
+2. Rejeitar com `LOCAL\_DATE\_TOO\_FAR\_AHEAD` uma `localDate` mais de 1 dia à frente da data UTC do `Clock`.
+3. Recorrigir as respostas no servidor com `AnswerGrader` (`modules/progress/domain/AnswerGrader.ts`). O servidor é a fonte da verdade. Resposta ausente ou duplicada para um exercício conta como incorreta; resposta para exercício fora da lição é ignorada.
+4. Calcular o XP.
+5. Aplicar a regra do streak com a `localDate`.
+6. Persistir sessão, progresso e `user\_stats` em uma única transação.
+7. Retornar XP ganho, streak atual e se o streak aumentou.
 
 **Estudos** (módulo `curriculum`):
 
@@ -161,6 +164,7 @@ src/
 * Estudos: `GET /v1/studies` (aba "Estudar", `StudiesResponse`) e `GET /v1/studies/:studyId` (`StudyGuide`). Id desconhecido retorna 404.
 * Toda rota autenticada valida o JWT do Supabase no plugin de auth. O `userId` vem do token, nunca do corpo da requisição.
 * Escritas sensíveis exigem o header `Idempotency-Key`.
+* O app envia a data local do dispositivo no header `X-Local-Date` (`YYYY-MM-DD`) em todas as requisições. A conclusão de lição usa a `localDate` do corpo, capturada quando a lição terminou.
 * Formato de erro padronizado: `{ "error": { "code": string, "message": string } }`.
 
 ### Banco de dados
@@ -182,7 +186,8 @@ src/
 ### Testes
 
 * Casos de uso: testes unitários com repositórios em memória e `Clock` fixo.
-* A regra do streak deve ter testes para: primeira lição, mesmo dia, dia seguinte, dia pulado, troca de fuso e virada de mês.
+* A regra do streak deve ter testes para: primeira lição, mesmo dia, dia seguinte, dia pulado, data anterior à última atividade e virada de mês.
+* `CompleteLesson` deve ter testes para: data à frente do limite (rejeitada), data no passado vinda da fila offline (aceita, sem alterar o streak se for anterior à última atividade) e virada de dia.
 * A regra do XP deve ter testes para: lição com erros, lição sem erros e lição refeita.
 * Repositórios Drizzle: testes de integração contra o Supabase local.
 
@@ -242,8 +247,9 @@ src/
 1. Buscar o bundle da lição.
 2. Fazer `Image.prefetch()` de todas as imagens antes de iniciar.
 3. Corrigir respostas localmente para feedback instantâneo.
-4. Enviar a sessão com uma `Idempotency-Key` gerada no início da lição.
-5. Em caso de falha de rede, enfileirar o envio no MMKV e reenviar quando houver conexão.
+4. Ao terminar a lição, capturar a `localDate` (data local do aparelho, de `shared/lib/localDate.ts`, montada com os componentes locais e nunca com `toISOString()`, que dá a data UTC).
+5. Enviar a sessão com uma `Idempotency-Key` gerada no início da lição e a `localDate`.
+6. Em caso de falha de rede, enfileirar o envio no MMKV (com a `localDate`) e reenviar quando houver conexão. No reenvio, usar a data salva, nunca a data atual.
 
 ### Estudos
 

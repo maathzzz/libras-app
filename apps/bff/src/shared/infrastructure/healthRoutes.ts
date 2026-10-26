@@ -7,7 +7,7 @@ import type { Clock } from '../application/Clock';
 // instead of in @libras/contracts.
 const HealthResponse = z.object({
   status: z.literal('ok'),
-  // Server time, handy when checking streak and time zone issues.
+  // Server time, handy when checking the streak and the local date limit (1 day past UTC).
   time: z.iso.datetime(),
 });
 

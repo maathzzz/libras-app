@@ -42,6 +42,10 @@ beforeEach(() => {
   randomUUIDMock.mockImplementation(() => uuid((uuidCount += 1)));
 });
 
+afterEach(() => {
+  jest.useRealTimers();
+});
+
 describe('start', () => {
   it('loads, prefetches every image of the lesson and then plays', async () => {
     const starting = useLessonStore.getState().start(lesson.id);
@@ -179,10 +183,11 @@ describe('submit', () => {
   }
 
   it('hands the session to the completion with the answers in exercise order', async () => {
-    const now = jest.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    // Started at 23:59 and finished after midnight: the day is the one the lesson ended.
+    jest.useFakeTimers({ now: new Date(2026, 2, 14, 23, 59, 0) });
     await startPlaying();
     answerAll([1]);
-    now.mockReturnValue(1_000_000 + 134_000);
+    jest.setSystemTime(new Date(2026, 2, 15, 0, 1, 14));
 
     useLessonStore.getState().submit();
 
@@ -195,10 +200,10 @@ describe('submit', () => {
           exerciseId: exercise.id,
           answer: index === 1 ? { type: exercise.type, optionId: 'wrong-option' } : correctAnswerFor(index),
         })),
+        localDate: '2026-03-15',
       },
       { correct: lesson.exercises.length - 1, total: lesson.exercises.length, durationMs: 134_000 },
     );
-    now.mockRestore();
   });
 
   it('sends nothing without a lesson', () => {

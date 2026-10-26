@@ -30,7 +30,7 @@ export const Trail = z.object({
 });
 export type Trail = z.infer<typeof Trail>;
 
-// Lessons finished today (in the learner's timezone) against the daily goal.
+// Lessons finished today (the device's date, sent in X-Local-Date) against the daily goal.
 export const TodayProgress = z.object({
   completedLessons: z.number().int().nonnegative(),
   dailyGoal: DailyGoal,

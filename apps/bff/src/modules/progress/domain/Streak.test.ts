@@ -60,27 +60,24 @@ describe('Streak.registerLessonCompleted', () => {
     expect(streakOf(2, 2, '2026-12-31').registerLessonCompleted(d('2027-01-01')).current).toBe(3);
   });
 
-  it('uses the local date of the time zone: 23:30 in São Paulo is already the next day in UTC', () => {
-    const instant = new Date('2026-03-15T02:30:00Z');
-    const streak = streakOf(3, 3, '2026-03-14');
-
-    const inSaoPaulo = streak.registerLessonCompleted(
-      LocalDate.fromInstant(instant, 'America/Sao_Paulo'),
-    );
-    const inUtc = streak.registerLessonCompleted(LocalDate.fromInstant(instant, 'UTC'));
-
-    expect(inSaoPaulo.current).toBe(3);
-    expect(inUtc.current).toBe(4);
-  });
-
-  it('treats a last activity after today as today, after a move to a zone further west', () => {
-    const streak = streakOf(3, 3, '2026-03-16');
+  it('does not change on a lesson dated the day before the last activity', () => {
+    const streak = streakOf(3, 5, '2026-03-16');
 
     const next = streak.registerLessonCompleted(d('2026-03-15'));
 
     expect(next.current).toBe(3);
-    expect(next.statusAt(d('2026-03-15'))).toBe('done_today');
-    expect(next.currentAt(d('2026-03-15'))).toBe(3);
+    expect(next.longest).toBe(5);
+    expect(next.lastActivity?.toString()).toBe('2026-03-16');
+  });
+
+  it('does not change on a lesson dated several days before the last activity', () => {
+    const streak = streakOf(1, 4, '2026-03-16');
+
+    const next = streak.registerLessonCompleted(d('2026-03-01'));
+
+    expect(next.current).toBe(1);
+    expect(next.longest).toBe(4);
+    expect(next.lastActivity?.toString()).toBe('2026-03-16');
   });
 
   it('returns a new streak and leaves the original unchanged', () => {
@@ -115,6 +112,13 @@ describe('Streak.statusAt and currentAt', () => {
     expect(streak.statusAt(d('2026-03-15'))).toBe('broken');
     expect(streak.currentAt(d('2026-03-15'))).toBe(0);
     expect(streak.longest).toBe(5);
+  });
+
+  it('is done_today when the last lesson is dated after today', () => {
+    const streak = streakOf(3, 5, '2026-03-16');
+
+    expect(streak.statusAt(d('2026-03-15'))).toBe('done_today');
+    expect(streak.currentAt(d('2026-03-15'))).toBe(3);
   });
 
   it('is broken with 0 before the first lesson', () => {

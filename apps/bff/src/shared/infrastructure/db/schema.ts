@@ -136,7 +136,6 @@ export const profiles = app.table(
       .$type<'beginner' | 'basic' | 'conversational'>()
       .notNull()
       .default('beginner'),
-    timezone: text('timezone').notNull().default('America/Sao_Paulo'),
     createdAt: createdAt(),
   },
   (table) => [

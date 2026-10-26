@@ -40,6 +40,9 @@ export const CompleteLessonRequest = z
     lessonId: z.string().min(1),
     idempotencyKey: z.uuid(),
     answers: z.array(LessonAnswer).min(1),
+    // The device's local date (YYYY-MM-DD) when the lesson ended: the streak's "day".
+    // Taken once and kept in the offline queue, so a late retry still counts that day.
+    localDate: z.iso.date(),
   })
   .superRefine((request, ctx) => {
     const seen = new Set<string>();

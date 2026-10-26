@@ -25,7 +25,6 @@ const initialProfile: ProfileResponse = {
   name: 'Matheus Amorim',
   dailyGoal: 3,
   startLevel: 'beginner',
-  timezone: 'America/Sao_Paulo',
 };
 
 type MockStats = {
@@ -90,7 +89,6 @@ export function updateMockProfile(update: UpdateProfileRequest): ProfileResponse
     name: update.name ?? profile.name,
     dailyGoal: update.dailyGoal ?? profile.dailyGoal,
     startLevel: update.startLevel ?? profile.startLevel,
-    timezone: update.timezone ?? profile.timezone,
   };
   return profile;
 }

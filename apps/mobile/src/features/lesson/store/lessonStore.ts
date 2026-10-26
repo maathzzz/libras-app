@@ -2,6 +2,7 @@ import type { CompleteLessonRequest, ExerciseAnswer, LessonBundle } from '@libra
 import * as Crypto from 'expo-crypto';
 import { create } from 'zustand';
 
+import { getLocalDate } from '@/shared/lib/localDate';
 import { prefetchImages } from '@/shared/lib/prefetchImages';
 
 import { getLesson } from '../api/getLesson';
@@ -123,6 +124,9 @@ export const useLessonStore = create<LessonState>()((set, get) => ({
         const answer = answers[exercise.id];
         return answer ? [{ exerciseId: exercise.id, answer }] : [];
       }),
+      // Taken now, when the lesson ends: the offline queue keeps it, so a retry on a later
+      // day still counts the day the lesson was done.
+      localDate: getLocalDate(),
     };
     const summary = {
       correct: correctCount,

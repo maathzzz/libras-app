@@ -19,8 +19,7 @@ const weekDays = [
 ] as const;
 
 // The streak counts consecutive days ending today, so this week's marks follow from its
-// length alone. `today` is the device's date; the BFF's day uses the profile's time zone,
-// which is the same for a learner at home.
+// length alone. `today` is the device's date, the same "day" the BFF uses for the streak.
 export function weekMarks(streakDays: number, today: Date): WeekMark[] {
   const todayIndex = (today.getDay() + 6) % 7;
 

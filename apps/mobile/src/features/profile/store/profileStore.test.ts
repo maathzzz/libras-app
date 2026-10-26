@@ -16,7 +16,6 @@ const profile: ProfileResponse = {
   name: 'Ana Souza',
   dailyGoal: 3,
   startLevel: 'beginner',
-  timezone: 'America/Sao_Paulo',
 };
 
 beforeEach(() => {

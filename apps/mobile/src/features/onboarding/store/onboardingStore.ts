@@ -17,8 +17,6 @@ type OnboardingState = {
   createAccount: () => Promise<boolean>;
 };
 
-const deviceTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
-
 export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
   account: null,
   startLevel: 'beginner',
@@ -34,7 +32,7 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
 
     const { name, email, password } = account;
     const created = await signUp({ email, password }, () =>
-      updateProfile({ name, startLevel, dailyGoal, timezone: deviceTimezone() }),
+      updateProfile({ name, startLevel, dailyGoal }),
     );
     // The password is kept in memory only until the account exists.
     if (created) set({ account: null });

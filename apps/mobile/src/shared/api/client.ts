@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 
+import { getLocalDate } from '../lib/localDate';
 import { getAccessToken } from './session';
 
 const baseUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -33,9 +34,15 @@ export async function apiRequest<TSchema extends z.ZodType>(
   const token = getAccessToken();
   const auth: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
+  // The streak's "day" is the device's date; the BFF has no time zone of its own.
   const response = await fetch(`${baseUrl}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', ...auth, ...headers },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Local-Date': getLocalDate(),
+      ...auth,
+      ...headers,
+    },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
 

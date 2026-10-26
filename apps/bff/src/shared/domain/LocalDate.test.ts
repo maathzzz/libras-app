@@ -2,47 +2,24 @@ import { describe, expect, it } from 'vitest';
 
 import { LocalDate } from './LocalDate';
 
-const at = (iso: string, timeZone: string) =>
-  LocalDate.fromInstant(new Date(iso), timeZone).toString();
-
-describe('LocalDate.fromInstant', () => {
-  it('keeps the previous day in São Paulo until 03:00 UTC', () => {
-    expect(at('2026-03-15T02:59:59Z', 'America/Sao_Paulo')).toBe('2026-03-14');
-    expect(at('2026-03-15T03:00:00Z', 'America/Sao_Paulo')).toBe('2026-03-15');
+describe('LocalDate.utcDateOf', () => {
+  it('takes the date in UTC, whatever the hour', () => {
+    expect(LocalDate.utcDateOf(new Date('2026-03-15T00:00:00Z')).toString()).toBe('2026-03-15');
+    expect(LocalDate.utcDateOf(new Date('2026-03-15T23:59:59.999Z')).toString()).toBe(
+      '2026-03-15',
+    );
   });
 
-  it('gives different dates for the same instant in different zones', () => {
-    const instant = '2026-03-15T01:00:00Z';
-    expect(at(instant, 'America/Sao_Paulo')).toBe('2026-03-14');
-    expect(at(instant, 'UTC')).toBe('2026-03-15');
+  it('uses UTC even for an instant written with an offset', () => {
+    // 23:30 in São Paulo is already the next day in UTC.
+    expect(LocalDate.utcDateOf(new Date('2026-03-14T23:30:00-03:00')).toString()).toBe(
+      '2026-03-15',
+    );
   });
 
-  it('moves to the next day earlier in zones ahead of UTC', () => {
-    expect(at('2026-03-14T14:59:59Z', 'Asia/Tokyo')).toBe('2026-03-14');
-    expect(at('2026-03-14T15:00:00Z', 'Asia/Tokyo')).toBe('2026-03-15');
-  });
-
-  it('handles half-hour offsets', () => {
-    expect(at('2026-01-31T18:29:59Z', 'Asia/Kolkata')).toBe('2026-01-31');
-    expect(at('2026-01-31T18:30:00Z', 'Asia/Kolkata')).toBe('2026-02-01');
-  });
-
-  it('follows daylight saving time', () => {
-    // New York is UTC-4 in July and UTC-5 in January.
-    expect(at('2026-07-10T03:59:59Z', 'America/New_York')).toBe('2026-07-09');
-    expect(at('2026-07-10T04:00:00Z', 'America/New_York')).toBe('2026-07-10');
-    expect(at('2026-01-10T04:59:59Z', 'America/New_York')).toBe('2026-01-09');
-    expect(at('2026-01-10T05:00:00Z', 'America/New_York')).toBe('2026-01-10');
-  });
-
-  it('crosses month and year boundaries near midnight', () => {
-    expect(at('2026-05-01T02:30:00Z', 'America/Sao_Paulo')).toBe('2026-04-30');
-    expect(at('2027-01-01T02:30:00Z', 'America/Sao_Paulo')).toBe('2026-12-31');
-    expect(at('2027-01-01T03:30:00Z', 'America/Sao_Paulo')).toBe('2027-01-01');
-  });
-
-  it('rejects an unknown time zone', () => {
-    expect(() => at('2026-03-15T12:00:00Z', 'America/Nowhere')).toThrow(RangeError);
+  it('crosses month and year boundaries at midnight UTC', () => {
+    expect(LocalDate.utcDateOf(new Date('2026-04-30T23:59:59Z')).toString()).toBe('2026-04-30');
+    expect(LocalDate.utcDateOf(new Date('2027-01-01T00:00:00Z')).toString()).toBe('2027-01-01');
   });
 });
 
@@ -89,12 +66,6 @@ describe('LocalDate.equals', () => {
     expect(date.equals(LocalDate.of(2027, 3, 15))).toBe(false);
   });
 
-  it('compares dates, not instants', () => {
-    const morning = LocalDate.fromInstant(new Date('2026-03-15T11:00:00Z'), 'America/Sao_Paulo');
-    const night = LocalDate.fromInstant(new Date('2026-03-16T02:00:00Z'), 'America/Sao_Paulo');
-    expect(morning.equals(night)).toBe(true);
-  });
-
   it('recognizes yesterday through minusDays', () => {
     const today = LocalDate.of(2026, 3, 1);
     expect(LocalDate.of(2026, 2, 28).equals(today.minusDays(1))).toBe(true);
@@ -118,6 +89,26 @@ describe('LocalDate.isAfter', () => {
     expect(LocalDate.of(2026, 3, 14).isAfter(date)).toBe(false);
     expect(LocalDate.of(2026, 2, 28).isAfter(date)).toBe(false);
     expect(LocalDate.of(2025, 12, 31).isAfter(date)).toBe(false);
+  });
+});
+
+describe('LocalDate.isBefore', () => {
+  const date = LocalDate.of(2026, 3, 15);
+
+  it('is true for an earlier day, month or year', () => {
+    expect(LocalDate.of(2026, 3, 14).isBefore(date)).toBe(true);
+    expect(LocalDate.of(2026, 2, 28).isBefore(date)).toBe(true);
+    expect(LocalDate.of(2025, 12, 31).isBefore(date)).toBe(true);
+  });
+
+  it('is false for the same date', () => {
+    expect(LocalDate.of(2026, 3, 15).isBefore(date)).toBe(false);
+  });
+
+  it('is false for a later date, even with an earlier day or month', () => {
+    expect(LocalDate.of(2026, 3, 16).isBefore(date)).toBe(false);
+    expect(LocalDate.of(2026, 4, 1).isBefore(date)).toBe(false);
+    expect(LocalDate.of(2027, 1, 1).isBefore(date)).toBe(false);
   });
 });
 

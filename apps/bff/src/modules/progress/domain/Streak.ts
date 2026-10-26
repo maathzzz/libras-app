@@ -28,11 +28,13 @@ export class Streak {
     return new Streak(current, longest, lastActivity);
   }
 
-  registerLessonCompleted(today: LocalDate): Streak {
-    if (this.isDoneAt(today)) return this;
+  // `day` is the device's date when the lesson ended. A day before the last activity (a
+  // lesson sent late by the offline queue) changes nothing: the streak never goes back.
+  registerLessonCompleted(day: LocalDate): Streak {
+    if (this.isDoneAt(day)) return this;
 
-    const current = this.isYesterday(today) ? this.current + 1 : 1;
-    return new Streak(current, Math.max(this.longest, current), today);
+    const current = this.isYesterday(day) ? this.current + 1 : 1;
+    return new Streak(current, Math.max(this.longest, current), day);
   }
 
   statusAt(today: LocalDate): StreakStatus {
@@ -45,8 +47,8 @@ export class Streak {
     return this.statusAt(today) === 'broken' ? 0 : this.current;
   }
 
-  // A last activity after today only happens when the learner moves to a zone further
-  // west; it counts as today so changing the time zone never costs the streak.
+  // A last activity after today happens when an older lesson arrives from the offline
+  // queue or the device's date goes back; it counts as today so the streak never drops.
   private isDoneAt(today: LocalDate): boolean {
     if (this.lastActivity === null) return false;
     return this.lastActivity.equals(today) || this.lastActivity.isAfter(today);

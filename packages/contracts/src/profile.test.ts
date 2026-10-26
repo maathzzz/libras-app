@@ -6,7 +6,6 @@ const profile = {
   name: 'Ana Souza',
   dailyGoal: 3,
   startLevel: 'beginner',
-  timezone: 'America/Sao_Paulo',
 };
 
 describe('ProfileResponse', () => {

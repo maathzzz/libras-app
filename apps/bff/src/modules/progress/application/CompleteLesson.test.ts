@@ -8,7 +8,6 @@ import type { GradableLesson } from '../domain/LessonCatalog';
 import { Streak } from '../domain/Streak';
 import { InMemoryLessonCatalog } from '../testing/InMemoryLessonCatalog';
 import { InMemoryProgressStore } from '../testing/InMemoryProgressStore';
-import { InMemoryUserTimezones } from '../testing/InMemoryUserTimezones';
 import { CompleteLesson, type CompleteLessonInput } from './CompleteLesson';
 
 const image = (name: string) => [{ url: `https://example.com/${name}.png`, alt: name }];
@@ -69,11 +68,9 @@ function expectOk(result: Result<CompleteLessonResponse>): CompleteLessonRespons
 
 describe('CompleteLesson', () => {
   let store: InMemoryProgressStore;
-  let timezones: InMemoryUserTimezones;
 
   beforeEach(() => {
     store = new InMemoryProgressStore();
-    timezones = new InMemoryUserTimezones('America/Sao_Paulo');
   });
 
   // A new use case per call, all sharing the same stores, so each call can happen at a
@@ -83,15 +80,21 @@ describe('CompleteLesson', () => {
       store,
       store,
       new InMemoryLessonCatalog([lesson]),
-      timezones,
       new FixedClock(new Date(instant)),
     ).execute({
       userId,
       lessonId: lesson.id,
       idempotencyKey: keys.first,
       answers: perfectAnswers,
+      localDate: '2026-03-15',
       ...input,
     });
+
+  const expectError = (result: Result<CompleteLessonResponse>, code: string) => {
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe(code);
+  };
 
   describe('first completion', () => {
     it('grants XP, starts the streak and saves the session and stats', async () => {
@@ -133,7 +136,10 @@ describe('CompleteLesson', () => {
 
       // A retry from the offline queue may arrive later and can't change the outcome.
       const retry = expectOk(
-        await completeAt('2026-03-16T12:00:00-03:00', { answers: answersWithOneMistake }),
+        await completeAt('2026-03-16T12:00:00-03:00', {
+          answers: answersWithOneMistake,
+          localDate: '2026-03-16',
+        }),
       );
 
       expect(retry).toEqual(first);
@@ -159,9 +165,7 @@ describe('CompleteLesson', () => {
     it('returns LESSON_NOT_FOUND and saves nothing', async () => {
       const result = await completeAt('2026-03-15T12:00:00-03:00', { lessonId: 'lesson-missing' });
 
-      expect(result.ok).toBe(false);
-      if (result.ok) return;
-      expect(result.error.code).toBe('LESSON_NOT_FOUND');
+      expectError(result, 'LESSON_NOT_FOUND');
       expect(store.sessions).toHaveLength(0);
       expect(await store.findByUserId(userId)).toBeNull();
     });
@@ -186,11 +190,14 @@ describe('CompleteLesson', () => {
       expect((await store.findByUserId(userId))?.totalXp).toBe(25);
     });
 
-    it('grows on consecutive days in the learner time zone', async () => {
+    it('grows on consecutive days of the device', async () => {
       await completeAt('2026-03-15T12:00:00-03:00', { idempotencyKey: keys.first });
 
       const nextDay = expectOk(
-        await completeAt('2026-03-16T12:00:00-03:00', { idempotencyKey: keys.second }),
+        await completeAt('2026-03-16T12:00:00-03:00', {
+          idempotencyKey: keys.second,
+          localDate: '2026-03-16',
+        }),
       );
 
       expect(nextDay.streak).toEqual({ current: 2, longest: 2, status: 'done_today' });
@@ -198,19 +205,22 @@ describe('CompleteLesson', () => {
       expect((await store.findByUserId(userId))?.totalXp).toBe(30);
     });
 
-    it('grows from 23:30 to 00:30 in São Paulo, though both instants are the same UTC day', async () => {
-      timezones.set(userId, 'America/Sao_Paulo');
-
-      // 2026-03-14 23:30 and 2026-03-15 00:30 in São Paulo (UTC-3).
+    it('grows when the device turns to the next day, though both instants are the same UTC day', async () => {
+      // 23:59 on 2026-03-14 and 00:01 on 2026-03-15 on a device in UTC-3.
       const late = expectOk(
-        await completeAt('2026-03-15T02:30:00Z', { idempotencyKey: keys.first }),
+        await completeAt('2026-03-15T02:59:00Z', {
+          idempotencyKey: keys.first,
+          localDate: '2026-03-14',
+        }),
       );
       const afterMidnight = expectOk(
-        await completeAt('2026-03-15T03:30:00Z', { idempotencyKey: keys.second }),
+        await completeAt('2026-03-15T03:01:00Z', {
+          idempotencyKey: keys.second,
+          localDate: '2026-03-15',
+        }),
       );
 
-      expect(late.streak.current).toBe(1);
-      expect(late.streakIncreased).toBe(true);
+      expect(late.streak).toEqual({ current: 1, longest: 1, status: 'done_today' });
       expect(afterMidnight.streak).toEqual({ current: 2, longest: 2, status: 'done_today' });
       expect(afterMidnight.streakIncreased).toBe(true);
       expect((await store.findByUserId(userId))?.streak.lastActivity?.toString()).toBe(
@@ -245,6 +255,77 @@ describe('CompleteLesson', () => {
 
       expect(response.streak).toEqual({ current: 6, longest: 7, status: 'done_today' });
       expect(response.streakIncreased).toBe(true);
+    });
+  });
+
+  describe('local date limit', () => {
+    it('rejects a date more than 1 day ahead of the UTC date and saves nothing', async () => {
+      const result = await completeAt('2026-03-15T12:00:00Z', { localDate: '2026-03-17' });
+
+      expectError(result, 'LOCAL_DATE_TOO_FAR_AHEAD');
+      expect(store.sessions).toHaveLength(0);
+      expect(await store.findByUserId(userId)).toBeNull();
+    });
+
+    it('accepts a date exactly 1 day ahead, as on a device in UTC+14', async () => {
+      const response = expectOk(
+        await completeAt('2026-03-15T23:00:00Z', { localDate: '2026-03-16' }),
+      );
+
+      expect(response.streak).toEqual({ current: 1, longest: 1, status: 'done_today' });
+      expect((await store.findByUserId(userId))?.streak.lastActivity?.toString()).toBe(
+        '2026-03-16',
+      );
+    });
+
+    it('measures the limit from the UTC date, from midnight to midnight UTC', async () => {
+      expectOk(await completeAt('2026-03-15T00:00:00Z', { localDate: '2026-03-16' }));
+
+      const tooFar = await completeAt('2026-03-15T23:59:59Z', {
+        idempotencyKey: keys.second,
+        localDate: '2026-03-17',
+      });
+
+      expectError(tooFar, 'LOCAL_DATE_TOO_FAR_AHEAD');
+    });
+  });
+
+  describe('lesson sent late by the offline queue', () => {
+    it('accepts a date before the last activity and grants XP without changing the streak', async () => {
+      store.seedStats({
+        userId,
+        totalXp: 100,
+        streak: Streak.restore({ current: 4, longest: 6, lastActivity: d('2026-03-15') }),
+      });
+
+      const response = expectOk(
+        await completeAt('2026-03-16T12:00:00Z', { localDate: '2026-03-14' }),
+      );
+
+      expect(response.xpEarned).toBe(15);
+      expect(response.streak).toEqual({ current: 4, longest: 6, status: 'done_today' });
+      expect(response.streakIncreased).toBe(false);
+      const stats = await store.findByUserId(userId);
+      expect(stats?.totalXp).toBe(115);
+      expect(stats?.streak.lastActivity?.toString()).toBe('2026-03-15');
+    });
+
+    it('counts a date after the last activity, even if it is no longer today', async () => {
+      store.seedStats({
+        userId,
+        totalXp: 100,
+        streak: Streak.restore({ current: 4, longest: 4, lastActivity: d('2026-03-14') }),
+      });
+
+      // Finished offline on 2026-03-15 and sent only on 2026-03-17.
+      const response = expectOk(
+        await completeAt('2026-03-17T12:00:00Z', { localDate: '2026-03-15' }),
+      );
+
+      expect(response.streak).toEqual({ current: 5, longest: 5, status: 'done_today' });
+      expect((await store.findByUserId(userId))?.streak.lastActivity?.toString()).toBe(
+        '2026-03-15',
+      );
     });
   });
 });

@@ -26,6 +26,8 @@ describe('createContainer', () => {
         userId,
         lessonId,
         idempotencyKey: randomUUID(),
+        // The real clock runs here, so today's UTC date is always within the limit.
+        localDate: new Date().toISOString().slice(0, 10),
         answers: [
           { exerciseId: exercise.id, answer: { type: 'sign_to_word', optionId: 'a' } } as const,
         ],

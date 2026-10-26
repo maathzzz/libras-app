@@ -17,6 +17,7 @@ const request: CompleteLessonRequest = {
   lessonId: 'saudacoes-bom-dia',
   idempotencyKey: '00000000-0000-4000-8000-000000000001',
   answers: [{ exerciseId: 'ex-oi', answer: { type: 'sign_to_word', optionId: 'oi' } }],
+  localDate: '2026-03-14',
 };
 const summary = { correct: 5, total: 6, durationMs: 134_000 };
 const response: CompleteLessonResponse = {

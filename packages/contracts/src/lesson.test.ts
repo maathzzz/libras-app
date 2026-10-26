@@ -42,6 +42,7 @@ const request = {
     { exerciseId: 'ex-1', answer: { type: 'word_to_sign', optionId: 'a' } },
     { exerciseId: 'ex-2', answer: { type: 'sign_to_word', optionId: 'b' } },
   ],
+  localDate: '2026-03-15',
 };
 
 describe('CompleteLessonRequest', () => {
@@ -55,6 +56,24 @@ describe('CompleteLessonRequest', () => {
 
   it('rejects an idempotency key that is not a UUID', () => {
     expect(CompleteLessonRequest.safeParse({ ...request, idempotencyKey: 'key-1' }).success).toBe(
+      false,
+    );
+  });
+
+  it('rejects a local date that is not YYYY-MM-DD', () => {
+    for (const localDate of ['2026-3-5', '2026-03-15T00:00:00Z', '15/03/2026', '']) {
+      expect(CompleteLessonRequest.safeParse({ ...request, localDate }).success).toBe(false);
+    }
+  });
+
+  it('rejects a local date that does not exist', () => {
+    expect(CompleteLessonRequest.safeParse({ ...request, localDate: '2026-02-30' }).success).toBe(
+      false,
+    );
+  });
+
+  it('rejects a request without a local date', () => {
+    expect(CompleteLessonRequest.safeParse({ ...request, localDate: undefined }).success).toBe(
       false,
     );
   });

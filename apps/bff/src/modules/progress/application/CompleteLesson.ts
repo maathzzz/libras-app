@@ -9,7 +9,6 @@ import type { LessonCatalog } from '../domain/LessonCatalog';
 import type { LessonSessionRepository } from '../domain/LessonSessionRepository';
 import { Streak } from '../domain/Streak';
 import type { UserStats, UserStatsRepository } from '../domain/UserStatsRepository';
-import type { UserTimezoneProvider } from '../domain/UserTimezoneProvider';
 import { XpPolicy } from '../domain/XpPolicy';
 
 // userId comes from the token, never from the request body.
@@ -20,37 +19,44 @@ export class CompleteLesson {
     private readonly sessions: LessonSessionRepository,
     private readonly stats: UserStatsRepository,
     private readonly lessons: LessonCatalog,
-    private readonly timezones: UserTimezoneProvider,
     private readonly clock: Clock,
   ) {}
 
   async execute(input: CompleteLessonInput): Promise<Result<CompleteLessonResponse>> {
-    const { userId, lessonId, idempotencyKey, answers } = input;
+    const { userId, lessonId, idempotencyKey, answers, localDate } = input;
 
     const previousSession = await this.sessions.findByIdempotencyKey(userId, idempotencyKey);
     if (previousSession) return ok(previousSession.response);
 
+    // The day is the device's date when the lesson ended. Past dates are accepted, since
+    // the offline queue sends lessons late; a future one is only possible within a day of
+    // UTC (UTC+14 is the furthest zone ahead), so anything beyond is a wrong device clock.
+    const now = this.clock.now();
+    const day = LocalDate.parse(localDate);
+    if (day.minusDays(1).isAfter(LocalDate.utcDateOf(now))) {
+      return err(
+        new DomainError('LOCAL_DATE_TOO_FAR_AHEAD', `Local date ${localDate} is too far ahead`),
+      );
+    }
+
     const lesson = await this.lessons.findById(lessonId);
     if (!lesson) return err(new DomainError('LESSON_NOT_FOUND', `Lesson ${lessonId} not found`));
-
-    const now = this.clock.now();
-    const today = LocalDate.fromInstant(now, await this.timezones.timezoneOf(userId));
 
     const xpEarned = XpPolicy.xpFor(AnswerGrader.grade(lesson.exercises, answers));
 
     const stats = (await this.stats.findByUserId(userId)) ?? emptyStats(userId);
-    const streak = stats.streak.registerLessonCompleted(today);
+    const streak = stats.streak.registerLessonCompleted(day);
 
     const response: CompleteLessonResponse = {
       xpEarned,
       streak: {
-        current: streak.currentAt(today),
+        current: streak.currentAt(day),
         longest: streak.longest,
-        status: streak.statusAt(today),
+        status: streak.statusAt(day),
       },
       // Compared with the value shown before the lesson, so starting over after a broken
       // streak (0 → 1) counts as an increase, like the very first lesson.
-      streakIncreased: streak.current > stats.streak.currentAt(today),
+      streakIncreased: streak.current > stats.streak.currentAt(day),
     };
 
     await this.sessions.saveCompletion({

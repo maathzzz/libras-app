@@ -1,5 +1,4 @@
 import { DrizzleLessonRepository } from './modules/curriculum/infrastructure/DrizzleLessonRepository';
-import { DrizzleUserTimezones } from './modules/profile/infrastructure/DrizzleUserTimezones';
 import { CompleteLesson } from './modules/progress/application/CompleteLesson';
 import { DrizzleProgressStore } from './modules/progress/infrastructure/DrizzleProgressStore';
 import type { Clock } from './shared/application/Clock';
@@ -22,9 +21,8 @@ export function createContainer(db: DbExecutor): Container {
     completeLesson: new CompleteLesson(
       progress,
       progress,
-      // Curriculum and profile repositories match the progress ports by shape.
+      // The curriculum repository matches the progress port by shape.
       new DrizzleLessonRepository(db),
-      new DrizzleUserTimezones(db),
       clock,
     ),
   };
