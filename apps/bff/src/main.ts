@@ -6,7 +6,11 @@ import { loadEnv } from './shared/infrastructure/env';
 const env = loadEnv();
 // No connection is opened until the first query.
 const database = createDatabase(env.DATABASE_URL);
-const app = buildApp(createContainer(database.db), {
+const container = createContainer(database.db, {
+  supabaseUrl: env.SUPABASE_URL,
+  supabaseSecretKey: env.SUPABASE_SECRET_KEY,
+});
+const app = buildApp(container, {
   logger: { level: env.NODE_ENV === 'production' ? 'info' : 'debug' },
 });
 app.addHook('onClose', () => database.close());

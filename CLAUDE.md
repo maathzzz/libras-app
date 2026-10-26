@@ -162,9 +162,11 @@ src/
 * Rotas versionadas em `/v1`.
 * Endpoints são moldados pelas telas do app (ex.: `GET /v1/home` agrega trilha, streak e XP).
 * Estudos: `GET /v1/studies` (aba "Estudar", `StudiesResponse`) e `GET /v1/studies/:studyId` (`StudyGuide`). Id desconhecido retorna 404.
+* Perfil: `GET /v1/me` (cria o perfil no primeiro acesso, com o nome tirado do e-mail do token), `PATCH /v1/me` (`UpdateProfileRequest`) e `DELETE /v1/me` (exclui os dados no schema `app` e o usuário do Supabase Auth; idempotente, responde 204).
 * Toda rota autenticada valida o JWT do Supabase no plugin de auth. O `userId` vem do token, nunca do corpo da requisição.
+* O plugin de auth (`shared/infrastructure/auth.ts`) é registrado no escopo `/v1`. Ele verifica a assinatura pelo JWKS do projeto (só ES256/RS256: o segredo HS256 legado é recusado), a expiração, o `iss` (`<SUPABASE_URL>/auth/v1`) e o `aud` (`authenticated`). Token ausente ou inválido retorna 401 `UNAUTHORIZED`; falha ao buscar as chaves retorna 500.
 * Escritas sensíveis exigem o header `Idempotency-Key`.
-* O app envia a data local do dispositivo no header `X-Local-Date` (`YYYY-MM-DD`) em todas as requisições. A conclusão de lição usa a `localDate` do corpo, capturada quando a lição terminou.
+* O app envia a data local do dispositivo no header `X-Local-Date` (`YYYY-MM-DD`) em todas as requisições. As rotas que precisam dele o leem com `readLocalDate` (`shared/infrastructure/localDateHeader.ts`), que retorna 400 `INVALID_LOCAL_DATE` quando ausente ou inválido. A conclusão de lição usa a `localDate` do corpo, capturada quando a lição terminou.
 * Formato de erro padronizado: `{ "error": { "code": string, "message": string } }`.
 
 ### Banco de dados
@@ -180,6 +182,8 @@ src/
 ### Configuração
 
 * Variáveis de ambiente validadas com Zod em `shared/infrastructure/env.ts` na inicialização. A aplicação não sobe com env inválido.
+* `SUPABASE_URL` dá origem ao JWKS, ao `iss` esperado e à API administrativa do Auth. `SUPABASE_SECRET_KEY` (`sb\_secret\_…`) é usada só na API administrativa (ex.: excluir conta).
+* A chave secreta do Supabase existe **apenas no BFF** (env do Cloud Run e `.env` local, fora do git). Ela nunca vai para o app, para variáveis `EXPO\_PUBLIC\_\*` nem para o repositório.
 * O servidor escuta em `0.0.0.0` e na porta de `process.env.PORT` (exigência do Cloud Run).
 * Nenhum estado em memória que precise sobreviver entre requisições, exceto cache de currículo invalidado por `content\_version`.
 
@@ -234,6 +238,7 @@ src/
 * Componentes não chamam a API diretamente: chamam ações do store (`load`, `refresh`, `submit`), que usam as funções de `api/`.
 * Toda chamada ao BFF passa por `shared/api/client.ts`, que injeta o token e tipa a resposta com `contracts`.
 * O app usa o Supabase **apenas** para autenticação. Dados de negócio vêm sempre do BFF.
+* O app conhece só a chave publicável do Supabase. A chave secreta nunca entra no app: qualquer operação administrativa (como excluir a conta) passa pelo BFF.
 * O token de sessão é armazenado com `expo-secure-store`. MMKV é usado para dados não sensíveis.
 
 ### Exercícios

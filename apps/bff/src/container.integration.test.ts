@@ -10,6 +10,7 @@ import {
   signToWordExercise,
 } from './shared/infrastructure/db/testing/fixtures';
 import { useTestDatabase } from './shared/infrastructure/db/testing/testDatabase';
+import { loadEnv } from './shared/infrastructure/env';
 
 const inRollback = useTestDatabase();
 
@@ -21,7 +22,11 @@ describe('createContainer', () => {
       const lessonId = await insertLessonFixture(tx, 'container');
       const exercise = signToWordExercise('it-container-ex');
       await insertExercise(tx, { lessonId, position: 1, payload: exercise });
-      const { completeLesson } = createContainer(tx);
+      const env = loadEnv();
+      const { completeLesson } = createContainer(tx, {
+        supabaseUrl: env.SUPABASE_URL,
+        supabaseSecretKey: env.SUPABASE_SECRET_KEY,
+      });
       const input = {
         userId,
         lessonId,

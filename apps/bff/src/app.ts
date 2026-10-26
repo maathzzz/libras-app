@@ -6,6 +6,8 @@ import {
 } from 'fastify-type-provider-zod';
 
 import type { Container } from './container';
+import { profileRoutes } from './modules/profile/http/profileRoutes';
+import { authPlugin } from './shared/infrastructure/auth';
 import { errorHandler, notFoundHandler } from './shared/infrastructure/errorHandler';
 import { healthRoutes } from './shared/infrastructure/healthRoutes';
 
@@ -22,6 +24,15 @@ export function buildApp(container: Container, { logger }: AppOptions) {
   app.setNotFoundHandler(notFoundHandler);
 
   app.register(healthRoutes(container.clock));
+
+  // Everything under /v1 needs a valid access token; /health stays public.
+  app.register(
+    async (v1) => {
+      await v1.register(authPlugin(container.verifyAccessToken));
+      await v1.register(profileRoutes(container));
+    },
+    { prefix: '/v1' },
+  );
 
   return app;
 }

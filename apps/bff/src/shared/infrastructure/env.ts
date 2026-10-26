@@ -6,6 +6,12 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   // Supabase pooler in transaction mode (port 6543).
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+  // Base of the project's APIs. The JWKS, the token issuer and the Auth admin API are
+  // built from it, so a trailing slash is dropped.
+  SUPABASE_URL: z.url({ protocol: /^https?$/ }).transform((url) => url.replace(/\/+$/, '')),
+  // Server-only key for the Auth admin API. The prefix check stops the publishable key
+  // from being used by mistake.
+  SUPABASE_SECRET_KEY: z.string().startsWith('sb_secret_'),
 });
 export type Env = z.infer<typeof EnvSchema>;
 

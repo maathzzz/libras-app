@@ -9,10 +9,16 @@ import { courses, exercises, lessons, profiles, units } from '../schema';
 // Rows for integration tests. They are written inside withRollback, and ids start with
 // `it-` so a leftover would be easy to spot next to the seed content.
 
-export async function insertUser(tx: DbExecutor): Promise<string> {
+// Only the Supabase Auth user, without a profile.
+export async function insertAuthUser(tx: DbExecutor): Promise<string> {
   const id = randomUUID();
   // profiles references auth.users, which Drizzle does not manage here.
   await tx.execute(sql`insert into auth.users (id) values (${id})`);
+  return id;
+}
+
+export async function insertUser(tx: DbExecutor): Promise<string> {
+  const id = await insertAuthUser(tx);
   await tx.insert(profiles).values({ id, name: 'Teste de integração' });
   return id;
 }

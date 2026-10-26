@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { buildApp } from '../../app';
 import { createInMemoryContainer } from '../../testing/inMemoryContainer';
 import { FixedClock } from '../application/FixedClock';
+import { HttpError } from './HttpError';
 
 function buildTestApp() {
   const clock = new FixedClock(new Date('2026-03-15T12:00:00Z'));
@@ -15,6 +16,9 @@ function buildTestApp() {
     { schema: { body: z.object({ name: z.string().min(1) }) } },
     async (request) => request.body,
   );
+  app.get('/teapot', async () => {
+    throw new HttpError(418, 'TEAPOT', 'I am a teapot');
+  });
   app.get('/boom', async () => {
     throw new Error('connection to db.internal:5432 refused');
   });
@@ -54,6 +58,13 @@ describe('error handler', () => {
 
     expect(response.statusCode).toBe(400);
     expect(ErrorResponse.parse(response.json()).error.code).toBe('BAD_REQUEST');
+  });
+
+  it('answers an HttpError with its own status and code', async () => {
+    const response = await app.inject({ method: 'GET', url: '/teapot' });
+
+    expect(response.statusCode).toBe(418);
+    expect(response.json()).toEqual({ error: { code: 'TEAPOT', message: 'I am a teapot' } });
   });
 
   it('answers 404 NOT_FOUND for an unknown route', async () => {

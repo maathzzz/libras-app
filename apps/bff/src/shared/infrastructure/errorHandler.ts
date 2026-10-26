@@ -4,6 +4,8 @@ import type { ErrorResponse } from '@libras/contracts';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
 
+import { HttpError } from './HttpError';
+
 export function errorBody(code: string, message: string): ErrorResponse {
   return { error: { code, message } };
 }
@@ -16,6 +18,10 @@ function codeForStatus(status: number): string {
 export function errorHandler(error: FastifyError, request: FastifyRequest, reply: FastifyReply) {
   if (hasZodFastifySchemaValidationErrors(error)) {
     return reply.status(400).send(errorBody('VALIDATION_ERROR', error.message));
+  }
+
+  if (error instanceof HttpError) {
+    return reply.status(error.statusCode).send(errorBody(error.code, error.message));
   }
 
   const status = error.statusCode ?? 500;

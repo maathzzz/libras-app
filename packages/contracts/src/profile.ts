@@ -9,7 +9,7 @@ export type DailyGoal = z.infer<typeof DailyGoal>;
 export const StartLevel = z.enum(['beginner', 'basic', 'conversational']);
 export type StartLevel = z.infer<typeof StartLevel>;
 
-// GET /v1/profile
+// GET /v1/me — the profile is created on the first access.
 export const ProfileResponse = z.object({
   name: z.string().trim().min(1).max(60),
   dailyGoal: DailyGoal,
@@ -17,9 +17,12 @@ export const ProfileResponse = z.object({
 });
 export type ProfileResponse = z.infer<typeof ProfileResponse>;
 
-// PATCH /v1/profile — answers with the updated ProfileResponse.
+// PATCH /v1/me — answers with the updated ProfileResponse.
 export const UpdateProfileRequest = ProfileResponse.partial().refine(
   (update) => Object.keys(update).length > 0,
   { message: 'at least one field must be updated' },
 );
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequest>;
+
+// DELETE /v1/me — deletes the account and all of its data. Answers 204 with no body and is
+// idempotent: deleting an account that is already gone also answers 204.
