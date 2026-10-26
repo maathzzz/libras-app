@@ -4,6 +4,8 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   // Cloud Run tells the container which port to listen on through PORT.
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  // Supabase pooler in transaction mode (port 6543).
+  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
 });
 export type Env = z.infer<typeof EnvSchema>;
 

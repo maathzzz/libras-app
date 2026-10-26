@@ -48,10 +48,17 @@ pnpm --filter <pacote> test
 pnpm lint
 pnpm typecheck
 
-supabase start                 # Supabase local (requer Docker)
-supabase db reset              # Recria o banco local com migrations + seed
-supabase migration new <nome>  # Nova migration
+# Supabase CLI (dependência de desenvolvimento da raiz: use via pnpm exec)
+pnpm exec supabase migration new <nome>   # Nova migration
+pnpm exec supabase db push --dry-run      # Mostra o que seria aplicado no projeto remoto
+pnpm --filter bff db:seed:generate        # Regera supabase/seed.sql a partir de scripts/seed
 ```
+
+O desenvolvimento usa um projeto Supabase **na nuvem** (não há Supabase local). Por isso:
+
+* **Nunca** rode `supabase db reset` contra o projeto remoto (`--linked` ou `--db-url`): ele apaga todos os dados.
+* **Nunca** rode `supabase db push` (com ou sem `--include-seed`) sem aprovação explícita do usuário. Antes, mostre o SQL completo das migrations pendentes e do seed e aguarde a aprovação.
+* `supabase login` e `supabase link` são interativos: peça ao usuário para executá-los.
 
 Antes de considerar uma tarefa concluída, execute `pnpm typecheck`, `pnpm lint` e os testes do pacote alterado.
 
@@ -163,6 +170,8 @@ src/
 * O `payload jsonb` de `exercises` é validado com o schema de `contracts` antes da gravação.
 * Estudos ficam em `app.studies` (`id`, `trail\_id`, `position`, `title`, `description`, `pages jsonb`). O `pages` é validado com `StudyPage` de `contracts` antes da gravação, como o `payload` de `exercises`.
 * Conexão via pooler do Supabase em modo transação, com prepared statements desativados.
+* O schema Drizzle (`shared/infrastructure/db/schema.ts`) espelha as migrations e serve só para tipar as consultas. As migrations são a fonte da verdade: altere os dois juntos.
+* O seed (`supabase/seed.sql`) é gerado por `apps/bff/scripts/seed`, que valida os exercícios com `contracts`. Não edite o SQL à mão. O seed faz upsert por id, porque o banco remoto nunca é recriado.
 
 ### Configuração
 

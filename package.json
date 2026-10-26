@@ -20,7 +20,8 @@
   "packageManager": "pnpm@12.10.1",
   "type": "module",
   "devDependencies": {
-    "prettier": "^3.9.9"
+    "prettier": "^3.9.9",
+    "supabase": "^2.122.0"
   },
   "dependencies": {
     "expo": "~57.0.27",

@@ -9,12 +9,15 @@
     "start": "node --enable-source-maps dist/main.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "db:seed:generate": "tsx scripts/seed/generateSeed.ts"
   },
   "dependencies": {
     "@libras/contracts": "workspace:*",
+    "drizzle-orm": "^0.45.4",
     "fastify": "^5.12.7",
     "fastify-type-provider-zod": "^7.0.0",
+    "postgres": "^3.4.9",
     "zod": "^4.6.5"
   },
   "devDependencies": {
