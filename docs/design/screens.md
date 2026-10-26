@@ -36,8 +36,13 @@ Apresenta o app e leva ao onboarding ou ao login.
 
 No app: "COMEÇAR AGORA" abre o onboarding e "JÁ TENHO CONTA" abre o Login. É a primeira tela de quem não tem sessão, inclusive depois de sair da conta. A ilustração usa o ícone de mão sobre fundo sólido até os gradientes serem definidos.
 
-### 1b. Login (não existe no design)
-Formulário de e-mail e senha no estilo das telas de onboarding: `ScreenTitle`, `TextField` ×2 (com ícone e mostrar/ocultar senha), `Button` primário ("ENTRAR") e ghost ("Voltar"). A autenticação está mockada até o projeto Supabase ser configurado (`features/auth/api/authApi.ts`). O token fica no `expo-secure-store` e o `client.ts` o envia no header `Authorization`.
+### 1b. Autenticação (não existe no design)
+Formulários no estilo das telas de onboarding (`AuthScreen`): `ScreenTitle`, `TextField` com ícone (e mostrar/ocultar senha), mensagem de erro em português simples (com háptico), `Button` primário e ghost ("Voltar").
+* **Login** (`sign-in`): e-mail e senha, "Esqueci minha senha".
+* **Cadastro**: é o onboarding (Criar conta, Nível e Meta diária). Não há confirmação de e-mail ("Confirm email" desativado no Supabase): o "CRIAR MINHA TRILHA" cria a conta, salva as escolhas no perfil e abre as abas.
+* **Recuperar senha** (`forgot-password` → `reset-code` → `new-password`): e-mail, código de 6 dígitos e nova senha. Salvar a nova senha já entra no app; sair antes encerra a sessão aberta pelo código.
+
+A autenticação usa o Supabase Auth de verdade (`features/auth/api/authApi.ts`). O template "Reset password" do projeto precisa enviar o código (`{{ .Token }}`).
 
 ### 2. Nível de conhecimento (onboarding, passo 2 de 3)
 O usuário escolhe por onde a trilha começa.
@@ -99,7 +104,10 @@ Mostra o sinal de uma letra ou número.
 Perfil e preferências. Mostra a barra de abas.
 **Componentes:** `ScreenTitle`, `Card` de perfil (avatar com iniciais em gradiente, nome, XP e streak, botão pill "Editar"), `SettingsGroup` "HÁBITO DE ESTUDO" (lembrete diário com `Switch`, meta diária com botão "Alterar"), `SettingsGroup` "LIÇÕES", nota de créditos em `surfaceSubtle`, `Button` perigo ("SAIR DA CONTA"), `TabBar`.
 
-No app: aba "Ajustes" (a aba "Perfil" continua com a tela provisória). O avatar é sólido até os gradientes serem definidos. Nome e meta vêm do perfil (`GET /v1/profile`, mockado). "Editar" abre a aba Perfil. "Alterar" abre a tela de meta diária. "SAIR DA CONTA" pede confirmação, apaga a sessão e volta às Boas-vindas. O lembrete diário agenda uma notificação local às 20:00 (`expo-notifications`). O grupo "LIÇÕES" (som, velocidade do vídeo, alto contraste) aparece na tela, mas é só visual: os controles não são salvos nem aplicados.
+No app: aba "Ajustes" (a aba "Perfil" continua com a tela provisória). O avatar é sólido até os gradientes serem definidos. Nome e meta vêm do perfil (`GET /v1/me`, mockado). "Editar" abre a aba Perfil. "Alterar" abre a tela de meta diária. "SAIR DA CONTA" pede confirmação, apaga a sessão e volta às Boas-vindas. O lembrete diário agenda uma notificação local às 20:00 (`expo-notifications`). O grupo "LIÇÕES" (som, velocidade do vídeo, alto contraste) aparece na tela, mas é só visual: os controles não são salvos nem aplicados.
+
+### 13b. Perfil (não existe no design)
+Aba "Perfil": `ScreenTitle`, `Card` com o nome de exibição (`GET /v1/me`, mockado), `Button` secundário "SAIR DA CONTA" (com confirmação) e `Button` perigo "EXCLUIR CONTA". A exclusão pede uma confirmação que diz que tudo é apagado para sempre, chama `DELETE /v1/me` (mockado) e encerra a sessão.
 
 ### 14. Estudar (não existe no design)
 Lista dos estudos, agrupados por trilha. Mostra a barra de abas, entre "Trilhas" e "Alfabeto".

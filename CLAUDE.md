@@ -238,8 +238,10 @@ src/
 * Componentes não chamam a API diretamente: chamam ações do store (`load`, `refresh`, `submit`), que usam as funções de `api/`.
 * Toda chamada ao BFF passa por `shared/api/client.ts`, que injeta o token e tipa a resposta com `contracts`.
 * O app usa o Supabase **apenas** para autenticação. Dados de negócio vêm sempre do BFF.
+* O cadastro não exige confirmação de e-mail: a opção **Confirm email** fica desativada no Supabase, e o `signUp` já devolve uma sessão que leva o usuário direto ao app. Se o `signUp` voltar sem sessão (a opção foi religada), o app mostra um erro e mantém o usuário no cadastro. Só a recuperação de senha envia e-mail (código de 6 dígitos).
 * O app conhece só a chave publicável do Supabase. A chave secreta nunca entra no app: qualquer operação administrativa (como excluir a conta) passa pelo BFF.
-* O token de sessão é armazenado com `expo-secure-store`. MMKV é usado para dados não sensíveis.
+* A sessão do Supabase (que pode passar do limite de tamanho por valor do `expo-secure-store`) fica em um MMKV criptografado (`shared/lib/secureStorage.ts`), cuja chave fica no `expo-secure-store`. O MMKV comum é usado só para dados não sensíveis.
+* O cliente Supabase (`shared/api/supabase.ts`) usa `EXPO\_PUBLIC\_SUPABASE\_URL` e `EXPO\_PUBLIC\_SUPABASE\_PUBLISHABLE\_KEY`. `client.ts` envia o token no header `Authorization`; diante de um 401 renova a sessão uma vez e repete a requisição, e se a renovação for recusada encerra a sessão.
 
 ### Exercícios
 

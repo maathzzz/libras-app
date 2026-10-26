@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 
 import { getLocalDate } from '../lib/localDate';
-import { getAccessToken } from './session';
+import { endSession, getAccessToken, refreshAccessToken } from './session';
 
 const baseUrl = process.env.EXPO_PUBLIC_API_URL;
 
@@ -20,22 +20,16 @@ type RequestOptions = {
   headers?: Record<string, string>;
 };
 
-// Responses are parsed with the schemas from @libras/contracts so the app never trusts the wire format.
-export async function apiRequest<TSchema extends z.ZodType>(
-  path: string,
-  schema: TSchema,
-  { method = 'GET', body, headers = {} }: RequestOptions = {},
-): Promise<z.infer<TSchema>> {
-  if (!baseUrl) {
-    throw new Error('EXPO_PUBLIC_API_URL não configurada');
-  }
-
+function send(
+  url: string,
+  token: string | null,
+  { method = 'GET', body, headers = {} }: RequestOptions,
+): Promise<Response> {
   // The BFF takes the user from this token, never from the body.
-  const token = getAccessToken();
   const auth: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   // The streak's "day" is the device's date; the BFF has no time zone of its own.
-  const response = await fetch(`${baseUrl}${path}`, {
+  return fetch(url, {
     method,
     headers: {
       'Content-Type': 'application/json',
@@ -45,12 +39,41 @@ export async function apiRequest<TSchema extends z.ZodType>(
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
+}
 
-  if (!response.ok) {
-    throw new ApiError(response.status, `Falha na requisição ${method} ${path}`);
+// Responses are parsed with the schemas from @libras/contracts so the app never trusts the wire format.
+export async function apiRequest<TSchema extends z.ZodType>(
+  path: string,
+  schema: TSchema,
+  options: RequestOptions = {},
+): Promise<z.infer<TSchema>> {
+  if (!baseUrl) {
+    throw new Error('EXPO_PUBLIC_API_URL não configurada');
   }
 
-  return schema.parse(await response.json());
+  const url = `${baseUrl}${path}`;
+  const failure = (status: number) =>
+    new ApiError(status, `Falha na requisição ${options.method ?? 'GET'} ${path}`);
+
+  let response = await send(url, await getAccessToken(), options);
+
+  // The token expired or was revoked: renew the session once and send the request again.
+  if (response.status === 401) {
+    const token = await refreshAccessToken();
+    if (!token) {
+      // The session can no longer be renewed. Ending it takes the learner back to the login.
+      await endSession();
+      throw failure(401);
+    }
+    response = await send(url, token, options);
+  }
+
+  if (!response.ok) {
+    throw failure(response.status);
+  }
+
+  // 204 No Content (e.g. DELETE /v1/me) has no body to read.
+  return schema.parse(response.status === 204 ? undefined : await response.json());
 }
 
 // A request that may work if sent again later: no network (fetch rejects with a TypeError)

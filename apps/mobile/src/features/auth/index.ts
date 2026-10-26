@@ -2,6 +2,9 @@ import type { Credentials } from './api/authApi';
 import { useAuthStore } from './store/authStore';
 
 export type { Credentials } from './api/authApi';
+export { ForgotPasswordScreen } from './components/ForgotPasswordScreen';
+export { NewPasswordScreen } from './components/NewPasswordScreen';
+export { ResetCodeScreen } from './components/ResetCodeScreen';
 export { SignInScreen } from './components/SignInScreen';
 export { fieldErrors, SignUpForm, type FieldErrors, type SignUpValues } from './forms';
 export type { AuthStatus } from './store/authStore';

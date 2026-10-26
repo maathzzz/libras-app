@@ -1,15 +1,22 @@
 import type { ProfileResponse } from '@libras/contracts';
 
+import { signOut } from '@/features/auth';
 import { reloadHome } from '@/features/home';
 
-import { getProfile, updateProfile } from '../api/profileApi';
+import { deleteAccount, getProfile, updateProfile } from '../api/profileApi';
 import { useProfileStore } from './profileStore';
 
-jest.mock('../api/profileApi', () => ({ getProfile: jest.fn(), updateProfile: jest.fn() }));
+jest.mock('../api/profileApi', () => ({
+  getProfile: jest.fn(),
+  updateProfile: jest.fn(),
+  deleteAccount: jest.fn(),
+}));
 jest.mock('@/features/home', () => ({ reloadHome: jest.fn() }));
+jest.mock('@/features/auth', () => ({ signOut: jest.fn() }));
 
 const getProfileMock = jest.mocked(getProfile);
 const updateProfileMock = jest.mocked(updateProfile);
+const deleteAccountMock = jest.mocked(deleteAccount);
 const initialState = useProfileStore.getState();
 
 const profile: ProfileResponse = {
@@ -68,5 +75,23 @@ describe('useProfileStore', () => {
     await expect(useProfileStore.getState().update({ dailyGoal: 5 })).resolves.toBe(false);
 
     expect(useProfileStore.getState()).toMatchObject({ profile, saving: false });
+  });
+
+  it('ends the session once the account is deleted', async () => {
+    deleteAccountMock.mockResolvedValue();
+
+    await expect(useProfileStore.getState().deleteAccount()).resolves.toBe(true);
+
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(useProfileStore.getState().deleting).toBe(false);
+  });
+
+  it('keeps the session when the account could not be deleted', async () => {
+    deleteAccountMock.mockRejectedValue(new TypeError('Network request failed'));
+
+    await expect(useProfileStore.getState().deleteAccount()).resolves.toBe(false);
+
+    expect(signOut).not.toHaveBeenCalled();
+    expect(useProfileStore.getState().deleting).toBe(false);
   });
 });

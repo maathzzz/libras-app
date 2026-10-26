@@ -1,22 +1,27 @@
 import type { ProfileResponse, UpdateProfileRequest } from '@libras/contracts';
 import { create } from 'zustand';
 
+import { signOut } from '@/features/auth';
 import { reloadHome } from '@/features/home';
 
-import { getProfile, updateProfile } from '../api/profileApi';
+import { deleteAccount, getProfile, updateProfile } from '../api/profileApi';
 
 type ProfileState = {
   profile: ProfileResponse | null;
   saving: boolean;
+  deleting: boolean;
   load: () => Promise<void>;
   /** Resolves to false when the change could not be saved. */
   update: (update: UpdateProfileRequest) => Promise<boolean>;
+  /** Deletes the account for good, then ends the session. Resolves to false when it failed. */
+  deleteAccount: () => Promise<boolean>;
   clear: () => void;
 };
 
-export const useProfileStore = create<ProfileState>()((set) => ({
+export const useProfileStore = create<ProfileState>()((set, get) => ({
   profile: null,
   saving: false,
+  deleting: false,
 
   load: async () => {
     try {
@@ -38,6 +43,22 @@ export const useProfileStore = create<ProfileState>()((set) => ({
     } finally {
       set({ saving: false });
     }
+  },
+
+  deleteAccount: async () => {
+    if (get().deleting) return false;
+    set({ deleting: true });
+    try {
+      await deleteAccount();
+    } catch {
+      set({ deleting: false });
+      return false;
+    }
+    // The account is gone, so is the session that pointed to it. The session guard takes the
+    // learner back to the welcome screen.
+    await signOut();
+    set({ deleting: false });
+    return true;
   },
 
   clear: () => set({ profile: null }),

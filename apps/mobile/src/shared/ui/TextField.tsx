@@ -29,6 +29,7 @@ type TextFieldProps = {
   | 'autoCapitalize'
   | 'autoComplete'
   | 'keyboardType'
+  | 'maxLength'
   | 'onSubmitEditing'
   | 'returnKeyType'
   | 'secureTextEntry'

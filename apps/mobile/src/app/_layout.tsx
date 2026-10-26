@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { restoreSession, useAuthStatus } from '@/features/auth';
 import { useSyncPendingSessions } from '@/features/lesson';
+import { useProfileSession } from '@/features/profile';
 import { useAppFonts } from '@/shared/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -15,6 +16,7 @@ export default function RootLayout() {
   const ready = (fontsLoaded || fontError !== null) && authStatus !== 'restoring';
   const signedIn = authStatus === 'signedIn';
   useSyncPendingSessions();
+  useProfileSession();
 
   useEffect(() => {
     void restoreSession();
@@ -46,6 +48,8 @@ export default function RootLayout() {
             options={{ presentation: 'transparentModal', animation: 'fade' }}
           />
         </Stack.Protected>
+        {/* The saved session is restored before this renders (the splash stays up meanwhile), so
+            a signed-in learner never sees the welcome screen flash. */}
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="(auth)" />
         </Stack.Protected>

@@ -1,4 +1,4 @@
-import { fieldErrors, SignInForm, SignUpForm } from './forms';
+import { CodeForm, fieldErrors, SignInForm, SignUpForm } from './forms';
 
 describe('SignInForm', () => {
   it('accepts a valid e-mail and password, trimming the e-mail', () => {
@@ -31,5 +31,19 @@ describe('SignUpForm', () => {
     expect(result.success).toBe(false);
     if (result.success) return;
     expect(fieldErrors(result.error)).toEqual({ name: 'Digite seu nome.' });
+  });
+});
+
+describe('CodeForm', () => {
+  it('accepts the 6 digits of the e-mail code', () => {
+    expect(CodeForm.parse({ code: ' 012345 ' })).toEqual({ code: '012345' });
+  });
+
+  it.each(['12345', '1234567', '12a456'])('rejects %s', (code) => {
+    const result = CodeForm.safeParse({ code });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(fieldErrors(result.error)).toEqual({ code: 'Digite os 6 números do código.' });
   });
 });

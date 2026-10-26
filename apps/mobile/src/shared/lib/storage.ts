@@ -1,4 +1,4 @@
 import { createMMKV } from 'react-native-mmkv';
 
-// Non-sensitive data only; session tokens live in expo-secure-store.
+// Non-sensitive data only; the session lives in the encrypted storage (secureStorage.ts).
 export const storage = createMMKV({ id: 'libras-app' });
