@@ -7,7 +7,9 @@ import { mockLesson } from './lessonMocks';
 
 // Long enough for the "saving" state to be visible on the device.
 const mockLatencyMs = 600;
-const xpPerCorrectAnswer = 10;
+// Same rule the BFF applies (CLAUDE.md, "Regras de domínio" > XP).
+const xpPerLesson = 10;
+const perfectLessonBonusXp = 5;
 
 type SimulatedNetwork = 'online' | 'firstAttemptFails' | 'offline';
 
@@ -31,12 +33,12 @@ function failsNow(idempotencyKey: string): boolean {
 }
 
 // The BFF re-grades every answer: the app's own grading is only for instant feedback.
-function countCorrectAnswers({ lessonId, answers }: CompleteLessonRequest): number {
+function isPerfectLesson({ lessonId, answers }: CompleteLessonRequest): boolean {
   const exercises = new Map(mockLesson(lessonId).exercises.map((ex) => [ex.id, ex]));
-  return answers.filter(({ exerciseId, answer }) => {
+  return answers.every(({ exerciseId, answer }) => {
     const exercise = exercises.get(exerciseId);
     return exercise !== undefined && gradeAnswer(exercise, answer);
-  }).length;
+  });
 }
 
 // Mocked until the BFF exposes POST /v1/lessons/:lessonId/completion. Then only this
@@ -53,6 +55,6 @@ export async function submitSession(
   // Same error fetch throws in React Native when there is no connection.
   if (failsNow(request.idempotencyKey)) throw new TypeError('Network request failed');
 
-  const xpEarned = countCorrectAnswers(request) * xpPerCorrectAnswer;
+  const xpEarned = xpPerLesson + (isPerfectLesson(request) ? perfectLessonBonusXp : 0);
   return CompleteLessonResponse.parse(recordMockCompletion(request.idempotencyKey, xpEarned));
 }

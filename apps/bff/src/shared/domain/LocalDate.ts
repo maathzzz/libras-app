@@ -48,6 +48,12 @@ export class LocalDate {
     return this.year === other.year && this.month === other.month && this.day === other.day;
   }
 
+  isAfter(other: LocalDate): boolean {
+    if (this.year !== other.year) return this.year > other.year;
+    if (this.month !== other.month) return this.month > other.month;
+    return this.day > other.day;
+  }
+
   // YYYY-MM-DD, the same format as Postgres `date`.
   toString(): string {
     return `${pad(this.year, 4)}-${pad(this.month, 2)}-${pad(this.day, 2)}`;

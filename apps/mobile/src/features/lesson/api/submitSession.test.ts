@@ -48,11 +48,25 @@ afterEach(() => {
 });
 
 describe('submitSession', () => {
-  it('earns 10 XP per answer the server grades as correct', async () => {
+  it('earns 10 XP for a lesson with mistakes', async () => {
     const result = await resolveSubmit(session(key(1), 2));
 
-    expect(result).toMatchObject({ value: { xpEarned: (lesson.exercises.length - 2) * 10 } });
-    expect(getMockStats().totalXp).toBe(1240 + (lesson.exercises.length - 2) * 10);
+    expect(result).toMatchObject({ value: { xpEarned: 10 } });
+    expect(getMockStats().totalXp).toBe(1240 + 10);
+  });
+
+  it('earns a 5 XP bonus when the server grades every answer as correct', async () => {
+    const result = await resolveSubmit(session(key(1)));
+
+    expect(result).toMatchObject({ value: { xpEarned: 15 } });
+    expect(getMockStats().totalXp).toBe(1240 + 15);
+  });
+
+  it('earns XP again when the lesson is redone', async () => {
+    await resolveSubmit(session(key(1)));
+    await resolveSubmit(session(key(2)));
+
+    expect(getMockStats().totalXp).toBe(1240 + 15 + 15);
   });
 
   it('grows the streak on the first lesson of the day only', async () => {
@@ -78,7 +92,7 @@ describe('submitSession', () => {
     const repeated = await resolveSubmit(session(key(1)));
 
     expect(repeated).toEqual(first);
-    expect(getMockStats().totalXp).toBe(1240 + lesson.exercises.length * 10);
+    expect(getMockStats().totalXp).toBe(1240 + 15);
   });
 
   it('fails like fetch without network when offline', async () => {

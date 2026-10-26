@@ -125,7 +125,7 @@ O protótipo inclui itens que o CLAUDE.md coloca fora do escopo ou que conflitam
 * **"Revisar os sinais"** (recompensa): no protótipo, refaz a lição. Fica de fora até existir um modo de revisão, porque refazer contaria como uma nova conclusão (XP e streak).
 * **Vídeo do sinal** ("VER MOVIMENTO", "Velocidade do vídeo do sinal"): o MVP usa só imagens. Um sinal com movimento é uma sequência de imagens.
 * **Som nos exercícios** (ajuste "Retorno sonoro"): o app não depende de áudio. O feedback é visual e háptico.
-* **Bônus de XP por precisão e sequência** (variante "Resumo"): o XP é calculado no BFF. Confirmar a regra antes de exibir o detalhamento.
+* **Bônus de XP por precisão e sequência** (variante "Resumo"): a regra está no CLAUDE.md. Há bônus só por acertar tudo (+5 XP), não por sequência. O detalhamento fica de fora porque `CompleteLessonResponse` só retorna `xpEarned`.
 * **Meta diária de N lições** ("3 de 5 lições", "Faltam 2 lições para manter a sequência"): resolvido. A meta é só um alvo pessoal, exibido no card "Meta de hoje" da home (`HomeResponse.today`). O streak continua exigindo **uma** lição por dia, então os textos não ligam a meta à sequência.
 * **Prova do módulo** (trilha): não há tipo de exercício correspondente em `contracts`.
 * **Alvos de toque menores que 44pt** no design (fechar 30, toggle 46×27, botão "Editar", chips): os componentes do app garantem 44×44.

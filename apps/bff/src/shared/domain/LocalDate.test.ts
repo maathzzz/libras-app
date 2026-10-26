@@ -101,6 +101,26 @@ describe('LocalDate.equals', () => {
   });
 });
 
+describe('LocalDate.isAfter', () => {
+  const date = LocalDate.of(2026, 3, 15);
+
+  it('is true for a later day, month or year', () => {
+    expect(LocalDate.of(2026, 3, 16).isAfter(date)).toBe(true);
+    expect(LocalDate.of(2026, 4, 1).isAfter(date)).toBe(true);
+    expect(LocalDate.of(2027, 1, 1).isAfter(date)).toBe(true);
+  });
+
+  it('is false for the same date', () => {
+    expect(LocalDate.of(2026, 3, 15).isAfter(date)).toBe(false);
+  });
+
+  it('is false for an earlier date, even with a later day or month', () => {
+    expect(LocalDate.of(2026, 3, 14).isAfter(date)).toBe(false);
+    expect(LocalDate.of(2026, 2, 28).isAfter(date)).toBe(false);
+    expect(LocalDate.of(2025, 12, 31).isAfter(date)).toBe(false);
+  });
+});
+
 describe('LocalDate.of', () => {
   it('rejects a date that does not exist', () => {
     expect(() => LocalDate.of(2026, 2, 29)).toThrow(RangeError);

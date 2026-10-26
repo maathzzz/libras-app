@@ -8,7 +8,7 @@ Aplicativo gamificado para ensino de Libras (inspirado no Duolingo). Monorepo co
 ## Escopo do MVP
 
 * Retenção por **streak**: o usuário mantém a sequência completando ao menos uma lição por dia.
-* XP é apenas uma pontuação acumulada.
+* XP é apenas uma pontuação acumulada. A regra de cálculo está em "Regras de domínio".
 * A **meta diária** (1, 3, 5 ou 8 lições) é só um alvo pessoal, exibido no progresso do dia. Ela não altera a regra do streak.
 * Conteúdo visual composto **somente por imagens** (sem vídeos, sem áudio).
 * **Estudos**: páginas de conteúdo que ensinam, passo a passo, o assunto de uma trilha antes das lições. Ficam na aba "Estudar", agrupados por trilha. São recomendados, mas **não bloqueiam lições, não dão XP e não contam para o streak**. Usam apenas texto e imagens. Na interface o nome é "Estudo"; no código, `study` (para não confundir com `lesson`, que é a sessão de exercícios). O estudo de exemplo é o "Alfabeto manual"; os das demais trilhas serão definidos junto com o planejamento de cada trilha.
@@ -118,14 +118,23 @@ src/
   * última atividade hoje → sem alteração;
   * última atividade ontem → `current + 1`;
   * caso contrário → reinicia em 1.
+* Última atividade depois de hoje (troca de fuso para oeste) → tratada como hoje: sem alteração e status `done\_today`. Trocar de fuso nunca quebra o streak.
 * `longest` é sempre o maior valor já atingido.
 * Status na leitura: `done\_today`, `at\_risk` (última atividade ontem) ou `broken`. Quando `broken`, o valor exibido é 0.
 * O streak é calculado na leitura (lazy). Não crie cron para quebrar streaks.
 
+**XP** (`modules/progress/domain/XpPolicy.ts`):
+
+* 10 XP por lição concluída, com qualquer número de acertos.
+* +5 XP de bônus quando o servidor corrige todas as respostas da lição como certas.
+* Refazer uma lição já concluída concede XP de novo. Isso incentiva a revisão e mantém a regra simples.
+* O XP é calculado sobre a correção do servidor, nunca sobre a do app.
+* Uma `Idempotency-Key` repetida não concede XP de novo: o resultado anterior é retornado (passo 1 de `CompleteLesson`).
+
 **Conclusão de lição** (`CompleteLesson`):
 
 1. Se a `Idempotency-Key` já foi processada para o usuário, retornar o resultado anterior.
-2. Recorrigir as respostas no servidor. O servidor é a fonte da verdade.
+2. Recorrigir as respostas no servidor com `AnswerGrader` (`modules/progress/domain/AnswerGrader.ts`). O servidor é a fonte da verdade. Resposta ausente ou duplicada para um exercício conta como incorreta; resposta para exercício fora da lição é ignorada.
 3. Calcular o XP.
 4. Aplicar a regra do streak.
 5. Persistir sessão, progresso e `user\_stats` em uma única transação.
@@ -165,6 +174,7 @@ src/
 
 * Casos de uso: testes unitários com repositórios em memória e `Clock` fixo.
 * A regra do streak deve ter testes para: primeira lição, mesmo dia, dia seguinte, dia pulado, troca de fuso e virada de mês.
+* A regra do XP deve ter testes para: lição com erros, lição sem erros e lição refeita.
 * Repositórios Drizzle: testes de integração contra o Supabase local.
 
 ## App (apps/mobile)
