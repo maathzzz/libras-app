@@ -1,12 +1,7 @@
-import type { Exercise } from '@libras/contracts';
+import type { LessonBundle } from '@libras/contracts';
 
-export interface GradableLesson {
-  id: string;
-  exercises: readonly Exercise[];
-}
-
-// Port to the curriculum: progress only needs a lesson's exercises to re-grade the answers,
-// so it does not depend on the curriculum module.
+// Port to the curriculum: the lesson as the app receives it, whose exercises are also used to
+// re-grade the answers. Progress does not depend on the curriculum module.
 export interface LessonCatalog {
-  findById(lessonId: string): Promise<GradableLesson | null>;
+  findById(lessonId: string): Promise<LessonBundle | null>;
 }

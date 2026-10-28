@@ -233,4 +233,18 @@ describe('DrizzleProgressStore reads', () => {
       expect(await store.findByUserId(userId)).toBeNull();
     }),
   );
+
+  it(
+    'lists each lesson the learner completed once, ignoring other learners',
+    inRollback(async (tx) => {
+      const { store, userId, lessonId } = await setUp(tx);
+      const otherUserId = await insertUser(tx);
+      await store.saveCompletion(completion(userId, lessonId));
+      // A redo keeps a single progress row.
+      await store.saveCompletion(completion(userId, lessonId));
+
+      expect(await store.findCompletedLessonIds(userId)).toEqual(new Set([lessonId]));
+      expect(await store.findCompletedLessonIds(otherUserId)).toEqual(new Set());
+    }),
+  );
 });

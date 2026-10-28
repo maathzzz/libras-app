@@ -1,6 +1,6 @@
 import type { HomeResponse, Trail } from '@libras/contracts';
 
-import { getMockProfile, getMockStats } from '@/shared/api/mockServer';
+import { getMockStats } from '@/shared/api/mockServer';
 
 // Mirrors the design's "Primeiros contatos" trail. The "Prova do módulo" node is left
 // out: contracts have no exercise type for it yet.
@@ -51,7 +51,6 @@ export const mockTrail = {
 // Streak and XP come from the mock shared with the lesson completion, so finishing a
 // lesson shows up here. The starting streak status is set in shared/api/mockServer.ts.
 export function mockHome(): HomeResponse {
-  const { streak, totalXp, completedToday } = getMockStats();
-  const today = { completedLessons: completedToday, dailyGoal: getMockProfile().dailyGoal };
-  return { trail: mockTrail, streak, totalXp, today };
+  const { streak, totalXp } = getMockStats();
+  return { trail: mockTrail, streak, totalXp };
 }

@@ -30,14 +30,12 @@ const initialProfile: ProfileResponse = {
 type MockStats = {
   streak: StreakSummary;
   totalXp: number;
-  completedToday: number;
 };
 
 function initialStats(status: StreakStatus): MockStats {
   return {
     streak: initialStreaks[status],
     totalXp: initialTotalXp,
-    completedToday: status === 'done_today' ? 1 : 0,
   };
 }
 
@@ -71,11 +69,7 @@ export function recordMockCompletion(
     streak,
     streakIncreased: streak.current !== stats.streak.current,
   };
-  stats = {
-    streak,
-    totalXp: stats.totalXp + xpEarned,
-    completedToday: stats.completedToday + 1,
-  };
+  stats = { streak, totalXp: stats.totalXp + xpEarned };
   processed.set(idempotencyKey, response);
   return response;
 }

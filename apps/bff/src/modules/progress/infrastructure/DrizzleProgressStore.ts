@@ -8,6 +8,7 @@ import {
   userLessonProgress,
   userStats,
 } from '../../../shared/infrastructure/db/schema';
+import type { LessonProgressRepository } from '../domain/LessonProgressRepository';
 import type {
   LessonCompletion,
   LessonSession,
@@ -16,9 +17,11 @@ import type {
 import { Streak } from '../domain/Streak';
 import type { UserStats, UserStatsRepository } from '../domain/UserStatsRepository';
 
-// One class behind both repositories, like InMemoryProgressStore: saveCompletion writes
-// sessions and stats together, so they share the same executor.
-export class DrizzleProgressStore implements LessonSessionRepository, UserStatsRepository {
+// One class behind the progress repositories, like InMemoryProgressStore: saveCompletion
+// writes sessions, lesson progress and stats together, so they share the same executor.
+export class DrizzleProgressStore
+  implements LessonSessionRepository, UserStatsRepository, LessonProgressRepository
+{
   constructor(private readonly db: DbExecutor) {}
 
   async findByIdempotencyKey(
@@ -56,6 +59,14 @@ export class DrizzleProgressStore implements LessonSessionRepository, UserStatsR
         lastActivity: row.lastActiveDate === null ? null : LocalDate.parse(row.lastActiveDate),
       }),
     };
+  }
+
+  async findCompletedLessonIds(userId: string): Promise<ReadonlySet<string>> {
+    const rows = await this.db
+      .select({ lessonId: userLessonProgress.lessonId })
+      .from(userLessonProgress)
+      .where(eq(userLessonProgress.userId, userId));
+    return new Set(rows.map((row) => row.lessonId));
   }
 
   // The session goes first: a repeated (user_id, idempotency_key) fails there, and the

@@ -1,4 +1,4 @@
-import type { StreakStatus } from '@libras/contracts';
+import type { StreakStatus, StreakSummary } from '@libras/contracts';
 
 import type { LocalDate } from '../../../shared/domain/LocalDate';
 
@@ -45,6 +45,11 @@ export class Streak {
 
   currentAt(today: LocalDate): number {
     return this.statusAt(today) === 'broken' ? 0 : this.current;
+  }
+
+  // What the app shows on `today`.
+  summaryAt(today: LocalDate): StreakSummary {
+    return { current: this.currentAt(today), longest: this.longest, status: this.statusAt(today) };
   }
 
   // A last activity after today happens when an older lesson arrives from the offline

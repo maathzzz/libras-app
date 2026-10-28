@@ -7,8 +7,11 @@ import { UpdateProfile } from '../modules/profile/application/UpdateProfile';
 import { InMemoryAuthAdmin } from '../modules/profile/testing/InMemoryAuthAdmin';
 import { InMemoryProfileRepository } from '../modules/profile/testing/InMemoryProfileRepository';
 import { CompleteLesson } from '../modules/progress/application/CompleteLesson';
+import { GetHome } from '../modules/progress/application/GetHome';
+import { GetLesson } from '../modules/progress/application/GetLesson';
 import { InMemoryLessonCatalog } from '../modules/progress/testing/InMemoryLessonCatalog';
 import { InMemoryProgressStore } from '../modules/progress/testing/InMemoryProgressStore';
+import { InMemoryTrailCatalog } from '../modules/progress/testing/InMemoryTrailCatalog';
 import type { Clock } from '../shared/application/Clock';
 import { createAccessTokenVerifier } from '../shared/infrastructure/auth';
 
@@ -19,6 +22,9 @@ interface InMemoryContainerOptions {
   jwks?: JWTVerifyGetKey;
   profiles?: InMemoryProfileRepository;
   authAdmin?: InMemoryAuthAdmin;
+  progress?: InMemoryProgressStore;
+  lessons?: InMemoryLessonCatalog;
+  trails?: InMemoryTrailCatalog;
 }
 
 // For tests of the HTTP layer: a Container with in-memory fakes and no database.
@@ -28,10 +34,11 @@ export function createInMemoryContainer(
     jwks = createLocalJWKSet({ keys: [] }),
     profiles = new InMemoryProfileRepository(),
     authAdmin = new InMemoryAuthAdmin(),
+    progress = new InMemoryProgressStore(),
+    lessons = new InMemoryLessonCatalog([]),
+    trails = new InMemoryTrailCatalog([]),
   }: InMemoryContainerOptions = {},
 ): Container {
-  const store = new InMemoryProgressStore();
-
   return {
     clock,
     verifyAccessToken: createAccessTokenVerifier({
@@ -40,7 +47,9 @@ export function createInMemoryContainer(
       audience: 'authenticated',
       clock,
     }),
-    completeLesson: new CompleteLesson(store, store, new InMemoryLessonCatalog([]), clock),
+    completeLesson: new CompleteLesson(progress, progress, lessons, clock),
+    getHome: new GetHome(trails, progress, progress),
+    getLesson: new GetLesson(lessons, trails, progress),
     getProfile: new GetProfile(profiles),
     updateProfile: new UpdateProfile(profiles),
     deleteAccount: new DeleteAccount(profiles, authAdmin),

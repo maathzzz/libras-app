@@ -52,6 +52,7 @@ pnpm typecheck
 pnpm exec supabase migration new <nome>   # Nova migration
 pnpm exec supabase db push --dry-run      # Mostra o que seria aplicado no projeto remoto
 pnpm --filter bff db:seed:generate        # Regera supabase/seed.sql a partir de scripts/seed
+pnpm --silent --filter bff dev:token      # Imprime o access token do usuário de teste (só desenvolvimento)
 ```
 
 O desenvolvimento usa um projeto Supabase **na nuvem** (não há Supabase local). Por isso:
@@ -150,6 +151,14 @@ src/
 6. Persistir sessão, progresso e `user\_stats` em uma única transação.
 7. Retornar XP ganho, streak atual e se o streak aumentou.
 
+**Desbloqueio de lições** (`modules/progress/domain/LessonUnlocking.ts`):
+
+* A ordem é a da trilha: módulos por posição e, dentro de cada um, lições por posição.
+* A primeira lição do primeiro módulo começa disponível. Concluir uma lição libera a seguinte, inclusive a primeira do módulo seguinte.
+* Lições concluídas continuam acessíveis. Status: `locked`, `available` e `completed`.
+* A Home mostra a trilha de menor posição. Módulos sem lições ficam de fora.
+* `GetHome` e `GetLesson` ficam no módulo `progress` e leem a trilha pelo port `TrailCatalog`. A implementação (`CurriculumTrailCatalog`, em `progress/infrastructure`) usa o `TrailRepository` do curriculum.
+
 **Estudos** (módulo `curriculum`):
 
 * São conteúdo de leitura: `GetStudies` (lista por trilha) e `GetStudy` (páginas de um estudo). Não há escrita, correção, XP nem streak.
@@ -161,6 +170,8 @@ src/
 
 * Rotas versionadas em `/v1`.
 * Endpoints são moldados pelas telas do app (ex.: `GET /v1/home` agrega trilha, streak e XP).
+* Home: `GET /v1/home` (`HomeResponse`, exige `X-Local-Date`). Um usuário sem atividade recebe streak 0 e XP 0.
+* Lição: `GET /v1/lessons/:lessonId` (`LessonBundle`). Lição inexistente retorna 404 `LESSON_NOT_FOUND`; lição bloqueada para o usuário retorna 403 `LESSON_LOCKED`.
 * Estudos: `GET /v1/studies` (aba "Estudar", `StudiesResponse`) e `GET /v1/studies/:studyId` (`StudyGuide`). Id desconhecido retorna 404.
 * Perfil: `GET /v1/me` (cria o perfil no primeiro acesso, com o nome tirado do e-mail do token), `PATCH /v1/me` (`UpdateProfileRequest`) e `DELETE /v1/me` (exclui os dados no schema `app` e o usuário do Supabase Auth; idempotente, responde 204).
 * Toda rota autenticada valida o JWT do Supabase no plugin de auth. O `userId` vem do token, nunca do corpo da requisição.

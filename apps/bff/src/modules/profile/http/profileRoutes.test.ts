@@ -1,31 +1,22 @@
 import { ErrorResponse, ProfileResponse } from '@libras/contracts';
-import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type CryptoKey } from 'jose';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { buildApp } from '../../../app';
 import { FixedClock } from '../../../shared/application/FixedClock';
-import { createInMemoryContainer, testIssuer } from '../../../testing/inMemoryContainer';
+import { createInMemoryContainer } from '../../../testing/inMemoryContainer';
+import { createTestTokens, type TestTokens } from '../../../testing/testTokens';
 import { InMemoryAuthAdmin } from '../testing/InMemoryAuthAdmin';
 import { InMemoryProfileRepository } from '../testing/InMemoryProfileRepository';
 
 const now = new Date('2026-03-15T12:00:00Z');
 const userId = '7d6f1c2a-1b2d-4c5e-8f90-1a2b3c4d5e01';
 
-let privateKey: CryptoKey;
-let jwks: ReturnType<typeof createLocalJWKSet>;
+let tokens: TestTokens;
 let token: string;
 
 beforeAll(async () => {
-  const pair = await generateKeyPair('ES256', { extractable: true });
-  privateKey = pair.privateKey;
-  jwks = createLocalJWKSet({ keys: [{ ...(await exportJWK(pair.publicKey)), alg: 'ES256' }] });
-  token = await new SignJWT({ email: 'ana@example.com' })
-    .setProtectedHeader({ alg: 'ES256' })
-    .setSubject(userId)
-    .setIssuer(testIssuer)
-    .setAudience('authenticated')
-    .setExpirationTime(Math.floor(now.getTime() / 1000) + 3600)
-    .sign(privateKey);
+  tokens = await createTestTokens();
+  token = await tokens.sign(userId, { now, email: 'ana@example.com' });
 });
 
 describe('profile routes', () => {
@@ -36,9 +27,16 @@ describe('profile routes', () => {
   beforeEach(() => {
     profiles = new InMemoryProfileRepository();
     authAdmin = new InMemoryAuthAdmin();
-    app = buildApp(createInMemoryContainer(new FixedClock(now), { jwks, profiles, authAdmin }), {
-      logger: false,
-    });
+    app = buildApp(
+      createInMemoryContainer(new FixedClock(now), {
+        jwks: tokens.jwks,
+        profiles,
+        authAdmin,
+      }),
+      {
+        logger: false,
+      },
+    );
   });
 
   const request = (method: 'GET' | 'PATCH' | 'DELETE', payload?: object) =>

@@ -1,10 +1,9 @@
-import type { CompleteLessonResponse, LessonAnswer } from '@libras/contracts';
+import type { CompleteLessonResponse, LessonAnswer, LessonBundle } from '@libras/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { FixedClock } from '../../../shared/application/FixedClock';
 import { LocalDate } from '../../../shared/domain/LocalDate';
 import type { Result } from '../../../shared/domain/Result';
-import type { GradableLesson } from '../domain/LessonCatalog';
 import { Streak } from '../domain/Streak';
 import { InMemoryLessonCatalog } from '../testing/InMemoryLessonCatalog';
 import { InMemoryProgressStore } from '../testing/InMemoryProgressStore';
@@ -12,8 +11,9 @@ import { CompleteLesson, type CompleteLessonInput } from './CompleteLesson';
 
 const image = (name: string) => [{ url: `https://example.com/${name}.png`, alt: name }];
 
-const lesson: GradableLesson = {
+const lesson: LessonBundle = {
   id: 'lesson-greetings',
+  title: 'Saudações',
   exercises: [
     {
       id: 'ex-sign',

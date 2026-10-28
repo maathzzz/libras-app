@@ -2,7 +2,6 @@ import type { ProfileResponse, UpdateProfileRequest } from '@libras/contracts';
 import { create } from 'zustand';
 
 import { signOut } from '@/features/auth';
-import { reloadHome } from '@/features/home';
 
 import { deleteAccount, getProfile, updateProfile } from '../api/profileApi';
 
@@ -35,8 +34,6 @@ export const useProfileStore = create<ProfileState>()((set, get) => ({
     set({ saving: true });
     try {
       set({ profile: await updateProfile(update) });
-      // The home shows today's progress against the daily goal.
-      if (update.dailyGoal !== undefined) void reloadHome();
       return true;
     } catch {
       return false;

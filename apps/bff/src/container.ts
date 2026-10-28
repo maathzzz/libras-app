@@ -1,10 +1,14 @@
 import { DrizzleLessonRepository } from './modules/curriculum/infrastructure/DrizzleLessonRepository';
+import { DrizzleTrailRepository } from './modules/curriculum/infrastructure/DrizzleTrailRepository';
 import { DeleteAccount } from './modules/profile/application/DeleteAccount';
 import { GetProfile } from './modules/profile/application/GetProfile';
 import { UpdateProfile } from './modules/profile/application/UpdateProfile';
 import { DrizzleProfileRepository } from './modules/profile/infrastructure/DrizzleProfileRepository';
 import { SupabaseAuthAdmin } from './modules/profile/infrastructure/SupabaseAuthAdmin';
 import { CompleteLesson } from './modules/progress/application/CompleteLesson';
+import { GetHome } from './modules/progress/application/GetHome';
+import { GetLesson } from './modules/progress/application/GetLesson';
+import { CurriculumTrailCatalog } from './modules/progress/infrastructure/CurriculumTrailCatalog';
 import { DrizzleProgressStore } from './modules/progress/infrastructure/DrizzleProgressStore';
 import type { Clock } from './shared/application/Clock';
 import { SystemClock } from './shared/application/SystemClock';
@@ -21,6 +25,8 @@ export interface Container {
   clock: Clock;
   verifyAccessToken: AccessTokenVerifier;
   completeLesson: CompleteLesson;
+  getHome: GetHome;
+  getLesson: GetLesson;
   getProfile: GetProfile;
   updateProfile: UpdateProfile;
   deleteAccount: DeleteAccount;
@@ -37,6 +43,9 @@ export function createContainer(
 ): Container {
   const clock = new SystemClock();
   const progress = new DrizzleProgressStore(db);
+  // The curriculum repository matches the progress LessonCatalog port by shape.
+  const lessons = new DrizzleLessonRepository(db);
+  const trails = new CurriculumTrailCatalog(new DrizzleTrailRepository(db));
   const profiles = new DrizzleProfileRepository(db);
 
   return {
@@ -48,13 +57,9 @@ export function createContainer(
       audience: 'authenticated',
       clock,
     }),
-    completeLesson: new CompleteLesson(
-      progress,
-      progress,
-      // The curriculum repository matches the progress port by shape.
-      new DrizzleLessonRepository(db),
-      clock,
-    ),
+    completeLesson: new CompleteLesson(progress, progress, lessons, clock),
+    getHome: new GetHome(trails, progress, progress),
+    getLesson: new GetLesson(lessons, trails, progress),
     getProfile: new GetProfile(profiles),
     updateProfile: new UpdateProfile(profiles),
     deleteAccount: new DeleteAccount(

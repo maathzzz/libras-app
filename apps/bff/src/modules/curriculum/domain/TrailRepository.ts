@@ -17,4 +17,9 @@ export interface TrailOutlineUnit {
 
 export interface TrailRepository {
   findById(trailId: string): Promise<TrailOutline | null>;
+  // The trail with the lowest position. Null when there is none.
+  findFirst(): Promise<TrailOutline | null>;
+  // The trail that holds the lesson. Null for an unknown lesson.
+  findByLessonId(lessonId: string): Promise<TrailOutline | null>;
+  count(): Promise<number>;
 }

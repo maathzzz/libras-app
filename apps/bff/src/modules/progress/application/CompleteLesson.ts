@@ -49,11 +49,7 @@ export class CompleteLesson {
 
     const response: CompleteLessonResponse = {
       xpEarned,
-      streak: {
-        current: streak.currentAt(day),
-        longest: streak.longest,
-        status: streak.statusAt(day),
-      },
+      streak: streak.summaryAt(day),
       // Compared with the value shown before the lesson, so starting over after a broken
       // streak (0 → 1) counts as an increase, like the very first lesson.
       streakIncreased: streak.current > stats.streak.currentAt(day),

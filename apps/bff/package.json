@@ -11,7 +11,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "db:seed:generate": "tsx scripts/seed/generateSeed.ts"
+    "db:seed:generate": "tsx scripts/seed/generateSeed.ts",
+    "dev:token": "tsx --env-file-if-exists=.env scripts/devToken.ts"
   },
   "dependencies": {
     "@libras/contracts": "workspace:*",

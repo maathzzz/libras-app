@@ -27,6 +27,12 @@ export async function insertCourse(tx: DbExecutor, id: string, position = 1000):
   await tx.insert(courses).values({ id, title: `Trilha ${id}`, position });
 }
 
+// The shared database already has the seed trails. Inside the rolled-back transaction they
+// move far behind, so a fixture at position 1 becomes the first trail.
+export async function moveExistingTrailsBack(tx: DbExecutor): Promise<void> {
+  await tx.update(courses).set({ position: sql`${courses.position} + 1000000` });
+}
+
 export async function insertUnit(
   tx: DbExecutor,
   { id, courseId, position }: { id: string; courseId: string; position: number },

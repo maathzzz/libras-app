@@ -22,7 +22,6 @@ const home = {
   },
   streak: { current: 7, longest: 12, status: 'at_risk' },
   totalXp: 1240,
-  today: { completedLessons: 2, dailyGoal: 3 },
 };
 
 describe('HomeResponse', () => {

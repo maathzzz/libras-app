@@ -1,14 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
+import type { DbExecutor } from '../../../shared/infrastructure/db/client';
+
 import {
   insertCourse,
   insertLesson,
   insertUnit,
+  moveExistingTrailsBack,
 } from '../../../shared/infrastructure/db/testing/fixtures';
 import { useTestDatabase } from '../../../shared/infrastructure/db/testing/testDatabase';
 import { DrizzleTrailRepository } from './DrizzleTrailRepository';
 
 const inRollback = useTestDatabase();
+
+async function insertTwoTrails(tx: DbExecutor): Promise<void> {
+  await moveExistingTrailsBack(tx);
+  await insertCourse(tx, 'it-first-course', 1);
+  await insertCourse(tx, 'it-second-course', 2);
+  await insertUnit(tx, { id: 'it-first-unit', courseId: 'it-first-course', position: 1 });
+  await insertUnit(tx, { id: 'it-second-unit', courseId: 'it-second-course', position: 1 });
+  await insertLesson(tx, { id: 'it-first-lesson', unitId: 'it-first-unit', position: 1 });
+  await insertLesson(tx, { id: 'it-second-lesson', unitId: 'it-second-unit', position: 1 });
+}
 
 describe('DrizzleTrailRepository.findById', () => {
   it(
@@ -66,6 +79,67 @@ describe('DrizzleTrailRepository.findById', () => {
     'returns null for an unknown trail',
     inRollback(async (tx) => {
       expect(await new DrizzleTrailRepository(tx).findById('it-missing-course')).toBeNull();
+    }),
+  );
+});
+
+describe('DrizzleTrailRepository.findFirst', () => {
+  it(
+    'returns the trail with the lowest position, with its units and lessons',
+    inRollback(async (tx) => {
+      await insertTwoTrails(tx);
+
+      const trail = await new DrizzleTrailRepository(tx).findFirst();
+
+      expect(trail).toEqual({
+        id: 'it-first-course',
+        title: 'Trilha it-first-course',
+        position: 1,
+        units: [
+          {
+            id: 'it-first-unit',
+            title: 'Módulo it-first-unit',
+            lessons: [{ id: 'it-first-lesson', title: 'Lição it-first-lesson' }],
+          },
+        ],
+      });
+    }),
+  );
+});
+
+describe('DrizzleTrailRepository.findByLessonId', () => {
+  it(
+    'returns the trail that holds the lesson',
+    inRollback(async (tx) => {
+      await insertTwoTrails(tx);
+
+      const trail = await new DrizzleTrailRepository(tx).findByLessonId('it-second-lesson');
+
+      expect(trail?.id).toBe('it-second-course');
+      expect(trail?.units.flatMap((unit) => unit.lessons.map((lesson) => lesson.id))).toEqual([
+        'it-second-lesson',
+      ]);
+    }),
+  );
+
+  it(
+    'returns null for an unknown lesson',
+    inRollback(async (tx) => {
+      expect(await new DrizzleTrailRepository(tx).findByLessonId('it-missing-lesson')).toBeNull();
+    }),
+  );
+});
+
+describe('DrizzleTrailRepository.count', () => {
+  it(
+    'counts every trail',
+    inRollback(async (tx) => {
+      const repository = new DrizzleTrailRepository(tx);
+      const before = await repository.count();
+
+      await insertTwoTrails(tx);
+
+      expect(await repository.count()).toBe(before + 2);
     }),
   );
 });

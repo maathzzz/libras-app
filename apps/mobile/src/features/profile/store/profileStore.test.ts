@@ -1,7 +1,6 @@
 import type { ProfileResponse } from '@libras/contracts';
 
 import { signOut } from '@/features/auth';
-import { reloadHome } from '@/features/home';
 
 import { deleteAccount, getProfile, updateProfile } from '../api/profileApi';
 import { useProfileStore } from './profileStore';
@@ -11,7 +10,6 @@ jest.mock('../api/profileApi', () => ({
   updateProfile: jest.fn(),
   deleteAccount: jest.fn(),
 }));
-jest.mock('@/features/home', () => ({ reloadHome: jest.fn() }));
 jest.mock('@/features/auth', () => ({ signOut: jest.fn() }));
 
 const getProfileMock = jest.mocked(getProfile);
@@ -48,7 +46,7 @@ describe('useProfileStore', () => {
     expect(useProfileStore.getState().profile).toEqual(profile);
   });
 
-  it('reloads the home after the daily goal changes', async () => {
+  it('saves a new daily goal', async () => {
     updateProfileMock.mockResolvedValue({ ...profile, dailyGoal: 5 });
 
     await expect(useProfileStore.getState().update({ dailyGoal: 5 })).resolves.toBe(true);
@@ -57,15 +55,6 @@ describe('useProfileStore', () => {
       profile: { dailyGoal: 5 },
       saving: false,
     });
-    expect(reloadHome).toHaveBeenCalled();
-  });
-
-  it('does not reload the home for other changes', async () => {
-    updateProfileMock.mockResolvedValue({ ...profile, name: 'Ana' });
-
-    await useProfileStore.getState().update({ name: 'Ana' });
-
-    expect(reloadHome).not.toHaveBeenCalled();
   });
 
   it('reports a change that could not be saved', async () => {

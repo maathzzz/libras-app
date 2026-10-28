@@ -10,7 +10,6 @@ import {
   lessonsLabel,
   nextLessonCopy,
   streakCopy,
-  todayGoalCopy,
 } from './homeView';
 
 const newUserTrail: Trail = {
@@ -92,24 +91,5 @@ describe('homeView', () => {
     expect(lessonAccessibilityLabel({ id: 'c', title: 'Casa', status: 'locked' })).toBe(
       'Casa, bloqueada',
     );
-  });
-
-  it('shows how many lessons are left for the daily goal', () => {
-    expect(todayGoalCopy({ completedLessons: 1, dailyGoal: 3 })).toEqual({
-      progress: '1 de 3 lições',
-      hint: 'Faltam 2 lições para a sua meta.',
-      ratio: 1 / 3,
-    });
-    expect(todayGoalCopy({ completedLessons: 4, dailyGoal: 5 }).hint).toBe(
-      'Faltam 1 lição para a sua meta.',
-    );
-  });
-
-  it('caps the progress at the goal once it is reached', () => {
-    expect(todayGoalCopy({ completedLessons: 4, dailyGoal: 3 })).toEqual({
-      progress: '3 de 3 lições',
-      hint: 'Meta de hoje concluída!',
-      ratio: 1,
-    });
   });
 });

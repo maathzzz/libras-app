@@ -7,6 +7,7 @@ import {
 
 import type { Container } from './container';
 import { profileRoutes } from './modules/profile/http/profileRoutes';
+import { progressRoutes } from './modules/progress/http/progressRoutes';
 import { authPlugin } from './shared/infrastructure/auth';
 import { errorHandler, notFoundHandler } from './shared/infrastructure/errorHandler';
 import { healthRoutes } from './shared/infrastructure/healthRoutes';
@@ -30,6 +31,7 @@ export function buildApp(container: Container, { logger }: AppOptions) {
     async (v1) => {
       await v1.register(authPlugin(container.verifyAccessToken));
       await v1.register(profileRoutes(container));
+      await v1.register(progressRoutes(container));
     },
     { prefix: '/v1' },
   );
