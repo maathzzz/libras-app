@@ -5,8 +5,10 @@ import { FixedClock } from '../../../shared/application/FixedClock';
 import { LocalDate } from '../../../shared/domain/LocalDate';
 import type { Result } from '../../../shared/domain/Result';
 import { Streak } from '../domain/Streak';
+import type { CatalogTrail } from '../domain/TrailCatalog';
 import { InMemoryLessonCatalog } from '../testing/InMemoryLessonCatalog';
 import { InMemoryProgressStore } from '../testing/InMemoryProgressStore';
+import { InMemoryTrailCatalog } from '../testing/InMemoryTrailCatalog';
 import { CompleteLesson, type CompleteLessonInput } from './CompleteLesson';
 
 const image = (name: string) => [{ url: `https://example.com/${name}.png`, alt: name }];
@@ -35,6 +37,19 @@ const lesson: LessonBundle = {
       ],
       correctOptionId: 'c',
     },
+  ],
+};
+
+// Unlocked only after `lesson`, the first of the trail.
+const nextLesson: LessonBundle = { ...lesson, id: 'lesson-next', title: 'Despedidas' };
+
+const trail: CatalogTrail = {
+  id: 'trail',
+  title: 'Trilha',
+  position: 1,
+  units: [
+    { id: 'unit-1', title: 'Módulo 1', lessons: [{ id: lesson.id, title: lesson.title }] },
+    { id: 'unit-2', title: 'Módulo 2', lessons: [{ id: nextLesson.id, title: nextLesson.title }] },
   ],
 };
 
@@ -79,7 +94,9 @@ describe('CompleteLesson', () => {
     new CompleteLesson(
       store,
       store,
-      new InMemoryLessonCatalog([lesson]),
+      new InMemoryLessonCatalog([lesson, nextLesson]),
+      new InMemoryTrailCatalog([trail]),
+      store,
       new FixedClock(new Date(instant)),
     ).execute({
       userId,
@@ -168,6 +185,30 @@ describe('CompleteLesson', () => {
       expectError(result, 'LESSON_NOT_FOUND');
       expect(store.sessions).toHaveLength(0);
       expect(await store.findByUserId(userId)).toBeNull();
+    });
+  });
+
+  describe('locked lesson', () => {
+    it('returns LESSON_LOCKED before the previous lesson is completed and saves nothing', async () => {
+      const result = await completeAt('2026-03-15T12:00:00-03:00', { lessonId: nextLesson.id });
+
+      expectError(result, 'LESSON_LOCKED');
+      expect(store.sessions).toHaveLength(0);
+      expect(await store.findByUserId(userId)).toBeNull();
+    });
+
+    it('completes the next lesson once the previous one is completed', async () => {
+      expectOk(await completeAt('2026-03-15T09:00:00-03:00', { idempotencyKey: keys.first }));
+
+      const next = expectOk(
+        await completeAt('2026-03-15T10:00:00-03:00', {
+          idempotencyKey: keys.second,
+          lessonId: nextLesson.id,
+        }),
+      );
+
+      expect(next.xpEarned).toBe(15);
+      expect((await store.findByUserId(userId))?.totalXp).toBe(30);
     });
   });
 

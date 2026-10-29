@@ -65,11 +65,12 @@ src/
 
 1. Se a `Idempotency-Key` já foi processada para o usuário, retornar o resultado anterior.
 2. Rejeitar com `LOCAL\_DATE\_TOO\_FAR\_AHEAD` uma `localDate` mais de 1 dia à frente da data UTC do `Clock`.
-3. Recorrigir as respostas no servidor com `AnswerGrader` (`modules/progress/domain/AnswerGrader.ts`). O servidor é a fonte da verdade. Resposta ausente ou duplicada para um exercício conta como incorreta; resposta para exercício fora da lição é ignorada.
-4. Calcular o XP.
-5. Aplicar a regra do streak com a `localDate`.
-6. Persistir sessão, progresso e `user\_stats` em uma única transação.
-7. Retornar XP ganho, streak atual e se o streak aumentou.
+3. Rejeitar com `LESSON_NOT_FOUND` uma lição inexistente e com `LESSON_LOCKED` uma lição bloqueada para o usuário (mesma regra de `GetLesson`).
+4. Recorrigir as respostas no servidor com `AnswerGrader` (`modules/progress/domain/AnswerGrader.ts`). O servidor é a fonte da verdade. Resposta ausente ou duplicada para um exercício conta como incorreta; resposta para exercício fora da lição é ignorada.
+5. Calcular o XP.
+6. Aplicar a regra do streak com a `localDate`.
+7. Persistir sessão, progresso e `user\_stats` em uma única transação.
+8. Retornar XP ganho, streak atual e se o streak aumentou.
 
 **Desbloqueio de lições** (`modules/progress/domain/LessonUnlocking.ts`):
 
@@ -92,6 +93,7 @@ src/
 * Endpoints são moldados pelas telas do app (ex.: `GET /v1/home` agrega trilha, streak e XP).
 * Home: `GET /v1/home` (`HomeResponse`, exige `X-Local-Date`). Um usuário sem atividade recebe streak 0 e XP 0.
 * Lição: `GET /v1/lessons/:lessonId` (`LessonBundle`). Lição inexistente retorna 404 `LESSON_NOT_FOUND`; lição bloqueada para o usuário retorna 403 `LESSON_LOCKED`.
+* Conclusão de lição: `POST /v1/lessons/:lessonId/sessions` (corpo `CompleteLessonBody`, header `Idempotency-Key`, resposta `CompleteLessonResponse`). Header ausente ou que não é UUID retorna 400 `INVALID_IDEMPOTENCY_KEY` (lido com `readIdempotencyKey`, `shared/infrastructure/idempotencyKeyHeader.ts`); corpo inválido, 400 `VALIDATION_ERROR`; lição inexistente, 404 `LESSON_NOT_FOUND`; lição bloqueada, 403 `LESSON_LOCKED`; `localDate` além do limite, 422 `LOCAL_DATE_TOO_FAR_AHEAD`. O reenvio com a mesma `Idempotency-Key` retorna 200 com o resultado original.
 * Estudos: `GET /v1/studies` (aba "Estudar", `StudiesResponse`) e `GET /v1/studies/:studyId` (`StudyGuide`). Id desconhecido retorna 404.
 * Perfil: `GET /v1/me` (cria o perfil no primeiro acesso, com o nome tirado do e-mail do token), `PATCH /v1/me` (`UpdateProfileRequest`) e `DELETE /v1/me` (exclui os dados no schema `app` e o usuário do Supabase Auth; idempotente, responde 204).
 * Toda rota autenticada valida o JWT do Supabase no plugin de auth. O `userId` vem do token, nunca do corpo da requisição.

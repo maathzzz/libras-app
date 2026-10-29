@@ -47,7 +47,7 @@ export function createInMemoryContainer(
       audience: 'authenticated',
       clock,
     }),
-    completeLesson: new CompleteLesson(progress, progress, lessons, clock),
+    completeLesson: new CompleteLesson(progress, progress, lessons, trails, progress, clock),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),
     getProfile: new GetProfile(profiles),

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { CompleteLessonRequest, CompleteLessonResponse, LessonBundle } from './lesson';
+import {
+  CompleteLessonBody,
+  CompleteLessonRequest,
+  CompleteLessonResponse,
+  LessonBundle,
+} from './lesson';
 
 const exercise = (id: string) => ({
   id,
@@ -81,6 +86,30 @@ describe('CompleteLessonRequest', () => {
   it('rejects two answers to the same exercise', () => {
     const [first] = request.answers;
     const result = CompleteLessonRequest.safeParse({ ...request, answers: [first, first] });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(['answers', 1, 'exerciseId']);
+  });
+});
+
+describe('CompleteLessonBody', () => {
+  const body = { answers: request.answers, localDate: request.localDate };
+
+  it('accepts the answers and the local date', () => {
+    expect(CompleteLessonBody.parse(body)).toEqual(body);
+  });
+
+  it('rejects a body without answers', () => {
+    expect(CompleteLessonBody.safeParse({ ...body, answers: [] }).success).toBe(false);
+  });
+
+  it('rejects a local date that does not exist', () => {
+    expect(CompleteLessonBody.safeParse({ ...body, localDate: '2026-02-30' }).success).toBe(false);
+  });
+
+  it('rejects two answers to the same exercise', () => {
+    const [first] = body.answers;
+    const result = CompleteLessonBody.safeParse({ ...body, answers: [first, first] });
 
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(['answers', 1, 'exerciseId']);

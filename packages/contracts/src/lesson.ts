@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { Exercise, ExerciseAnswer } from './exercises';
+import { IdempotencyKey } from './idempotencyKey';
 import { StreakSummary } from './streak';
 
 // GET /v1/lessons/:lessonId
@@ -32,31 +33,41 @@ export const LessonAnswer = z.object({
 });
 export type LessonAnswer = z.infer<typeof LessonAnswer>;
 
-// POST /v1/lessons/:lessonId/completion. On the wire, lessonId goes in the path and
+const completionFields = {
+  answers: z.array(LessonAnswer).min(1),
+  // The device's local date (YYYY-MM-DD) when the lesson ended: the streak's "day".
+  // Taken once and kept in the offline queue, so a late retry still counts that day.
+  localDate: z.iso.date(),
+};
+
+function rejectRepeatedAnswers({ answers }: { answers: LessonAnswer[] }, ctx: z.RefinementCtx) {
+  const seen = new Set<string>();
+  answers.forEach((answer, index) => {
+    if (seen.has(answer.exerciseId)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['answers', index, 'exerciseId'],
+        message: 'each exercise can be answered only once',
+      });
+    }
+    seen.add(answer.exerciseId);
+  });
+}
+
+// Body of POST /v1/lessons/:lessonId/sessions, sent with the Idempotency-Key header.
+export const CompleteLessonBody = z.object(completionFields).superRefine(rejectRepeatedAnswers);
+export type CompleteLessonBody = z.infer<typeof CompleteLessonBody>;
+
+// The whole completion as the app keeps it. On the wire, lessonId goes in the path and
 // idempotencyKey in the Idempotency-Key header; both stay here because the app's offline
 // queue stores the whole request to send it again later.
 export const CompleteLessonRequest = z
   .object({
     lessonId: z.string().min(1),
-    idempotencyKey: z.uuid(),
-    answers: z.array(LessonAnswer).min(1),
-    // The device's local date (YYYY-MM-DD) when the lesson ended: the streak's "day".
-    // Taken once and kept in the offline queue, so a late retry still counts that day.
-    localDate: z.iso.date(),
+    idempotencyKey: IdempotencyKey,
+    ...completionFields,
   })
-  .superRefine((request, ctx) => {
-    const seen = new Set<string>();
-    request.answers.forEach((answer, index) => {
-      if (seen.has(answer.exerciseId)) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['answers', index, 'exerciseId'],
-          message: 'each exercise can be answered only once',
-        });
-      }
-      seen.add(answer.exerciseId);
-    });
-  });
+  .superRefine(rejectRepeatedAnswers);
 export type CompleteLessonRequest = z.infer<typeof CompleteLessonRequest>;
 
 // XP and streak are computed by the BFF after re-grading the answers.

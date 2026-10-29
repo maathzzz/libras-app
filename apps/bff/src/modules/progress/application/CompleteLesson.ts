@@ -6,8 +6,11 @@ import { LocalDate } from '../../../shared/domain/LocalDate';
 import { err, ok, type Result } from '../../../shared/domain/Result';
 import { AnswerGrader } from '../domain/AnswerGrader';
 import type { LessonCatalog } from '../domain/LessonCatalog';
+import type { LessonProgressRepository } from '../domain/LessonProgressRepository';
 import type { LessonSessionRepository } from '../domain/LessonSessionRepository';
+import { LessonUnlocking } from '../domain/LessonUnlocking';
 import { Streak } from '../domain/Streak';
+import { lessonIdsOf, type TrailCatalog } from '../domain/TrailCatalog';
 import type { UserStats, UserStatsRepository } from '../domain/UserStatsRepository';
 import { XpPolicy } from '../domain/XpPolicy';
 
@@ -19,6 +22,8 @@ export class CompleteLesson {
     private readonly sessions: LessonSessionRepository,
     private readonly stats: UserStatsRepository,
     private readonly lessons: LessonCatalog,
+    private readonly trails: TrailCatalog,
+    private readonly progress: LessonProgressRepository,
     private readonly clock: Clock,
   ) {}
 
@@ -39,8 +44,20 @@ export class CompleteLesson {
       );
     }
 
-    const lesson = await this.lessons.findById(lessonId);
-    if (!lesson) return err(new DomainError('LESSON_NOT_FOUND', `Lesson ${lessonId} not found`));
+    const [lesson, trail, completed] = await Promise.all([
+      this.lessons.findById(lessonId),
+      this.trails.findByLessonId(lessonId),
+      this.progress.findCompletedLessonIds(userId),
+    ]);
+    if (!lesson || !trail) {
+      return err(new DomainError('LESSON_NOT_FOUND', `Lesson ${lessonId} not found`));
+    }
+
+    // Same rule as opening the lesson: a client that skips ahead cannot complete it either.
+    const status = LessonUnlocking.statusesOf(lessonIdsOf(trail), completed).get(lessonId);
+    if (status === 'locked') {
+      return err(new DomainError('LESSON_LOCKED', `Lesson ${lessonId} is locked`));
+    }
 
     const xpEarned = XpPolicy.xpFor(AnswerGrader.grade(lesson.exercises, answers));
 
