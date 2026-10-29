@@ -25,6 +25,8 @@ const icons = {
   hide: { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' },
   study: { ios: 'book.fill', android: 'menu_book', web: 'menu_book' },
   tip: { ios: 'lightbulb.fill', android: 'lightbulb', web: 'lightbulb' },
+  back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
+  trophy: { ios: 'trophy.fill', android: 'emoji_events', web: 'emoji_events' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof icons;

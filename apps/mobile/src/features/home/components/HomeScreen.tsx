@@ -10,9 +10,9 @@ import { LoadError, ScreenTitle } from '@/shared/ui';
 import { useHomeStore } from '../store/homeStore';
 import { HomeStats } from './HomeStats';
 import { findNextLesson, hasStartedTrail } from './homeView';
+import { ModuleList } from './ModuleList';
 import { NextLessonCard } from './NextLessonCard';
 import { StreakCard } from './StreakCard';
-import { TrailPath } from './TrailPath';
 
 export function HomeScreen() {
   const status = useHomeStore((state) => state.status);
@@ -58,6 +58,11 @@ function openLesson(lessonId: string) {
   router.push({ pathname: '/lesson/[lessonId]', params: { lessonId } });
 }
 
+// The lessons of a module only show up on its own screen.
+function openModule(unitId: string) {
+  router.push({ pathname: '/module/[unitId]', params: { unitId } });
+}
+
 function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
   const { trail } = home;
   const next = findNextLesson(trail);
@@ -82,7 +87,7 @@ function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
         />
       )}
       <StreakCard streak={home.streak} />
-      <TrailPath units={trail.units} onOpenLesson={openLesson} />
+      <ModuleList trail={trail} onOpenModule={openModule} />
     </ScrollView>
   );
 }

@@ -34,6 +34,7 @@ export default function RootLayout() {
         {/* Flipping a guard swaps the whole area: signing in or out needs no navigation. */}
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="module/[unitId]" />
           <Stack.Screen name="lesson/[lessonId]" options={{ presentation: 'fullScreenModal' }} />
           {/* No swipe back: the lesson it came from was already replaced. */}
           <Stack.Screen

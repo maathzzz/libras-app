@@ -199,6 +199,12 @@ export const sizes = {
   handSignFrame: 140,
   // Initials of the learner on the settings profile card.
   avatar: 46,
+  // Picture of the learner on the profile screen and the band behind it.
+  profileAvatar: 104,
+  profileAvatarRing: 4,
+  profileBanner: 64,
+  // Icon box at the left of a module card on the home.
+  moduleIcon: 48,
   switchWidth: 46,
   switchHeight: 27,
   switchThumb: 21,

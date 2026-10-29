@@ -16,6 +16,8 @@ import { lessonAccessibilityLabel } from './homeView';
 
 type TrailNodeProps = {
   lesson: TrailLesson;
+  /** Position of the lesson in its module, starting at 1. */
+  number: number;
   onPress?: (() => void) | undefined;
 };
 
@@ -24,6 +26,7 @@ type NodeLook = {
   edge: string;
   icon: IconName;
   iconColor: ColorToken;
+  kickerColor: ColorToken;
   labelColor: ColorToken;
 };
 
@@ -33,6 +36,7 @@ const looks: Record<LessonStatus, NodeLook> = {
     edge: colors.successDark,
     icon: 'check',
     iconColor: 'onColor',
+    kickerColor: 'successDark',
     labelColor: 'text',
   },
   available: {
@@ -40,6 +44,7 @@ const looks: Record<LessonStatus, NodeLook> = {
     edge: colors.accentDark,
     icon: 'play',
     iconColor: 'onColor',
+    kickerColor: 'accent',
     labelColor: 'text',
   },
   locked: {
@@ -47,6 +52,7 @@ const looks: Record<LessonStatus, NodeLook> = {
     edge: colors.locked,
     icon: 'locked',
     iconColor: 'textSubtle',
+    kickerColor: 'textSubtle',
     labelColor: 'textMuted',
   },
 };
@@ -65,7 +71,7 @@ function nodeShadow(edge: string, offsetY: number, highlighted: boolean): ViewSt
   return { boxShadow: highlighted ? [...shadows, halo] : shadows };
 }
 
-export function TrailNode({ lesson, onPress }: TrailNodeProps) {
+export function TrailNode({ lesson, number, onPress }: TrailNodeProps) {
   const look = looks[lesson.status];
   const highlighted = lesson.status === 'available';
   const icon = <Icon name={look.icon} size="lg" color={look.iconColor} />;
@@ -97,9 +103,14 @@ export function TrailNode({ lesson, onPress }: TrailNodeProps) {
           {icon}
         </View>
       )}
-      <AppText variant="label" color={look.labelColor} align="center" numberOfLines={2}>
-        {lesson.title}
-      </AppText>
+      <View style={styles.caption}>
+        <AppText variant="statLabel" color={look.kickerColor} align="center">
+          {`Lição ${number}`}
+        </AppText>
+        <AppText variant="label" color={look.labelColor} align="center" numberOfLines={2}>
+          {lesson.title}
+        </AppText>
+      </View>
     </View>
   );
 }
@@ -116,5 +127,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.pill,
+  },
+  caption: {
+    gap: spacing['3xs'],
   },
 });

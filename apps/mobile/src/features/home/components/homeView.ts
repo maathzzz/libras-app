@@ -18,6 +18,48 @@ export function completedLessons(unit: TrailUnit): number {
   return unit.lessons.filter((lesson) => lesson.status === 'completed').length;
 }
 
+export function percentLabel(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
+export function unitProgress(unit: TrailUnit): number {
+  return completedLessons(unit) / unit.lessons.length;
+}
+
+// A module opens once one of its lessons is unlocked; the BFF decides which ones are.
+export type UnitStatus = 'completed' | 'current' | 'locked';
+
+export function unitStatus(unit: TrailUnit): UnitStatus {
+  if (unit.lessons.every((lesson) => lesson.status === 'completed')) return 'completed';
+  if (unit.lessons.some((lesson) => lesson.status !== 'locked')) return 'current';
+  return 'locked';
+}
+
+export function unitKicker(index: number, unit: TrailUnit): string {
+  const status = unitStatus(unit);
+  const detail =
+    status === 'completed'
+      ? 'Concluído'
+      : status === 'locked'
+        ? 'Bloqueado'
+        : `${completedLessons(unit)} de ${lessonsLabel(unit.lessons.length)}`;
+  return `Módulo ${index + 1} · ${detail}`;
+}
+
+export function completedUnits(trail: Trail): number {
+  return trail.units.filter((unit) => unitStatus(unit) === 'completed').length;
+}
+
+export function trailLessonCounts(trail: Trail): { completed: number; total: number } {
+  return trail.units.reduce(
+    (counts, unit) => ({
+      completed: counts.completed + completedLessons(unit),
+      total: counts.total + unit.lessons.length,
+    }),
+    { completed: 0, total: 0 },
+  );
+}
+
 export function hasStartedTrail(trail: Trail): boolean {
   return trail.units.some((unit) => completedLessons(unit) > 0);
 }

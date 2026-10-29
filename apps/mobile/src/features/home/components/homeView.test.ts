@@ -2,6 +2,7 @@ import type { Trail } from '@libras/contracts';
 
 import { mockTrail } from '../api/homeFixtures';
 import {
+  completedUnits,
   daysLabel,
   findNextLesson,
   formatXp,
@@ -9,7 +10,12 @@ import {
   lessonAccessibilityLabel,
   lessonsLabel,
   nextLessonCopy,
+  percentLabel,
   streakCopy,
+  trailLessonCounts,
+  unitKicker,
+  unitProgress,
+  unitStatus,
 } from './homeView';
 
 const newUserTrail: Trail = {
@@ -91,5 +97,34 @@ describe('homeView', () => {
     expect(lessonAccessibilityLabel({ id: 'c', title: 'Casa', status: 'locked' })).toBe(
       'Casa, bloqueada',
     );
+  });
+
+  it('marks a module done, in progress or locked from its lessons', () => {
+    const [alphabet, greetings, numbers] = mockTrail.units;
+    if (!alphabet || !greetings || !numbers) throw new Error('expected three units');
+
+    expect(unitStatus(alphabet)).toBe('completed');
+    expect(unitStatus(greetings)).toBe('current');
+    expect(unitStatus(numbers)).toBe('locked');
+    expect(unitKicker(0, alphabet)).toBe('Módulo 1 · Concluído');
+    expect(unitKicker(1, greetings)).toBe('Módulo 2 · 1 de 4 lições');
+    expect(unitKicker(2, numbers)).toBe('Módulo 3 · Bloqueado');
+  });
+
+  it('keeps a module open when its next lesson is available but none is done', () => {
+    const [first] = newUserTrail.units;
+    if (!first) throw new Error('expected a unit');
+
+    expect(unitStatus(first)).toBe('current');
+    expect(unitProgress(first)).toBe(0);
+  });
+
+  it('sums the progress of the whole trail', () => {
+    const [, greetings] = mockTrail.units;
+    if (!greetings) throw new Error('expected a unit');
+
+    expect(completedUnits(mockTrail)).toBe(1);
+    expect(trailLessonCounts(mockTrail)).toEqual({ completed: 4, total: 11 });
+    expect(percentLabel(unitProgress(greetings))).toBe('25%');
   });
 });
