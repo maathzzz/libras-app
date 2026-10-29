@@ -37,7 +37,7 @@ src/
 * Arquivos em `src/app/` só compõem telas a partir das features. Nenhuma lógica, chamada de API ou estado neles.
 * Uma feature importa apenas de `shared` e do `index.ts` de outras features. Nunca importe arquivos internos de outra feature. Essas fronteiras são verificadas pelo `eslint-plugin-boundaries` (`apps/mobile/eslint.config.mjs`).
 * Componentes não chamam a API diretamente: chamam ações do store (`load`, `refresh`, `submit`), que usam as funções de `api/`.
-* Toda chamada ao BFF passa por `shared/api/client.ts`, que injeta o token e tipa a resposta com `contracts`.
+* Toda chamada ao BFF passa por `shared/api/client.ts`, que injeta o token e valida a resposta com `contracts`. Toda falha vira um `ApiError` com `kind`: `network` (sem resposta ou tempo esgotado), `server` (5xx ou resposta fora do contrato, `code: INVALID\_RESPONSE`) ou `request` (4xx, com o `code` do BFF). Os stores usam `isNetworkError` para separar "sem internet" de "erro do servidor".
 * O app usa o Supabase **apenas** para autenticação. Dados de negócio vêm sempre do BFF.
 * O cadastro não exige confirmação de e-mail: a opção **Confirm email** fica desativada no Supabase, e o `signUp` já devolve uma sessão que leva o usuário direto ao app. Se o `signUp` voltar sem sessão (a opção foi religada), o app mostra um erro e mantém o usuário no cadastro. Só a recuperação de senha envia e-mail (código de 6 dígitos).
 * O app conhece só a chave publicável do Supabase. A chave secreta nunca entra no app: qualquer operação administrativa (como excluir a conta) passa pelo BFF.
@@ -57,7 +57,8 @@ src/
 3. Corrigir respostas localmente para feedback instantâneo.
 4. Ao terminar a lição, capturar a `localDate` (data local do aparelho, de `shared/lib/localDate.ts`, montada com os componentes locais e nunca com `toISOString()`, que dá a data UTC).
 5. Enviar a sessão com uma `Idempotency-Key` gerada no início da lição e a `localDate`.
-6. Em caso de falha de rede, enfileirar o envio no MMKV (com a `localDate`) e reenviar quando houver conexão. No reenvio, usar a data salva, nunca a data atual.
+6. Em caso de falha de rede ou 5xx, enfileirar o envio no MMKV (com a `localDate`) e reenviar quando houver conexão e sessão ativa. No reenvio, usar a data salva, nunca a data atual. Um 4xx (ou uma resposta fora do contrato) remove a sessão da fila; um 200 do reenvio, inclusive o resultado original devolvido por idempotência, também.
+7. Quando o BFF confirma a conclusão (na hora ou pela fila), a home é recarregada.
 
 ## Estudos
 
@@ -90,4 +91,5 @@ O público inclui pessoas surdas:
 ## Configuração
 
 * URL do BFF em `EXPO\_PUBLIC\_API\_URL`.
-* Desenvolvimento local: Android Emulator usa `http://10.0.2.2:<porta>`; dispositivo físico usa o IP da máquina na rede local.
+* Desenvolvimento local: `http://localhost:3000` com `adb reverse tcp:3000 tcp:3000` (refeito sempre que o cabo for reconectado ou o emulador reiniciado), que vale para o emulador e para o celular via USB. Depois de alterar o `.env`, reinicie o Metro.
+* `EXPO\_PUBLIC\_USE\_MOCKS=true` faz as funções de `api/` responderem com as fixtures de desenvolvimento (`features/\*/api/\*Fixtures.ts`, com o estado compartilhado em `shared/api/mockServer.ts`), para desenvolver telas sem o BFF. O padrão é `false`. A escolha entre fixture e BFF acontece só dentro de `api/`: telas e stores nunca sabem a origem.

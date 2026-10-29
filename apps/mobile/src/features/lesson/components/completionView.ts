@@ -1,7 +1,6 @@
 import type { CompleteLessonResponse } from '@libras/contracts';
 
-const plural = (count: number, one: string, many: string) =>
-  `${count} ${count === 1 ? one : many}`;
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
 export function daysLabel(count: number): string {
   return plural(count, 'dia', 'dias');
@@ -39,9 +38,10 @@ export function resultAnnouncement({ xpEarned, streak, streakIncreased }: Comple
   return `Lição concluída. ${xp} Sua sequência aumentou para ${daysLabel(streak.current)}.`;
 }
 
+// Shown for no connection and for a server failure alike: both are sent again later.
 export const pendingMessage = {
-  title: 'Sem conexão agora',
-  body: 'Sua lição foi guardada e será enviada quando você voltar ao app.',
+  title: 'Lição guardada',
+  body: 'Não conseguimos enviar agora. Ela será enviada quando você voltar ao app.',
 };
 
 export const failedMessage = {

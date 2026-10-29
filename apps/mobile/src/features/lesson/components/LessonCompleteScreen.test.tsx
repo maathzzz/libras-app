@@ -3,7 +3,6 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { useEffect as mockUseEffect } from 'react';
 
-import { reloadHome } from '@/features/home';
 import { haptics } from '@/shared/lib/haptics';
 
 import { useCompletionStore } from '../store/completionStore';
@@ -14,7 +13,6 @@ jest.mock('expo-router', () => ({
   // The screen is always focused in these tests.
   useFocusEffect: (effect: () => void | (() => void)) => mockUseEffect(effect, [effect]),
 }));
-jest.mock('@/features/home', () => ({ reloadHome: jest.fn() }));
 jest.mock('@/shared/lib/haptics', () => ({ haptics: { correct: jest.fn() } }));
 
 const initialState = useCompletionStore.getState();
@@ -35,7 +33,6 @@ function renderWith(state: Partial<ReturnType<typeof useCompletionStore.getState
 
 beforeEach(() => {
   jest.mocked(router.dismissTo).mockReset();
-  jest.mocked(reloadHome).mockReset();
   jest.mocked(haptics.correct).mockReset();
 });
 
@@ -67,19 +64,18 @@ describe('LessonCompleteScreen', () => {
     expect(screen.queryByText('Sequência de 8 dias')).toBeNull();
   });
 
-  it('tells the learner a lesson without network will be sent later', async () => {
+  it('tells the learner a lesson that could not be sent will be sent later', async () => {
     await renderWith({ status: 'pending', summary });
 
-    expect(screen.getByText('Sem conexão agora')).toBeOnTheScreen();
+    expect(screen.getByText('Lição guardada')).toBeOnTheScreen();
     expect(screen.queryByText(/^\+\d+$/)).toBeNull();
   });
 
-  it('goes back to the reloaded home and clears the completion', async () => {
+  it('goes back to the home and clears the completion', async () => {
     await renderWith({ status: 'completed', summary, result: result(true) });
 
     await fireEvent.press(screen.getByRole('button', { name: 'Voltar à trilha' }));
 
-    expect(reloadHome).toHaveBeenCalledTimes(1);
     expect(router.dismissTo).toHaveBeenCalledWith('/');
     expect(useCompletionStore.getState().status).toBe('idle');
   });

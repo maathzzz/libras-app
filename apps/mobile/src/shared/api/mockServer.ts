@@ -6,8 +6,15 @@ import type {
   UpdateProfileRequest,
 } from '@libras/contracts';
 
-// In-memory stand-in for the BFF's user_stats and profile while its routes are mocked, so the
-// home, the lesson completion and the settings show the same data. Remove with the mocks.
+// Development fixtures: an in-memory stand-in for the BFF's user_stats and profile, so the
+// home, the lesson completion and the settings show the same data without the BFF running.
+// Only the functions in features/*/api look at `mocksEnabled`; screens and stores never know.
+export const mocksEnabled = process.env.EXPO_PUBLIC_USE_MOCKS === 'true';
+
+// Long enough for loading states to be visible on the device.
+export function mockLatency(ms = 600): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 // To check another case on the device, change the starting status: 'at_risk' grows to 8,
 // 'broken' restarts at 1 and 'done_today' completes a lesson without increasing the streak.

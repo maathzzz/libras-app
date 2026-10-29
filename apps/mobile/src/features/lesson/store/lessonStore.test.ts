@@ -1,9 +1,10 @@
 import * as Crypto from 'expo-crypto';
 
+import { ApiError } from '@/shared/api/client';
 import { prefetchImages } from '@/shared/lib/prefetchImages';
 
 import { getLesson } from '../api/getLesson';
-import { mockLesson } from '../api/lessonMocks';
+import { mockLesson } from '../api/lessonFixtures';
 import { useCompletionStore } from './completionStore';
 import { useLessonStore } from './lessonStore';
 
@@ -79,12 +80,27 @@ describe('start', () => {
     expect(useLessonStore.getState().idempotencyKey).not.toBe(firstKey);
   });
 
-  it('shows an error when the lesson cannot be loaded', async () => {
-    getLessonMock.mockRejectedValue(new Error('offline'));
+  it.each([
+    ['offline', new ApiError('network', 'Sem resposta')],
+    ['server', new ApiError('server', 'falhou', 502, null)],
+    ['server', new ApiError('server', 'fora do contrato', 200, 'INVALID_RESPONSE')],
+    ['locked', new ApiError('request', 'bloqueada', 403, 'LESSON_LOCKED')],
+    ['notFound', new ApiError('request', 'não existe', 404, 'LESSON_NOT_FOUND')],
+  ])('shows the %s error when the lesson cannot be loaded', async (loadError, error) => {
+    getLessonMock.mockRejectedValue(error);
 
     await useLessonStore.getState().start(lesson.id);
 
-    expect(useLessonStore.getState()).toMatchObject({ status: 'error', lesson: null });
+    expect(useLessonStore.getState()).toMatchObject({ status: 'error', loadError, lesson: null });
+  });
+
+  it('clears the error when the lesson is started again', async () => {
+    getLessonMock.mockRejectedValueOnce(new ApiError('network', 'Sem resposta'));
+    await useLessonStore.getState().start(lesson.id);
+
+    await startPlaying();
+
+    expect(useLessonStore.getState().loadError).toBeNull();
   });
 
   it('ignores a session that was reset before it finished loading', async () => {
@@ -198,7 +214,10 @@ describe('submit', () => {
         idempotencyKey,
         answers: lesson.exercises.map((exercise, index) => ({
           exerciseId: exercise.id,
-          answer: index === 1 ? { type: exercise.type, optionId: 'wrong-option' } : correctAnswerFor(index),
+          answer:
+            index === 1
+              ? { type: exercise.type, optionId: 'wrong-option' }
+              : correctAnswerFor(index),
         })),
         localDate: '2026-03-15',
       },

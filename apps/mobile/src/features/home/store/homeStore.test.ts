@@ -1,7 +1,9 @@
 import { HomeResponse } from '@libras/contracts';
 
+import { ApiError } from '@/shared/api/client';
+
 import { getHome } from '../api/getHome';
-import { mockHome } from '../api/homeMocks';
+import { mockHome } from '../api/homeFixtures';
 import { useHomeStore } from './homeStore';
 
 jest.mock('../api/getHome');
@@ -32,17 +34,39 @@ describe('useHomeStore', () => {
     expect(useHomeStore.getState()).toMatchObject({ status: 'ready', home });
   });
 
-  it('shows an error when the first load fails', async () => {
-    getHomeMock.mockRejectedValue(new Error('offline'));
+  it('tells a missing connection apart when the first load fails', async () => {
+    getHomeMock.mockRejectedValue(new ApiError('network', 'Sem resposta'));
 
     await useHomeStore.getState().load();
 
-    expect(useHomeStore.getState()).toMatchObject({ status: 'error', home: null });
+    expect(useHomeStore.getState()).toMatchObject({
+      status: 'error',
+      errorReason: 'offline',
+      home: null,
+    });
+  });
+
+  it('reports a server failure when the first load fails with a 5xx', async () => {
+    getHomeMock.mockRejectedValue(new ApiError('server', 'falhou', 500, 'INTERNAL_ERROR'));
+
+    await useHomeStore.getState().load();
+
+    expect(useHomeStore.getState()).toMatchObject({ status: 'error', errorReason: 'server' });
+  });
+
+  it('clears the error once a retry works', async () => {
+    getHomeMock.mockRejectedValueOnce(new ApiError('network', 'Sem resposta'));
+    getHomeMock.mockResolvedValueOnce(home);
+
+    await useHomeStore.getState().load();
+    await useHomeStore.getState().load();
+
+    expect(useHomeStore.getState()).toMatchObject({ status: 'ready', errorReason: null, home });
   });
 
   it('keeps the last home when a reload fails', async () => {
     getHomeMock.mockResolvedValueOnce(home);
-    getHomeMock.mockRejectedValueOnce(new Error('offline'));
+    getHomeMock.mockRejectedValueOnce(new ApiError('network', 'Sem resposta'));
 
     await useHomeStore.getState().load();
     await useHomeStore.getState().load();

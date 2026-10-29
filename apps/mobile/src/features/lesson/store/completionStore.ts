@@ -1,12 +1,13 @@
 import type { CompleteLessonRequest, CompleteLessonResponse } from '@libras/contracts';
 import { create } from 'zustand';
 
+import { reloadHome } from '@/features/home';
 import { isRetryableError } from '@/shared/api/client';
 
 import { pendingSessions } from '../api/pendingSessions';
 import { submitSession } from '../api/submitSession';
 
-// `pending`: no network, the session is queued and will be sent later.
+// `pending`: no network or a server failure; the session is queued and will be sent later.
 // `failed`: the BFF refused it; sending it again would fail the same way.
 type CompletionStatus = 'idle' | 'submitting' | 'completed' | 'pending' | 'failed';
 
@@ -47,6 +48,9 @@ export const useCompletionStore = create<CompletionState>()((set, get) => ({
     try {
       const result = await submitSession(request);
       if (isCurrent()) set({ status: 'completed', result });
+      // Streak and XP changed. Reloaded here, not when the learner leaves: they may leave
+      // before the answer arrives.
+      void reloadHome();
     } catch (error) {
       if (!isRetryableError(error)) {
         if (isCurrent()) set({ status: 'failed' });

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { ApiError, isRetryableError } from '../api/client';
 import { createOfflineQueue } from './offlineQueue';
 import { storage } from './storage';
 
@@ -7,7 +8,7 @@ const SessionSchema = z.object({ key: z.string(), score: z.number() });
 type Session = z.infer<typeof SessionSchema>;
 
 const storageKey = 'test.sessions';
-const networkError = () => new TypeError('Network request failed');
+const networkError = () => new ApiError('network', 'Sem resposta');
 const send = jest.fn<Promise<unknown>, [Session]>();
 
 function makeQueue() {
@@ -16,7 +17,7 @@ function makeQueue() {
     schema: SessionSchema,
     keyOf: (session) => session.key,
     send,
-    shouldRetry: (error) => error instanceof TypeError,
+    shouldRetry: isRetryableError,
   });
 }
 
@@ -94,7 +95,7 @@ describe('flush', () => {
     const queue = makeQueue();
     queue.enqueue(a);
     queue.enqueue(b);
-    send.mockRejectedValueOnce(new Error('400 Bad Request'));
+    send.mockRejectedValueOnce(new ApiError('request', 'recusada', 400, 'VALIDATION_ERROR'));
 
     await expect(queue.flush()).resolves.toEqual({ sent: 1 });
 

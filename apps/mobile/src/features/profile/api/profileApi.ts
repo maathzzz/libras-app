@@ -1,27 +1,24 @@
 import { ProfileResponse, UpdateProfileRequest } from '@libras/contracts';
+import { z } from 'zod';
 
-import { getMockProfile, resetMockServer, updateMockProfile } from '@/shared/api/mockServer';
+import { apiRequest } from '@/shared/api/client';
+import { mocksEnabled } from '@/shared/api/mockServer';
 
-const mockLatencyMs = 400;
-const wait = () => new Promise((resolve) => setTimeout(resolve, mockLatencyMs));
+import { mockDeleteAccount, mockGetProfile, mockUpdateProfile } from './profileFixtures';
 
-// Mocked until the app is wired to the BFF. Then they become
-// `apiRequest('/v1/me', ProfileResponse)`,
-// `apiRequest('/v1/me', ProfileResponse, { method: 'PATCH', body: update })` and
-// `apiRequest('/v1/me', z.undefined(), { method: 'DELETE' })`.
-export async function getProfile(): Promise<ProfileResponse> {
-  await wait();
-  return ProfileResponse.parse(getMockProfile());
+export function getProfile(): Promise<ProfileResponse> {
+  if (mocksEnabled) return mockGetProfile();
+  return apiRequest('/v1/me', ProfileResponse);
 }
 
 export async function updateProfile(update: UpdateProfileRequest): Promise<ProfileResponse> {
-  const request = UpdateProfileRequest.parse(update);
-  await wait();
-  return ProfileResponse.parse(updateMockProfile(request));
+  const body = UpdateProfileRequest.parse(update);
+  if (mocksEnabled) return mockUpdateProfile(body);
+  return apiRequest('/v1/me', ProfileResponse, { method: 'PATCH', body });
 }
 
-// The BFF deletes the data and the Supabase Auth user; the mock only forgets its own data.
+// The BFF deletes the learner's data and the Supabase Auth user, then answers 204.
 export async function deleteAccount(): Promise<void> {
-  await wait();
-  resetMockServer();
+  if (mocksEnabled) return mockDeleteAccount();
+  await apiRequest('/v1/me', z.undefined(), { method: 'DELETE' });
 }

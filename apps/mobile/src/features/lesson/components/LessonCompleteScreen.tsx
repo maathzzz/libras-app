@@ -18,7 +18,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { reloadHome } from '@/features/home';
 import { haptics } from '@/shared/lib/haptics';
 import { colors, duration, spacing } from '@/shared/theme';
 import { AppText, Button, Card, StatTile } from '@/shared/ui';
@@ -42,13 +41,13 @@ export function LessonCompleteScreen() {
   const result = useCompletionStore((state) => state.result);
   const reset = useCompletionStore((state) => state.reset);
 
+  // The home is reloaded by the completion store once the BFF answers, even after leaving.
   const leave = useCallback(() => {
     reset();
-    void reloadHome();
     router.dismissTo('/');
   }, [reset]);
 
-  // Android's back button leaves the same way as the button, so the home is reloaded too.
+  // Android's back button leaves the same way as the button.
   useFocusEffect(
     useCallback(() => {
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {

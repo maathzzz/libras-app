@@ -1,7 +1,8 @@
-import type { HomeResponse, Trail } from '@libras/contracts';
+import { HomeResponse, type Trail } from '@libras/contracts';
 
-import { getMockStats } from '@/shared/api/mockServer';
+import { getMockStats, mockLatency } from '@/shared/api/mockServer';
 
+// Development fixtures for GET /v1/home, used when EXPO_PUBLIC_USE_MOCKS=true.
 // Mirrors the design's "Primeiros contatos" trail. The "Prova do módulo" node is left
 // out: contracts have no exercise type for it yet.
 export const mockTrail = {
@@ -53,4 +54,10 @@ export const mockTrail = {
 export function mockHome(): HomeResponse {
   const { streak, totalXp } = getMockStats();
   return { trail: mockTrail, streak, totalXp };
+}
+
+// Goes through the same schema as the BFF's answer.
+export async function mockGetHome(): Promise<HomeResponse> {
+  await mockLatency();
+  return HomeResponse.parse(mockHome());
 }

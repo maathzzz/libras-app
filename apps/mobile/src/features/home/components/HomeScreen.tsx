@@ -5,7 +5,7 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/shared/theme';
-import { AppText, Button, ScreenTitle } from '@/shared/ui';
+import { LoadError, ScreenTitle } from '@/shared/ui';
 
 import { useHomeStore } from '../store/homeStore';
 import { HomeStats } from './HomeStats';
@@ -17,6 +17,7 @@ import { TrailPath } from './TrailPath';
 export function HomeScreen() {
   const status = useHomeStore((state) => state.status);
   const home = useHomeStore((state) => state.home);
+  const errorReason = useHomeStore((state) => state.errorReason);
   const refreshing = useHomeStore((state) => state.refreshing);
   const load = useHomeStore((state) => state.load);
   const refresh = useHomeStore((state) => state.refresh);
@@ -30,8 +31,14 @@ export function HomeScreen() {
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       {home ? (
         <HomeContent home={home} refreshing={refreshing} onRefresh={refresh} />
-      ) : status === 'error' ? (
-        <LoadError onRetry={load} />
+      ) : status === 'error' && errorReason ? (
+        <View style={styles.centered}>
+          <LoadError
+            title="Não foi possível carregar sua trilha."
+            reason={errorReason}
+            onRetry={() => void load()}
+          />
+        </View>
       ) : (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.accent} accessibilityLabel="Carregando sua trilha" />
@@ -80,20 +87,6 @@ function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
   );
 }
 
-function LoadError({ onRetry }: { onRetry: () => void }) {
-  return (
-    <View style={[styles.centered, styles.error]}>
-      <AppText variant="subtitle" align="center">
-        Não foi possível carregar sua trilha.
-      </AppText>
-      <AppText variant="body" align="center">
-        Verifique sua conexão e tente de novo.
-      </AppText>
-      <Button label="Tentar de novo" onPress={onRetry} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -109,9 +102,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  error: {
-    gap: spacing.lg,
-    paddingHorizontal: spacing['4xl'],
   },
 });

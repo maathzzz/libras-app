@@ -1,30 +1,24 @@
+import { mockLesson } from './lessonFixtures';
 import { getLesson } from './getLesson';
 
+jest.mock('@/shared/api/session', () => ({ getAccessToken: async () => 'token-1' }));
+
+const fetchMock = jest.fn();
+
 beforeEach(() => {
-  jest.useFakeTimers();
+  fetchMock.mockReset();
+  globalThis.fetch = fetchMock;
 });
-
-afterEach(() => {
-  jest.useRealTimers();
-});
-
-async function resolveGetLesson(lessonId: string) {
-  const lesson = getLesson(lessonId);
-  await jest.runAllTimersAsync();
-  return lesson;
-}
 
 describe('getLesson', () => {
-  it('returns the requested lesson', async () => {
-    expect((await resolveGetLesson('saudacoes-bom-dia')).id).toBe('saudacoes-bom-dia');
-  });
+  it('reads GET /v1/lessons/:lessonId from the BFF', async () => {
+    const lesson = mockLesson('saudacoes-bom-dia');
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => lesson });
 
-  it('mixes 6 to 8 sign_to_word and word_to_sign exercises', async () => {
-    const { exercises } = await resolveGetLesson('saudacoes-bom-dia');
-    const types = new Set(exercises.map((exercise) => exercise.type));
+    await expect(getLesson('saudacoes-bom-dia')).resolves.toEqual(lesson);
 
-    expect(exercises.length).toBeGreaterThanOrEqual(6);
-    expect(exercises.length).toBeLessThanOrEqual(8);
-    expect(types).toEqual(new Set(['sign_to_word', 'word_to_sign']));
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://bff.test/v1/lessons/saudacoes-bom-dia');
+    expect(init.method).toBe('GET');
   });
 });

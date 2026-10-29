@@ -1,121 +1,57 @@
-import type { CompleteLessonRequest } from '@libras/contracts';
+import type { CompleteLessonRequest, CompleteLessonResponse } from '@libras/contracts';
 
-import { getMockStats, resetMockServer } from '@/shared/api/mockServer';
+import { submitSession } from './submitSession';
 
-import { mockLesson } from './lessonMocks';
-import { simulateNetwork, submitSession } from './submitSession';
+jest.mock('@/shared/api/session', () => ({ getAccessToken: async () => 'token-1' }));
 
-const lesson = mockLesson('saudacoes-bom-dia');
-const key = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+const fetchMock = jest.fn();
 
-// Every exercise answered correctly except the first `wrong` ones.
-function session(idempotencyKey: string, wrong = 0): CompleteLessonRequest {
-  return {
-    lessonId: lesson.id,
-    idempotencyKey,
-    answers: lesson.exercises.map((exercise, index) => ({
-      exerciseId: exercise.id,
-      answer: {
-        type: exercise.type,
-        optionId:
-          index < wrong
-            ? (exercise.options.find((option) => option.id !== exercise.correctOptionId)?.id ?? '')
-            : exercise.correctOptionId,
-      },
-    })),
-    localDate: '2026-03-14',
-  };
-}
+const session: CompleteLessonRequest = {
+  lessonId: 'saudacoes-bom-dia',
+  idempotencyKey: '00000000-0000-4000-8000-000000000001',
+  answers: [{ exerciseId: 'ex-oi', answer: { type: 'sign_to_word', optionId: 'oi' } }],
+  localDate: '2026-03-14',
+};
+const response: CompleteLessonResponse = {
+  xpEarned: 15,
+  streak: { current: 1, longest: 1, status: 'done_today' },
+  streakIncreased: true,
+};
 
-async function resolveSubmit(request: CompleteLessonRequest) {
-  const submitting = submitSession(request);
-  // Attached before the timers run so a rejection is not reported as unhandled.
-  const settled = submitting.then(
-    (value) => ({ value }),
-    (error: unknown) => ({ error }),
-  );
-  await jest.runAllTimersAsync();
-  return settled;
+type SentInit = { method: string; headers: Record<string, string>; body: string };
+
+function sent(): { url: string; init: SentInit } {
+  const [url, init] = fetchMock.mock.calls[0] as [string, SentInit];
+  return { url, init };
 }
 
 beforeEach(() => {
-  jest.useFakeTimers();
-  resetMockServer('at_risk');
-  simulateNetwork('online');
-});
-
-afterEach(() => {
-  jest.useRealTimers();
+  fetchMock.mockReset().mockResolvedValue({ ok: true, status: 200, json: async () => response });
+  globalThis.fetch = fetchMock;
 });
 
 describe('submitSession', () => {
-  it('earns 10 XP for a lesson with mistakes', async () => {
-    const result = await resolveSubmit(session(key(1), 2));
+  it('posts the session with its Idempotency-Key and returns the official result', async () => {
+    await expect(submitSession(session)).resolves.toEqual(response);
 
-    expect(result).toMatchObject({ value: { xpEarned: 10 } });
-    expect(getMockStats().totalXp).toBe(1240 + 10);
+    const { url, init } = sent();
+    expect(url).toBe('https://bff.test/v1/lessons/saudacoes-bom-dia/sessions');
+    expect(init.method).toBe('POST');
+    expect(init.headers['Idempotency-Key']).toBe(session.idempotencyKey);
   });
 
-  it('earns a 5 XP bonus when the server grades every answer as correct', async () => {
-    const result = await resolveSubmit(session(key(1)));
+  it('sends only the answers and the date the lesson ended in the body', async () => {
+    await submitSession(session);
 
-    expect(result).toMatchObject({ value: { xpEarned: 15 } });
-    expect(getMockStats().totalXp).toBe(1240 + 15);
-  });
-
-  it('earns XP again when the lesson is redone', async () => {
-    await resolveSubmit(session(key(1)));
-    await resolveSubmit(session(key(2)));
-
-    expect(getMockStats().totalXp).toBe(1240 + 15 + 15);
-  });
-
-  it('grows the streak on the first lesson of the day only', async () => {
-    const first = await resolveSubmit(session(key(1)));
-    const second = await resolveSubmit(session(key(2)));
-
-    expect(first).toMatchObject({
-      value: { streak: { current: 8, status: 'done_today' }, streakIncreased: true },
+    expect(JSON.parse(sent().init.body)).toEqual({
+      answers: session.answers,
+      localDate: '2026-03-14',
     });
-    expect(second).toMatchObject({ value: { streak: { current: 8 }, streakIncreased: false } });
   });
 
-  it('restarts a broken streak at 1', async () => {
-    resetMockServer('broken');
+  it('rejects a request outside the contract without sending it', async () => {
+    await expect(submitSession({ ...session, answers: [] })).rejects.toThrow();
 
-    const result = await resolveSubmit(session(key(1)));
-
-    expect(result).toMatchObject({ value: { streak: { current: 1 }, streakIncreased: true } });
-  });
-
-  it('returns the first result again for a repeated idempotency key', async () => {
-    const first = await resolveSubmit(session(key(1)));
-    const repeated = await resolveSubmit(session(key(1)));
-
-    expect(repeated).toEqual(first);
-    expect(getMockStats().totalXp).toBe(1240 + 15);
-  });
-
-  it('fails like fetch without network when offline', async () => {
-    simulateNetwork('offline');
-
-    const result = await resolveSubmit(session(key(1)));
-
-    expect(result).toEqual({ error: new TypeError('Network request failed') });
-    expect(getMockStats().totalXp).toBe(1240);
-  });
-
-  it('fails only the first attempt of each session when the network is flaky', async () => {
-    simulateNetwork('firstAttemptFails');
-
-    expect(await resolveSubmit(session(key(1)))).toHaveProperty('error');
-    expect(await resolveSubmit(session(key(1)))).toHaveProperty('value');
-    expect(await resolveSubmit(session(key(2)))).toHaveProperty('error');
-  });
-
-  it('rejects a request outside the contract', async () => {
-    const result = await resolveSubmit({ ...session(key(1)), answers: [] });
-
-    expect(result).toHaveProperty('error');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

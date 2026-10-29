@@ -1,16 +1,20 @@
 import type { CompleteLessonRequest, CompleteLessonResponse } from '@libras/contracts';
 
+import { reloadHome } from '@/features/home';
 import { ApiError } from '@/shared/api/client';
 
 import { pendingSessions } from '../api/pendingSessions';
 import { submitSession } from '../api/submitSession';
 import { useCompletionStore } from './completionStore';
 
+jest.mock('@/features/home', () => ({ reloadHome: jest.fn() }));
 jest.mock('../api/submitSession');
 jest.mock('../api/pendingSessions', () => ({ pendingSessions: { enqueue: jest.fn() } }));
 
 const submitMock = jest.mocked(submitSession);
 const enqueueMock = jest.mocked(pendingSessions.enqueue);
+const reloadHomeMock = jest.mocked(reloadHome);
+const networkError = () => new ApiError('network', 'Sem resposta');
 const initialState = useCompletionStore.getState();
 
 const request: CompleteLessonRequest = {
@@ -30,6 +34,7 @@ beforeEach(() => {
   useCompletionStore.setState(initialState, true);
   submitMock.mockReset();
   enqueueMock.mockReset();
+  reloadHomeMock.mockReset().mockResolvedValue(undefined);
 });
 
 describe('useCompletionStore', () => {
@@ -45,22 +50,48 @@ describe('useCompletionStore', () => {
     expect(enqueueMock).not.toHaveBeenCalled();
   });
 
+  it('reloads the home once the BFF answers, even after the learner left', async () => {
+    let answer = (_value: CompleteLessonResponse) => {};
+    submitMock.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+
+    const submitting = useCompletionStore.getState().submit(request, summary);
+    useCompletionStore.getState().reset();
+    expect(reloadHomeMock).not.toHaveBeenCalled();
+    answer(response);
+    await submitting;
+
+    expect(reloadHomeMock).toHaveBeenCalledTimes(1);
+  });
+
   it('queues the session when there is no network', async () => {
-    submitMock.mockRejectedValue(new TypeError('Network request failed'));
+    submitMock.mockRejectedValue(networkError());
 
     await useCompletionStore.getState().submit(request, summary);
 
     expect(enqueueMock).toHaveBeenCalledWith(request);
     expect(useCompletionStore.getState()).toMatchObject({ status: 'pending', result: null });
+    expect(reloadHomeMock).not.toHaveBeenCalled();
+  });
+
+  it('queues the session when the server fails', async () => {
+    submitMock.mockRejectedValue(new ApiError('server', 'falhou', 503, 'INTERNAL_ERROR'));
+
+    await useCompletionStore.getState().submit(request, summary);
+
+    expect(enqueueMock).toHaveBeenCalledWith(request);
+    expect(useCompletionStore.getState().status).toBe('pending');
   });
 
   it('does not queue a session the BFF refused', async () => {
-    submitMock.mockRejectedValue(new ApiError(422, 'invalid'));
+    submitMock.mockRejectedValue(
+      new ApiError('request', 'recusada', 422, 'LOCAL_DATE_TOO_FAR_AHEAD'),
+    );
 
     await useCompletionStore.getState().submit(request, summary);
 
     expect(enqueueMock).not.toHaveBeenCalled();
     expect(useCompletionStore.getState().status).toBe('failed');
+    expect(reloadHomeMock).not.toHaveBeenCalled();
   });
 
   it('still queues a failed session after the learner left the screen', async () => {
@@ -69,7 +100,7 @@ describe('useCompletionStore', () => {
 
     const submitting = useCompletionStore.getState().submit(request, summary);
     useCompletionStore.getState().reset();
-    fail(new TypeError('Network request failed'));
+    fail(networkError());
     await submitting;
 
     expect(enqueueMock).toHaveBeenCalledWith(request);

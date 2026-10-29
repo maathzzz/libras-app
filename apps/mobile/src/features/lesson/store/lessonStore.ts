@@ -2,6 +2,7 @@ import type { CompleteLessonRequest, ExerciseAnswer, LessonBundle } from '@libra
 import * as Crypto from 'expo-crypto';
 import { create } from 'zustand';
 
+import { ApiError, isNetworkError } from '@/shared/api/client';
 import { getLocalDate } from '@/shared/lib/localDate';
 import { prefetchImages } from '@/shared/lib/prefetchImages';
 
@@ -14,12 +15,24 @@ type LessonStatus = 'idle' | 'loading' | 'preparing' | 'playing' | 'finished' | 
 
 export type Verdict = 'correct' | 'wrong';
 
+/** `locked` and `notFound` send the learner back to the home; the others offer a retry. */
+export type LessonLoadError = 'offline' | 'server' | 'locked' | 'notFound';
+
+function loadErrorOf(error: unknown): LessonLoadError {
+  if (isNetworkError(error)) return 'offline';
+  if (error instanceof ApiError && error.status === 403) return 'locked';
+  if (error instanceof ApiError && error.status === 404) return 'notFound';
+  return 'server';
+}
+
 // Past this, the lesson starts anyway; images still missing load (or fail) when shown.
 const prefetchTimeoutMs = 5000;
 
 type LessonSession = {
   status: LessonStatus;
   lesson: LessonBundle | null;
+  /** Why the lesson could not be loaded; null otherwise. */
+  loadError: LessonLoadError | null;
   currentIndex: number;
   /** Choice for the current exercise; null until the learner picks something. */
   selection: ExerciseAnswer | null;
@@ -46,6 +59,7 @@ type LessonState = LessonSession & {
 const initialSession: LessonSession = {
   status: 'idle',
   lesson: null,
+  loadError: null,
   currentIndex: 0,
   selection: null,
   verdict: null,
@@ -68,8 +82,8 @@ export const useLessonStore = create<LessonState>()((set, get) => ({
     let lesson: LessonBundle;
     try {
       lesson = await getLesson(lessonId);
-    } catch {
-      if (isCurrent()) set({ status: 'error' });
+    } catch (error) {
+      if (isCurrent()) set({ status: 'error', loadError: loadErrorOf(error) });
       return;
     }
     if (!isCurrent()) return;

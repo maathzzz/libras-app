@@ -1,27 +1,35 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { AppState, type AppStateStatus } from 'react-native';
 
+import { useAuthStatus, type AuthStatus } from '@/features/auth';
 import { reloadHome } from '@/features/home';
 
 import { pendingSessions } from '../api/pendingSessions';
 import { useSyncPendingSessions } from './useSyncPendingSessions';
 
+jest.mock('@/features/auth', () => ({ useAuthStatus: jest.fn() }));
 jest.mock('@/features/home', () => ({ reloadHome: jest.fn() }));
 jest.mock('../api/pendingSessions', () => ({ pendingSessions: { flush: jest.fn() } }));
 
 const flushMock = jest.mocked(pendingSessions.flush);
 const reloadHomeMock = jest.mocked(reloadHome);
+const authStatusMock = jest.mocked(useAuthStatus);
 const removeListener = jest.fn();
 let changeAppState: (state: AppStateStatus) => void = () => {};
 
 beforeEach(() => {
+  authStatusMock.mockReset().mockReturnValue('signedIn');
   flushMock.mockReset().mockResolvedValue({ sent: 0 });
   reloadHomeMock.mockReset().mockResolvedValue(undefined);
   removeListener.mockReset();
-  jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, listener) => {
-    changeAppState = listener;
-    return { remove: removeListener };
-  });
+  changeAppState = () => {};
+  jest
+    .spyOn(AppState, 'addEventListener')
+    .mockClear()
+    .mockImplementation((_type, listener) => {
+      changeAppState = listener;
+      return { remove: removeListener };
+    });
 });
 
 // RNTL 14 renders asynchronously; awaiting also lets the first flush settle.
@@ -52,6 +60,26 @@ describe('useSyncPendingSessions', () => {
     await act(async () => changeAppState('active'));
 
     expect(reloadHomeMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends nothing while signed out, so the BFF does not refuse and drop the lessons', async () => {
+    authStatusMock.mockReturnValue('signedOut');
+    await renderSync();
+
+    expect(flushMock).not.toHaveBeenCalled();
+    expect(AppState.addEventListener).not.toHaveBeenCalled();
+  });
+
+  it('sends the pending sessions as soon as the learner signs in', async () => {
+    let status: AuthStatus = 'signedOut';
+    authStatusMock.mockImplementation(() => status);
+    const { rerender } = await renderSync();
+    expect(flushMock).not.toHaveBeenCalled();
+
+    status = 'signedIn';
+    await rerender({});
+
+    expect(flushMock).toHaveBeenCalledTimes(1);
   });
 
   it('stops listening when unmounted', async () => {

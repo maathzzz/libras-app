@@ -1,6 +1,6 @@
 import type { Trail } from '@libras/contracts';
 
-import { mockTrail } from '../api/homeMocks';
+import { mockTrail } from '../api/homeFixtures';
 import {
   daysLabel,
   findNextLesson,

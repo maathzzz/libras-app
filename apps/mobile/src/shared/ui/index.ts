@@ -6,6 +6,7 @@ export { Header } from './Header';
 export { Icon, type IconName } from './Icon';
 export { IconButton } from './IconButton';
 export { LinkButton } from './LinkButton';
+export { LoadError, type LoadErrorReason } from './LoadError';
 export { OptionRow } from './OptionRow';
 export { Pill, type PillTone } from './Pill';
 export { ProgressBar } from './ProgressBar';

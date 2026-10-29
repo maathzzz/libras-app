@@ -1,13 +1,24 @@
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { reloadHome } from '@/features/home';
 import { colors, spacing } from '@/shared/theme';
-import { AppText, Button } from '@/shared/ui';
+import { AppText, Button, LoadError } from '@/shared/ui';
 
-import { useLessonStore } from '../store/lessonStore';
+import { useLessonStore, type LessonLoadError } from '../store/lessonStore';
 import { LessonPlayer } from './LessonPlayer';
+
+type UnavailableReason = Extract<LessonLoadError, 'locked' | 'notFound'>;
+
+const unavailableMessages: Record<UnavailableReason, { title: string; body: string }> = {
+  locked: { title: 'Lição bloqueada', body: 'Conclua as lições anteriores para liberar esta.' },
+  notFound: { title: 'Lição indisponível', body: 'Esta lição não está mais disponível.' },
+};
+
+const isUnavailable = (error: LessonLoadError | null): error is UnavailableReason =>
+  error === 'locked' || error === 'notFound';
 
 type LessonScreenProps = {
   lessonId: string;
@@ -15,6 +26,7 @@ type LessonScreenProps = {
 
 export function LessonScreen({ lessonId }: LessonScreenProps) {
   const status = useLessonStore((state) => state.status);
+  const loadError = useLessonStore((state) => state.loadError);
   const start = useLessonStore((state) => state.start);
   const reset = useLessonStore((state) => state.reset);
 
@@ -24,12 +36,29 @@ export function LessonScreen({ lessonId }: LessonScreenProps) {
     return reset;
   }, [lessonId, start, reset]);
 
+  // Retrying would fail the same way. The home that offered this lesson was out of date, so it
+  // is reloaded while the learner goes back to it.
+  useEffect(() => {
+    if (!isUnavailable(loadError)) return;
+    const { title, body } = unavailableMessages[loadError];
+    Alert.alert(title, body);
+    void reloadHome();
+    router.dismissTo('/');
+  }, [loadError]);
+
   if (status === 'playing' || status === 'finished') return <LessonPlayer />;
+  if (isUnavailable(loadError)) return <SafeAreaView style={styles.centered} />;
 
   return (
     <SafeAreaView style={styles.centered}>
-      {status === 'error' ? (
-        <LoadError onRetry={() => void start(lessonId)} />
+      {status === 'error' && loadError ? (
+        <LoadError
+          title="Não foi possível abrir a lição."
+          reason={loadError}
+          onRetry={() => void start(lessonId)}
+        >
+          <Button label="Voltar" variant="ghost" onPress={() => router.back()} />
+        </LoadError>
       ) : (
         <>
           <ActivityIndicator color={colors.accent} accessibilityLabel="Preparando a lição" />
@@ -42,21 +71,6 @@ export function LessonScreen({ lessonId }: LessonScreenProps) {
   );
 }
 
-function LoadError({ onRetry }: { onRetry: () => void }) {
-  return (
-    <View style={styles.error}>
-      <AppText variant="subtitle" align="center">
-        Não foi possível abrir a lição.
-      </AppText>
-      <AppText variant="body" align="center">
-        Verifique sua conexão e tente de novo.
-      </AppText>
-      <Button label="Tentar de novo" onPress={onRetry} />
-      <Button label="Voltar" variant="ghost" onPress={() => router.back()} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   centered: {
     flex: 1,
@@ -64,10 +78,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.md,
     backgroundColor: colors.background,
-  },
-  error: {
-    alignSelf: 'stretch',
-    gap: spacing.lg,
-    paddingHorizontal: spacing['4xl'],
   },
 });
