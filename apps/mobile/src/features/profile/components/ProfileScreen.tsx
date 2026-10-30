@@ -1,9 +1,8 @@
 import type { HomeResponse } from '@libras/contracts';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { signOut } from '@/features/auth';
 import {
   completedUnits,
   daysLabel,
@@ -12,22 +11,13 @@ import {
   trailLessonCounts,
   useHome,
 } from '@/features/home';
-import { haptics } from '@/shared/lib/haptics';
 import { colors, spacing } from '@/shared/theme';
-import { AppText, Button, Card, ProgressBar, ScreenTitle } from '@/shared/ui';
+import { AppText, Card, ProgressBar, ScreenTitle } from '@/shared/ui';
 
 import { startLevelLabels } from '../content/startLevels';
 import { useProfileStore } from '../store/profileStore';
 import { IdentityCard } from './IdentityCard';
 import { ProfileStat } from './ProfileStat';
-
-function confirmSignOut() {
-  Alert.alert('Sair da conta?', 'Você vai precisar entrar de novo para continuar.', [
-    { text: 'Cancelar', style: 'cancel' },
-    // The session guard in the root layout takes the learner back to the welcome screen.
-    { text: 'Sair', style: 'destructive', onPress: () => void signOut() },
-  ]);
-}
 
 // Shown while the home, where these numbers come from, has not loaded yet.
 const missingValue = '—';
@@ -100,10 +90,7 @@ export function ProfileScreen() {
   const profile = useProfileStore((state) => state.profile);
   const home = useHome();
   const homeMissing = home === null;
-  const deleting = useProfileStore((state) => state.deleting);
   const load = useProfileStore((state) => state.load);
-  const deleteAccount = useProfileStore((state) => state.deleteAccount);
-  const [deleteFailed, setDeleteFailed] = useState(false);
 
   useEffect(() => {
     void load();
@@ -113,29 +100,6 @@ export function ProfileScreen() {
   useEffect(() => {
     if (homeMissing) void reloadHome();
   }, [homeMissing]);
-
-  const removeAccount = async () => {
-    setDeleteFailed(false);
-    if (await deleteAccount()) return;
-    setDeleteFailed(true);
-    void haptics.wrong();
-  };
-
-  // Spells out that nothing can be recovered: deleting is the only action here that cannot be undone.
-  const confirmDelete = () => {
-    Alert.alert(
-      'Excluir sua conta para sempre?',
-      'Sua conta, sua sequência, seu XP e todo o seu progresso serão apagados. Não será possível desfazer nem recuperar nada depois.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir para sempre',
-          style: 'destructive',
-          onPress: () => void removeAccount(),
-        },
-      ],
-    );
-  };
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -151,27 +115,6 @@ export function ProfileScreen() {
           </AppText>
           <Stats home={home} />
           {home && <TrailProgress home={home} />}
-        </View>
-
-        <Button label="Sair da conta" variant="secondary" onPress={confirmSignOut} />
-
-        <View style={styles.deleteSection}>
-          <AppText variant="caption">
-            Excluir a conta apaga todos os seus dados de forma permanente.
-          </AppText>
-          <Button
-            label={deleting ? 'Excluindo…' : 'Excluir conta'}
-            variant="danger"
-            onPress={confirmDelete}
-            disabled={deleting}
-          />
-          {deleteFailed && (
-            <View accessibilityRole="alert" accessibilityLiveRegion="polite">
-              <AppText variant="bodyStrong" color="danger" align="center">
-                Não foi possível excluir a conta. Verifique sua conexão e tente de novo.
-              </AppText>
-            </View>
-          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -203,8 +146,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-  },
-  deleteSection: {
-    gap: spacing.md,
   },
 });

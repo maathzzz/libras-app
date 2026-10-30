@@ -55,6 +55,11 @@ export const textStyles = {
     textTransform: 'uppercase',
   }),
   link: style('semibold', fontSize.md, { color: colors.textSubtle }),
+  // Discreet action written as plain text, like deleting the account.
+  textLink: style('medium', fontSize.sm, {
+    color: colors.textMuted,
+    textDecorationLine: 'underline',
+  }),
   pill: style('bold', fontSize.md),
   label: style('bold', fontSize.xs, { lineHeight: fontSize.xs * 1.3 }),
   tab: style('bold', fontSize.xs),

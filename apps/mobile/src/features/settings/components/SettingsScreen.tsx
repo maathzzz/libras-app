@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { signOut } from '@/features/auth';
 import { useHomeStreakDays, useHomeTotalXp } from '@/features/home';
-import { dailyGoalLabel, loadProfile, useProfile } from '@/features/profile';
+import { DeleteAccountLink, dailyGoalLabel, loadProfile, useProfile } from '@/features/profile';
 import { colors, radius, spacing } from '@/shared/theme';
 import { AppText, Button, ScreenTitle, Switch } from '@/shared/ui';
 
@@ -125,6 +125,7 @@ export function SettingsScreen() {
           </AppText>
         </View>
         <Button label="Sair da conta" variant="danger" onPress={confirmSignOut} />
+        <DeleteAccountLink />
       </ScrollView>
     </SafeAreaView>
   );

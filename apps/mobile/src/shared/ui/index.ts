@@ -16,3 +16,4 @@ export { SignImage } from './SignImage';
 export { StatTile, type StatTileTone } from './StatTile';
 export { Switch } from './Switch';
 export { TextField } from './TextField';
+export { TextLink } from './TextLink';
