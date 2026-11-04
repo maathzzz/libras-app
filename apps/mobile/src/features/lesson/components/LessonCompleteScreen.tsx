@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ReminderOffer } from '@/features/reminder';
 import { haptics } from '@/shared/lib/haptics';
 import { colors, duration, spacing } from '@/shared/theme';
 import { AppText, Button, Card, StatTile } from '@/shared/ui';
@@ -90,6 +91,11 @@ export function LessonCompleteScreen() {
         )}
         {status === 'pending' && <Notice tone="warning" message={pendingMessage} />}
         {status === 'failed' && <Notice tone="danger" message={failedMessage} />}
+        {status !== 'failed' && (
+          <Animated.View entering={enter(3)}>
+            <ReminderOffer />
+          </Animated.View>
+        )}
       </ScrollView>
       <View style={styles.footer}>
         <Button label="Voltar à trilha" onPress={leave} />

@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { restoreSession, useAuthStatus } from '@/features/auth';
 import { useSyncPendingSessions } from '@/features/lesson';
 import { useProfileSession } from '@/features/profile';
+import { useStreakReminder } from '@/features/reminder';
 import { useAppFonts } from '@/shared/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -17,6 +18,7 @@ export default function RootLayout() {
   const signedIn = authStatus === 'signedIn';
   useSyncPendingSessions();
   useProfileSession();
+  useStreakReminder();
 
   useEffect(() => {
     void restoreSession();
@@ -43,6 +45,7 @@ export default function RootLayout() {
           />
           <Stack.Screen name="study/[studyId]" options={{ presentation: 'fullScreenModal' }} />
           <Stack.Screen name="daily-goal" />
+          <Stack.Screen name="reminder-time" />
           {/* On the root stack so the sheet covers the tab bar and reaches the screen edge. */}
           <Stack.Screen
             name="hand-sign/[signId]"

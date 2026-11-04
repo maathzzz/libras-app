@@ -2,6 +2,7 @@ import type { CompleteLessonRequest, CompleteLessonResponse } from '@libras/cont
 import { create } from 'zustand';
 
 import { reloadHome } from '@/features/home';
+import { markLessonDoneForReminder } from '@/features/reminder';
 import { isRetryableError } from '@/shared/api/client';
 
 import { pendingSessions } from '../api/pendingSessions';
@@ -48,6 +49,7 @@ export const useCompletionStore = create<CompletionState>()((set, get) => ({
     try {
       const result = await submitSession(request);
       if (isCurrent()) set({ status: 'completed', result });
+      void markLessonDoneForReminder(request.localDate);
       // Streak and XP changed. Reloaded here, not when the learner leaves: they may leave
       // before the answer arrives.
       void reloadHome();
@@ -58,6 +60,8 @@ export const useCompletionStore = create<CompletionState>()((set, get) => ({
       }
       // Queued even if the learner already left: the lesson must not be lost.
       pendingSessions.enqueue(request);
+      // The lesson was done today even if the BFF only hears about it later.
+      void markLessonDoneForReminder(request.localDate);
       if (isCurrent()) set({ status: 'pending' });
     }
   },

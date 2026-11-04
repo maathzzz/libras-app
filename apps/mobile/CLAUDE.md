@@ -23,6 +23,7 @@ src/
     study/               # Aba "Estudar" e leitor de páginas de estudo
     onboarding/          # Boas-vindas, nível e meta diária
     settings/            # Ajustes
+    reminder/            # Lembrete de streak (notificação local)
     streak/
     profile/
   shared/
@@ -67,6 +68,14 @@ src/
 * Cada tipo de bloco é um `case` em `features/study/components/StudyBlockView.tsx`. Para adicionar um tipo: criar o schema em `contracts` e o `case` correspondente; o `switch` não tem `default`, então o typecheck aponta o caso que falta.
 * Nada é enviado ao BFF ao concluir: "Concluir" só fecha o leitor.
 * Enquanto o BFF não existe, `api/studyMocks.ts` traz o estudo "Alfabeto manual", que reaproveita as letras exportadas por `features/alphabet`. O texto é provisório e precisa de revisão por especialista em Libras.
+
+## Lembrete de streak
+
+* Notificação **local** (`expo-notifications`), sem push e sem BFF: a preferência (ligado, horário) fica no MMKV do aparelho. Tudo fica em `features/reminder/`.
+* Um gatilho diário repetido não consegue pular um dia, então são agendadas notificações avulsas (gatilho `DATE`) para os próximos 7 dias, com identificador `streak-reminder-YYYY-MM-DD`. O hook `useStreakReminder` (layout raiz) reagenda a janela ao abrir o app, ao entrar na conta e a cada volta ao primeiro plano; ao sair da conta, cancela tudo.
+* Concluir uma lição (confirmada pelo BFF ou enfileirada) chama `markLessonDoneForReminder(localDate)`, que reagenda a partir de amanhã. A home com `streak.status === 'done_today'` (lição feita em outro aparelho) tem o mesmo efeito.
+* Os reagendamentos rodam em fila no store, para que um reagendamento antigo não recoloque o lembrete de hoje depois de uma lição.
+* A permissão **nunca** é pedida na abertura do app. Ela é oferecida uma única vez em `ReminderOffer`, na tela de lição concluída; o pedido do sistema só aparece se o usuário tocar em "Ativar lembrete". Depois disso, o lembrete é ligado, desligado e tem o horário alterado em Ajustes (rota `reminder-time`, com o `DateTimePicker` de `@expo/ui`).
 
 ## Imagens
 

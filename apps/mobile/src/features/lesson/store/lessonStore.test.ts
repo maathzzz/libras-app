@@ -11,6 +11,7 @@ import { useLessonStore } from './lessonStore';
 jest.mock('expo-crypto', () => ({ randomUUID: jest.fn() }));
 jest.mock('@/shared/lib/prefetchImages', () => ({ prefetchImages: jest.fn() }));
 jest.mock('../api/getLesson');
+jest.mock('@/features/reminder', () => ({ markLessonDoneForReminder: jest.fn() }));
 
 const getLessonMock = jest.mocked(getLesson);
 const prefetchMock = jest.mocked(prefetchImages);

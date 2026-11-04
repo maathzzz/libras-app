@@ -14,6 +14,11 @@ jest.mock('expo-router', () => ({
   useFocusEffect: (effect: () => void | (() => void)) => mockUseEffect(effect, [effect]),
 }));
 jest.mock('@/shared/lib/haptics', () => ({ haptics: { correct: jest.fn() } }));
+// The reminder is tested in its own feature; here it would load the native notifications module.
+jest.mock('@/features/reminder', () => ({
+  ReminderOffer: () => null,
+  markLessonDoneForReminder: jest.fn(),
+}));
 
 const initialState = useCompletionStore.getState();
 const summary = { correct: 5, total: 6, durationMs: 134_000 };

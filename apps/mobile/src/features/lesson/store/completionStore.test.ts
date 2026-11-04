@@ -1,6 +1,7 @@
 import type { CompleteLessonRequest, CompleteLessonResponse } from '@libras/contracts';
 
 import { reloadHome } from '@/features/home';
+import { markLessonDoneForReminder } from '@/features/reminder';
 import { ApiError } from '@/shared/api/client';
 
 import { pendingSessions } from '../api/pendingSessions';
@@ -8,12 +9,14 @@ import { submitSession } from '../api/submitSession';
 import { useCompletionStore } from './completionStore';
 
 jest.mock('@/features/home', () => ({ reloadHome: jest.fn() }));
+jest.mock('@/features/reminder', () => ({ markLessonDoneForReminder: jest.fn() }));
 jest.mock('../api/submitSession');
 jest.mock('../api/pendingSessions', () => ({ pendingSessions: { enqueue: jest.fn() } }));
 
 const submitMock = jest.mocked(submitSession);
 const enqueueMock = jest.mocked(pendingSessions.enqueue);
 const reloadHomeMock = jest.mocked(reloadHome);
+const markLessonDoneMock = jest.mocked(markLessonDoneForReminder);
 const networkError = () => new ApiError('network', 'Sem resposta');
 const initialState = useCompletionStore.getState();
 
@@ -35,6 +38,7 @@ beforeEach(() => {
   submitMock.mockReset();
   enqueueMock.mockReset();
   reloadHomeMock.mockReset().mockResolvedValue(undefined);
+  markLessonDoneMock.mockReset();
 });
 
 describe('useCompletionStore', () => {
@@ -48,6 +52,7 @@ describe('useCompletionStore', () => {
     expect(submitMock).toHaveBeenCalledWith(request);
     expect(useCompletionStore.getState()).toMatchObject({ status: 'completed', result: response });
     expect(enqueueMock).not.toHaveBeenCalled();
+    expect(markLessonDoneMock).toHaveBeenCalledWith('2026-03-14');
   });
 
   it('reloads the home once the BFF answers, even after the learner left', async () => {
@@ -71,6 +76,8 @@ describe('useCompletionStore', () => {
     expect(enqueueMock).toHaveBeenCalledWith(request);
     expect(useCompletionStore.getState()).toMatchObject({ status: 'pending', result: null });
     expect(reloadHomeMock).not.toHaveBeenCalled();
+    // The lesson was done today: today's reminder is cancelled before the BFF hears of it.
+    expect(markLessonDoneMock).toHaveBeenCalledWith('2026-03-14');
   });
 
   it('queues the session when the server fails', async () => {
@@ -92,6 +99,7 @@ describe('useCompletionStore', () => {
     expect(enqueueMock).not.toHaveBeenCalled();
     expect(useCompletionStore.getState().status).toBe('failed');
     expect(reloadHomeMock).not.toHaveBeenCalled();
+    expect(markLessonDoneMock).not.toHaveBeenCalled();
   });
 
   it('still queues a failed session after the learner left the screen', async () => {
