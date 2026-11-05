@@ -62,11 +62,11 @@ const initialAchievements: AchievementStatus[] = [
     unlockedAt,
   },
   {
-    id: 'lessons-50',
+    id: 'lessons-30',
     title: 'Mãos incansáveis',
-    description: 'Conclua 50 lições.',
+    description: 'Conclua 30 lições.',
     category: 'lessons',
-    progress: { current: 49, target: 50 },
+    progress: { current: 29, target: 30 },
     unlockedAt: null,
   },
   {

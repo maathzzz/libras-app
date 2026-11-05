@@ -44,12 +44,12 @@ export const achievementCatalog: readonly AchievementDefinition[] = [
     target: 10,
   },
   {
-    id: 'lessons-50',
+    id: 'lessons-30',
     title: 'Mãos incansáveis',
-    description: 'Conclua 50 lições.',
+    description: 'Conclua 30 lições.',
     category: 'lessons',
     metric: 'lessonsCompleted',
-    target: 50,
+    target: 30,
   },
   {
     id: 'first-perfect',
