@@ -4,14 +4,19 @@ import type { Clock } from '../../../shared/application/Clock';
 import { DomainError } from '../../../shared/domain/DomainError';
 import { LocalDate } from '../../../shared/domain/LocalDate';
 import { err, ok, type Result } from '../../../shared/domain/Result';
+import type { AchievementRepository } from '../domain/AchievementRepository';
+import { Achievements } from '../domain/Achievements';
 import { AnswerGrader } from '../domain/AnswerGrader';
 import type { LessonCatalog } from '../domain/LessonCatalog';
 import type { LessonProgressRepository } from '../domain/LessonProgressRepository';
 import type { LessonSessionRepository } from '../domain/LessonSessionRepository';
 import { LessonUnlocking } from '../domain/LessonUnlocking';
-import { Streak } from '../domain/Streak';
 import { lessonIdsOf, type TrailCatalog } from '../domain/TrailCatalog';
-import type { UserStats, UserStatsRepository } from '../domain/UserStatsRepository';
+import {
+  emptyStats,
+  type UserStats,
+  type UserStatsRepository,
+} from '../domain/UserStatsRepository';
 import { XpPolicy } from '../domain/XpPolicy';
 
 // userId comes from the token, never from the request body.
@@ -24,6 +29,7 @@ export class CompleteLesson {
     private readonly lessons: LessonCatalog,
     private readonly trails: TrailCatalog,
     private readonly progress: LessonProgressRepository,
+    private readonly achievements: AchievementRepository,
     private readonly clock: Clock,
   ) {}
 
@@ -59,10 +65,29 @@ export class CompleteLesson {
       return err(new DomainError('LESSON_LOCKED', `Lesson ${lessonId} is locked`));
     }
 
-    const xpEarned = XpPolicy.xpFor(AnswerGrader.grade(lesson.exercises, answers));
+    const results = AnswerGrader.grade(lesson.exercises, answers);
+    const xpEarned = XpPolicy.xpFor(results);
 
-    const stats = (await this.stats.findByUserId(userId)) ?? emptyStats(userId);
+    const [previousStats, unlocked] = await Promise.all([
+      this.stats.findByUserId(userId),
+      this.achievements.findUnlocked(userId),
+    ]);
+    const stats = previousStats ?? emptyStats(userId);
     const streak = stats.streak.registerLessonCompleted(day);
+    const nextStats: UserStats = {
+      userId,
+      totalXp: stats.totalXp + xpEarned,
+      streak,
+      lessonsCompleted: stats.lessonsCompleted + 1,
+      perfectLessons: stats.perfectLessons + (XpPolicy.isPerfect(results) ? 1 : 0),
+    };
+
+    // The rules see the progress as it is after this lesson. Everything they look at only
+    // changes here, so this is the only place achievements are unlocked.
+    const achievementsUnlocked = Achievements.newlyUnlocked(
+      Achievements.snapshotOf(nextStats, new Set([...completed, lessonId]), trail),
+      new Set(unlocked.map(({ achievementId }) => achievementId)),
+    );
 
     const response: CompleteLessonResponse = {
       xpEarned,
@@ -70,17 +95,15 @@ export class CompleteLesson {
       // Compared with the value shown before the lesson, so starting over after a broken
       // streak (0 → 1) counts as an increase, like the very first lesson.
       streakIncreased: streak.current > stats.streak.currentAt(day),
+      achievementsUnlocked: achievementsUnlocked.map(Achievements.toContract),
     };
 
     await this.sessions.saveCompletion({
       session: { userId, lessonId, idempotencyKey, completedAt: now, response },
-      stats: { userId, totalXp: stats.totalXp + xpEarned, streak },
+      stats: nextStats,
+      unlockedAchievementIds: achievementsUnlocked.map(({ id }) => id),
     });
 
     return ok(response);
   }
-}
-
-function emptyStats(userId: string): UserStats {
-  return { userId, totalXp: 0, streak: Streak.empty() };
 }

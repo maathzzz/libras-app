@@ -1,6 +1,7 @@
 import type { CompleteLessonRequest, CompleteLessonResponse } from '@libras/contracts';
 import { create } from 'zustand';
 
+import { reloadAchievements } from '@/features/achievements';
 import { reloadHome } from '@/features/home';
 import { markLessonDoneForReminder } from '@/features/reminder';
 import { isRetryableError } from '@/shared/api/client';
@@ -50,9 +51,10 @@ export const useCompletionStore = create<CompletionState>()((set, get) => ({
       const result = await submitSession(request);
       if (isCurrent()) set({ status: 'completed', result });
       void markLessonDoneForReminder(request.localDate);
-      // Streak and XP changed. Reloaded here, not when the learner leaves: they may leave
-      // before the answer arrives.
+      // Streak, XP and achievements changed. Reloaded here, not when the learner leaves: they
+      // may leave before the answer arrives.
       void reloadHome();
+      void reloadAchievements();
     } catch (error) {
       if (!isRetryableError(error)) {
         if (isCurrent()) set({ status: 'failed' });

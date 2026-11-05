@@ -9,11 +9,12 @@ Aplicativo gamificado para ensino de Libras (inspirado no Duolingo). Monorepo co
 * XP é apenas uma pontuação acumulada. A regra de cálculo está em "Regras de domínio".
 * A **meta diária** (1, 3, 5 ou 8 lições) é só um alvo pessoal, exibido no progresso do dia. Ela não altera a regra do streak.
 * Conteúdo visual composto **somente por imagens** (sem vídeos, sem áudio).
+* **Conquistas**: 15 conquistas fixas (lições, lições sem erro, revisão, XP, streak e módulos), desbloqueadas ao concluir uma lição e listadas no perfil com o progresso de cada uma. O catálogo e as regras ficam no BFF (`modules/progress/domain/Achievements.ts`).
 * **Estudos**: páginas de conteúdo que ensinam, passo a passo, o assunto de uma trilha antes das lições. Ficam na aba "Estudar", agrupados por trilha. São recomendados, mas **não bloqueiam lições, não dão XP e não contam para o streak**. Usam apenas texto e imagens. Na interface o nome é "Estudo"; no código, `study` (para não confundir com `lesson`, que é a sessão de exercícios). O estudo de exemplo é o "Alfabeto manual"; os das demais trilhas serão definidos junto com o planejamento de cada trilha.
 
 **Fora do escopo — não implementar sem solicitação explícita:**
 
-* Ligas, rankings, corações, conquistas e revisão espaçada
+* Ligas, rankings, corações e revisão espaçada
 * TanStack Query ou qualquer outra biblioteca de cache de servidor
 * Ferramentas de observabilidade (OpenTelemetry, Sentry, APM)
 * Filas, jobs agendados, Redis ou EventBus
@@ -58,6 +59,7 @@ Fonte única de verdade dos dados trocados entre app e BFF.
 * Toda rota do BFF tem schemas de request e response definidos aqui.
 * Exercícios são uma `z.discriminatedUnion('type', \[...])`. Tipos atuais: `sign\_to\_word`, `word\_to\_sign`, `fingerspelling`, `match\_pairs`, `handshape`.
 * Imagens são representadas por `SignImage` (`url` + `alt`). Um sinal com movimento usa uma lista de imagens em sequência.
+* Conquistas ficam em `achievement.ts`: `Achievement` (o que a conclusão de lição devolve em `achievementsUnlocked`) e `AchievementStatus` (com `progress` e `unlockedAt`, para o perfil).
 * Estudos ficam em `study.ts`. Os blocos de uma página também são uma `z.discriminatedUnion('type', \[...])` (`StudyBlock`). Tipos atuais: `text`, `sign` (rótulo + `SignImageSequence` + dica opcional) e `tip`.
 * Ao alterar um contrato, atualize o BFF e o app na mesma tarefa.
 
@@ -70,6 +72,7 @@ Fonte única de verdade dos dados trocados entre app e BFF.
 * Conexão via pooler do Supabase em modo transação, com prepared statements desativados.
 * O schema Drizzle (`shared/infrastructure/db/schema.ts`) espelha as migrations e serve só para tipar as consultas. As migrations são a fonte da verdade: altere os dois juntos.
 * O seed (`supabase/seed.sql`) é gerado por `apps/bff/scripts/seed`, que valida os exercícios com `contracts`. Não edite o SQL à mão. O seed faz upsert por id, porque o banco remoto nunca é recriado.
+* Conquistas desbloqueadas ficam em `app.user\_achievements` (`user\_id`, `achievement\_id`, `unlocked\_at`). O `achievement\_id` não tem chave estrangeira: o catálogo é código do BFF. Por isso um id de conquista nunca é renomeado nem reaproveitado.
 * A chave secreta do Supabase existe **apenas no BFF** (env do Cloud Run e `.env` local, fora do git). Ela nunca vai para o app, para variáveis `EXPO\_PUBLIC\_\*` nem para o repositório.
 
 ## Convenções gerais

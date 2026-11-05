@@ -203,11 +203,38 @@ export const userStats = app.table(
     streakLongest: integer('streak_longest').notNull().default(0),
     // YYYY-MM-DD, the same format as LocalDate.toString().
     lastActiveDate: date('last_active_date', { mode: 'string' }),
+    lessonsCompleted: integer('lessons_completed').notNull().default(0),
+    perfectLessons: integer('perfect_lessons').notNull().default(0),
     createdAt: createdAt(),
   },
   (table) => [
     check('user_stats_xp_total_check', sql`${table.xpTotal} >= 0`),
     check('user_stats_streak_current_check', sql`${table.streakCurrent} >= 0`),
     check('user_stats_streak_longest_check', sql`${table.streakLongest} >= ${table.streakCurrent}`),
+    check('user_stats_lessons_completed_check', sql`${table.lessonsCompleted} >= 0`),
+    check(
+      'user_stats_perfect_lessons_check',
+      sql`${table.perfectLessons} between 0 and ${table.lessonsCompleted}`,
+    ),
+  ],
+);
+
+// The achievement catalog is code in the BFF, so achievement_id has no foreign key.
+export const userAchievements = app.table(
+  'user_achievements',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    achievementId: text('achievement_id').notNull(),
+    unlockedAt: timestamp('unlocked_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.achievementId] }),
+    check(
+      'user_achievements_achievement_id_check',
+      sql`char_length(${table.achievementId}) between 1 and 60`,
+    ),
   ],
 );

@@ -1,4 +1,5 @@
 import {
+  AchievementsResponse,
   CompleteLessonResponse,
   ErrorResponse,
   HomeResponse,
@@ -13,6 +14,7 @@ import { LocalDate } from '../../../shared/domain/LocalDate';
 import { createInMemoryContainer } from '../../../testing/inMemoryContainer';
 import { createTestTokens, type TestTokens } from '../../../testing/testTokens';
 import { Streak } from '../domain/Streak';
+import { emptyStats } from '../domain/UserStatsRepository';
 import { InMemoryLessonCatalog } from '../testing/InMemoryLessonCatalog';
 import { InMemoryProgressStore } from '../testing/InMemoryProgressStore';
 import { InMemoryTrailCatalog } from '../testing/InMemoryTrailCatalog';
@@ -81,11 +83,32 @@ describe('progress routes', () => {
   const get = (url: string, headers: Record<string, string> = {}) =>
     app.inject({ method: 'GET', url, headers: { authorization: `Bearer ${token}`, ...headers } });
 
+  const post = (
+    url: string,
+    payload: object,
+    headers: Record<string, string> = { 'idempotency-key': idempotencyKey },
+  ) =>
+    app.inject({
+      method: 'POST',
+      url,
+      payload,
+      headers: { authorization: `Bearer ${token}`, ...headers },
+    });
+
+  const expectError = (
+    response: Awaited<ReturnType<typeof post>>,
+    status: number,
+    code: string,
+  ) => {
+    expect(response.statusCode).toBe(status);
+    expect(ErrorResponse.parse(response.json()).error.code).toBe(code);
+  };
+
   describe('GET /v1/home', () => {
     it('answers the trail with lesson statuses, the streak and the XP', async () => {
       progress.seedCompletedLessons(userId, ['vogais']);
       progress.seedStats({
-        userId,
+        ...emptyStats(userId),
         totalXp: 15,
         streak: Streak.empty().registerLessonCompleted(LocalDate.of(2026, 3, 14)),
       });
@@ -165,27 +188,6 @@ describe('progress routes', () => {
   });
 
   describe('POST /v1/lessons/:lessonId/sessions', () => {
-    const post = (
-      url: string,
-      payload: object,
-      headers: Record<string, string> = { 'idempotency-key': idempotencyKey },
-    ) =>
-      app.inject({
-        method: 'POST',
-        url,
-        payload,
-        headers: { authorization: `Bearer ${token}`, ...headers },
-      });
-
-    const expectError = (
-      response: Awaited<ReturnType<typeof post>>,
-      status: number,
-      code: string,
-    ) => {
-      expect(response.statusCode).toBe(status);
-      expect(ErrorResponse.parse(response.json()).error.code).toBe(code);
-    };
-
     it('completes the lesson and answers the XP and the streak', async () => {
       const response = await post('/v1/lessons/vogais/sessions', body('vogais'));
 
@@ -194,6 +196,16 @@ describe('progress routes', () => {
         xpEarned: 15,
         streak: { current: 1, longest: 1, status: 'done_today' },
         streakIncreased: true,
+        achievementsUnlocked: [
+          {
+            id: 'first-lesson',
+            title: 'Primeiro sinal',
+            description: 'Conclua sua primeira lição.',
+            category: 'lessons',
+          },
+          expect.objectContaining({ id: 'first-perfect' }),
+          expect.objectContaining({ id: 'first-module' }),
+        ],
       });
       expect((await progress.findByUserId(userId))?.totalXp).toBe(15);
       expect(await progress.findCompletedLessonIds(userId)).toEqual(new Set(['vogais']));
@@ -267,6 +279,42 @@ describe('progress routes', () => {
         payload: body('vogais'),
         headers: { 'idempotency-key': idempotencyKey },
       });
+
+      expectError(response, 401, 'UNAUTHORIZED');
+    });
+  });
+
+  describe('GET /v1/achievements', () => {
+    it('answers every achievement with its progress and unlock date', async () => {
+      await post('/v1/lessons/vogais/sessions', body('vogais'));
+
+      const response = await get('/v1/achievements');
+
+      expect(response.statusCode).toBe(200);
+      const { achievements } = AchievementsResponse.parse(response.json());
+      expect(achievements).toHaveLength(15);
+      expect(achievements.find(({ id }) => id === 'first-lesson')).toEqual({
+        id: 'first-lesson',
+        title: 'Primeiro sinal',
+        description: 'Conclua sua primeira lição.',
+        category: 'lessons',
+        progress: { current: 1, target: 1 },
+        unlockedAt: now.toISOString(),
+      });
+      expect(achievements.find(({ id }) => id === 'lessons-10')).toMatchObject({
+        progress: { current: 1, target: 10 },
+        unlockedAt: null,
+      });
+    });
+
+    it('does not need the local date header', async () => {
+      const response = await get('/v1/achievements');
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('answers 401 without a token', async () => {
+      const response = await app.inject({ method: 'GET', url: '/v1/achievements' });
 
       expectError(response, 401, 'UNAUTHORIZED');
     });

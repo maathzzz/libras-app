@@ -15,14 +15,16 @@ export interface LessonSession {
 export interface LessonCompletion {
   session: LessonSession;
   stats: UserStats;
+  // Unlocked at the session's completedAt.
+  unlockedAchievementIds: string[];
 }
 
 export interface LessonSessionRepository {
   // The key is scoped to the user: two learners may generate the same one.
   findByIdempotencyKey(userId: string, idempotencyKey: string): Promise<LessonSession | null>;
 
-  // Writes the session, the lesson progress and the user stats in one transaction. The
-  // storage must have a unique (user_id, idempotency_key) so two concurrent retries
-  // cannot both grant XP.
+  // Writes the session, the lesson progress, the user stats and the unlocked achievements in
+  // one transaction. The storage must have a unique (user_id, idempotency_key) so two
+  // concurrent retries cannot both grant XP.
   saveCompletion(completion: LessonCompletion): Promise<void>;
 }

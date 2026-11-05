@@ -1,4 +1,5 @@
 import {
+  AchievementsResponse,
   CompleteLessonBody,
   CompleteLessonResponse,
   ErrorResponse,
@@ -14,6 +15,7 @@ import { errorBody } from '../../../shared/infrastructure/errorHandler';
 import { readIdempotencyKey } from '../../../shared/infrastructure/idempotencyKeyHeader';
 import { readLocalDate } from '../../../shared/infrastructure/localDateHeader';
 import type { CompleteLesson } from '../application/CompleteLesson';
+import type { GetAchievements } from '../application/GetAchievements';
 import type { GetHome } from '../application/GetHome';
 import type { GetLesson } from '../application/GetLesson';
 
@@ -21,6 +23,7 @@ export interface ProgressUseCases {
   getHome: GetHome;
   getLesson: GetLesson;
   completeLesson: CompleteLesson;
+  getAchievements: GetAchievements;
 }
 
 const lessonErrorStatus: Record<string, 403 | 404> = {
@@ -49,12 +52,23 @@ export function progressRoutes({
   getHome,
   getLesson,
   completeLesson,
+  getAchievements,
 }: ProgressUseCases): FastifyPluginAsyncZod {
   return async (app) => {
     app.get('/home', { schema: { response: { 200: HomeResponse } } }, async (request) => {
       const { userId } = authenticatedUser(request);
       return getHome.execute({ userId, today: readLocalDate(request) });
     });
+
+    // Profile screen. Unlocking happens only in the lesson completion below.
+    app.get(
+      '/achievements',
+      { schema: { response: { 200: AchievementsResponse } } },
+      async (request) => {
+        const { userId } = authenticatedUser(request);
+        return getAchievements.execute({ userId });
+      },
+    );
 
     app.get(
       '/lessons/:lessonId',

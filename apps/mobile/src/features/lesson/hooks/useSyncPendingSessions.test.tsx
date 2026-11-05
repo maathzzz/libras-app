@@ -2,17 +2,20 @@ import { act, renderHook } from '@testing-library/react-native';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { useAuthStatus, type AuthStatus } from '@/features/auth';
+import { reloadAchievements } from '@/features/achievements';
 import { reloadHome } from '@/features/home';
 
 import { pendingSessions } from '../api/pendingSessions';
 import { useSyncPendingSessions } from './useSyncPendingSessions';
 
 jest.mock('@/features/auth', () => ({ useAuthStatus: jest.fn() }));
+jest.mock('@/features/achievements', () => ({ reloadAchievements: jest.fn() }));
 jest.mock('@/features/home', () => ({ reloadHome: jest.fn() }));
 jest.mock('../api/pendingSessions', () => ({ pendingSessions: { flush: jest.fn() } }));
 
 const flushMock = jest.mocked(pendingSessions.flush);
 const reloadHomeMock = jest.mocked(reloadHome);
+const reloadAchievementsMock = jest.mocked(reloadAchievements);
 const authStatusMock = jest.mocked(useAuthStatus);
 const removeListener = jest.fn();
 let changeAppState: (state: AppStateStatus) => void = () => {};
@@ -21,6 +24,7 @@ beforeEach(() => {
   authStatusMock.mockReset().mockReturnValue('signedIn');
   flushMock.mockReset().mockResolvedValue({ sent: 0 });
   reloadHomeMock.mockReset().mockResolvedValue(undefined);
+  reloadAchievementsMock.mockReset().mockResolvedValue(undefined);
   removeListener.mockReset();
   changeAppState = () => {};
   jest
@@ -52,14 +56,16 @@ describe('useSyncPendingSessions', () => {
     expect(flushMock).toHaveBeenCalledTimes(2);
   });
 
-  it('reloads the home only when a session was sent', async () => {
+  it('reloads the home and the achievements only when a session was sent', async () => {
     await renderSync();
     expect(reloadHomeMock).not.toHaveBeenCalled();
+    expect(reloadAchievementsMock).not.toHaveBeenCalled();
 
     flushMock.mockResolvedValue({ sent: 1 });
     await act(async () => changeAppState('active'));
 
     expect(reloadHomeMock).toHaveBeenCalledTimes(1);
+    expect(reloadAchievementsMock).toHaveBeenCalledTimes(1);
   });
 
   it('sends nothing while signed out, so the BFF does not refuse and drop the lessons', async () => {

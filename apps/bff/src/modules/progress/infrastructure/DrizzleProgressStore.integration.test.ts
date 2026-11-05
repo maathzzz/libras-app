@@ -33,6 +33,7 @@ function response(xpEarned: number, current: number): CompleteLessonResponse {
     xpEarned,
     streak: { current, longest: current, status: 'done_today' },
     streakIncreased: true,
+    achievementsUnlocked: [],
   };
 }
 
@@ -41,6 +42,7 @@ interface CompletionOptions {
   completedAt?: Date;
   totalXp?: number;
   streak?: Streak;
+  unlockedAchievementIds?: string[];
 }
 
 function completion(
@@ -51,6 +53,7 @@ function completion(
     completedAt = firstInstant,
     totalXp = 15,
     streak = Streak.empty().registerLessonCompleted(firstDay),
+    unlockedAchievementIds = [],
   }: CompletionOptions = {},
 ): LessonCompletion {
   return {
@@ -61,7 +64,8 @@ function completion(
       completedAt,
       response: response(15, streak.current),
     },
-    stats: { userId, totalXp, streak },
+    stats: { userId, totalXp, streak, lessonsCompleted: 1, perfectLessons: 1 },
+    unlockedAchievementIds,
   };
 }
 
@@ -145,6 +149,47 @@ describe('DrizzleProgressStore.saveCompletion', () => {
   );
 
   it(
+    'writes the lesson counters and the unlocked achievements at the completion instant',
+    inRollback(async (tx) => {
+      const { store, userId, lessonId } = await setUp(tx);
+
+      await store.saveCompletion(
+        completion(userId, lessonId, { unlockedAchievementIds: ['first-lesson', 'first-perfect'] }),
+      );
+
+      const { stats } = await rowsOf(tx, userId);
+      expect(stats).toEqual([expect.objectContaining({ lessonsCompleted: 1, perfectLessons: 1 })]);
+      expect(await store.findUnlocked(userId)).toEqual(
+        expect.arrayContaining([
+          { achievementId: 'first-lesson', unlockedAt: firstInstant },
+          { achievementId: 'first-perfect', unlockedAt: firstInstant },
+        ]),
+      );
+    }),
+  );
+
+  it(
+    'keeps the first unlock date when two lessons unlock the same achievement',
+    inRollback(async (tx) => {
+      const { store, userId, lessonId } = await setUp(tx);
+      const unlockedAchievementIds = ['first-lesson'];
+
+      await store.saveCompletion(completion(userId, lessonId, { unlockedAchievementIds }));
+      await store.saveCompletion(
+        completion(userId, lessonId, {
+          completedAt: new Date('2026-10-26T16:00:00.000Z'),
+          unlockedAchievementIds,
+        }),
+      );
+
+      expect(await store.findUnlocked(userId)).toEqual([
+        { achievementId: 'first-lesson', unlockedAt: firstInstant },
+      ]);
+      expect((await rowsOf(tx, userId)).sessions).toHaveLength(2);
+    }),
+  );
+
+  it(
     'persists nothing when one of the writes fails',
     inRollback(async (tx) => {
       const { store, userId, lessonId } = await setUp(tx);
@@ -222,6 +267,19 @@ describe('DrizzleProgressStore reads', () => {
       expect(stats?.streak.current).toBe(1);
       expect(stats?.streak.longest).toBe(1);
       expect(stats?.streak.lastActivity?.equals(firstDay)).toBe(true);
+    }),
+  );
+
+  it(
+    'lists only the achievements the learner unlocked',
+    inRollback(async (tx) => {
+      const { store, userId, lessonId } = await setUp(tx);
+      const otherUserId = await insertUser(tx);
+      await store.saveCompletion(
+        completion(otherUserId, lessonId, { unlockedAchievementIds: ['first-lesson'] }),
+      );
+
+      expect(await store.findUnlocked(userId)).toEqual([]);
     }),
   );
 

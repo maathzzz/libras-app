@@ -7,7 +7,7 @@ src/
   modules/
     profile/          # Perfil
     curriculum/       # Unidades, lições, exercícios, sinais, estudos
-    progress/         # Sessões de lição, XP, streak
+    progress/         # Sessões de lição, XP, streak, conquistas
       domain/         # Entidades, value objects, interfaces de repositório
       application/    # Casos de uso
       infrastructure/ # Implementações Drizzle dos repositórios
@@ -69,8 +69,18 @@ src/
 4. Recorrigir as respostas no servidor com `AnswerGrader` (`modules/progress/domain/AnswerGrader.ts`). O servidor é a fonte da verdade. Resposta ausente ou duplicada para um exercício conta como incorreta; resposta para exercício fora da lição é ignorada.
 5. Calcular o XP.
 6. Aplicar a regra do streak com a `localDate`.
-7. Persistir sessão, progresso e `user\_stats` em uma única transação.
-8. Retornar XP ganho, streak atual e se o streak aumentou.
+7. Verificar as conquistas com o progresso já somado desta lição (ver "Conquistas").
+8. Persistir sessão, progresso, `user\_stats` e conquistas desbloqueadas em uma única transação.
+9. Retornar XP ganho, streak atual, se o streak aumentou e as conquistas desbloqueadas (`achievementsUnlocked`).
+
+**Conquistas** (`modules/progress/domain/Achievements.ts`):
+
+* O catálogo (15 conquistas) é código: cada uma tem `id`, título, descrição, `category`, uma métrica e um alvo. Só o desbloqueio é gravado (`user\_achievements`). O `id` é persistido: nunca renomeie nem reaproveite um. Títulos e descrições podem mudar.
+* Métricas (`AchievementSnapshot`): lições concluídas (contando refeitas), lições sem erro, lições refeitas (conclusões − lições distintas), XP total, **maior** streak (`longest`, para um streak quebrado não perder o progresso), módulos concluídos e trilha concluída. Os contadores ficam em `user\_stats` (`lessons\_completed`, `perfect\_lessons`).
+* Um módulo só está concluído quando tem lições e todas foram concluídas; a trilha, quando todos os módulos estão concluídos. Módulos sem lições (em planejamento) impedem a conquista da trilha.
+* O único gatilho é `CompleteLesson`: todas as métricas só mudam ali, então não há job. Conquistas cujo alvo foi atingido antes de existirem são desbloqueadas na próxima lição; `GetAchievements` só lê.
+* O desbloqueio é permanente e acontece uma única vez (chave primária `(user\_id, achievement\_id)`, `on conflict do nothing`). Uma conquista desbloqueada mostra o progresso cheio, mesmo que a métrica caia (ex.: lição nova num módulo já concluído).
+* A resposta guardada para idempotência inclui as conquistas: um reenvio devolve as mesmas, sem desbloquear de novo.
 
 **Desbloqueio de lições** (`modules/progress/domain/LessonUnlocking.ts`):
 
@@ -94,6 +104,7 @@ src/
 * Home: `GET /v1/home` (`HomeResponse`, exige `X-Local-Date`). Um usuário sem atividade recebe streak 0 e XP 0.
 * Lição: `GET /v1/lessons/:lessonId` (`LessonBundle`). Lição inexistente retorna 404 `LESSON_NOT_FOUND`; lição bloqueada para o usuário retorna 403 `LESSON_LOCKED`.
 * Conclusão de lição: `POST /v1/lessons/:lessonId/sessions` (corpo `CompleteLessonBody`, header `Idempotency-Key`, resposta `CompleteLessonResponse`). Header ausente ou que não é UUID retorna 400 `INVALID_IDEMPOTENCY_KEY` (lido com `readIdempotencyKey`, `shared/infrastructure/idempotencyKeyHeader.ts`); corpo inválido, 400 `VALIDATION_ERROR`; lição inexistente, 404 `LESSON_NOT_FOUND`; lição bloqueada, 403 `LESSON_LOCKED`; `localDate` além do limite, 422 `LOCAL_DATE_TOO_FAR_AHEAD`. O reenvio com a mesma `Idempotency-Key` retorna 200 com o resultado original.
+* Conquistas: `GET /v1/achievements` (`AchievementsResponse`, todo o catálogo na ordem de exibição, com `progress` e `unlockedAt`). Não exige `X-Local-Date`.
 * Estudos: `GET /v1/studies` (aba "Estudar", `StudiesResponse`) e `GET /v1/studies/:studyId` (`StudyGuide`). Id desconhecido retorna 404.
 * Perfil: `GET /v1/me` (cria o perfil no primeiro acesso, com o nome tirado do e-mail do token), `PATCH /v1/me` (`UpdateProfileRequest`) e `DELETE /v1/me` (exclui os dados no schema `app` e o usuário do Supabase Auth; idempotente, responde 204).
 * Toda rota autenticada valida o JWT do Supabase no plugin de auth. O `userId` vem do token, nunca do corpo da requisição.
@@ -115,4 +126,5 @@ src/
 * A regra do streak deve ter testes para: primeira lição, mesmo dia, dia seguinte, dia pulado, data anterior à última atividade e virada de mês.
 * `CompleteLesson` deve ter testes para: data à frente do limite (rejeitada), data no passado vinda da fila offline (aceita, sem alterar o streak se for anterior à última atividade) e virada de dia.
 * A regra do XP deve ter testes para: lição com erros, lição sem erros e lição refeita.
+* As conquistas devem ter testes para: alvo atingido, um abaixo do alvo, conquista já desbloqueada, reenvio idempotente e progresso anterior à conquista.
 * Repositórios Drizzle: testes de integração contra o Supabase local.

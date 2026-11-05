@@ -29,6 +29,7 @@ beforeEach(() => {
     xpEarned: 15,
     streak: { current: 1, longest: 1, status: 'done_today' },
     streakIncreased: true,
+    achievementsUnlocked: [],
   });
 });
 

@@ -1,6 +1,7 @@
 export * from './signImage';
 export * from './exercises';
 export * from './streak';
+export * from './achievement';
 export * from './profile';
 export * from './home';
 export * from './idempotencyKey';

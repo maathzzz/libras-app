@@ -25,6 +25,7 @@ src/
     settings/            # Ajustes
     reminder/            # Lembrete de streak (notificação local)
     streak/
+    achievements/        # Conquistas: seção do perfil e card da lição concluída
     profile/
   shared/
     api/client.ts        # Cliente HTTP tipado com contracts
@@ -76,6 +77,13 @@ src/
 * Concluir uma lição (confirmada pelo BFF ou enfileirada) chama `markLessonDoneForReminder(localDate)`, que reagenda a partir de amanhã. A home com `streak.status === 'done_today'` (lição feita em outro aparelho) tem o mesmo efeito.
 * Os reagendamentos rodam em fila no store, para que um reagendamento antigo não recoloque o lembrete de hoje depois de uma lição.
 * A permissão **nunca** é pedida na abertura do app. Ela é oferecida uma única vez em `ReminderOffer`, na tela de lição concluída; o pedido do sistema só aparece se o usuário tocar em "Ativar lembrete". Depois disso, o lembrete é ligado, desligado e tem o horário alterado em Ajustes (rota `reminder-time`, com o `DateTimePicker` de `@expo/ui`).
+
+## Conquistas
+
+* Tudo fica em `features/achievements/`. O app não conhece as regras: só mostra o que o BFF manda.
+* O perfil mostra `AchievementsSection` (todas as conquistas, desbloqueadas coloridas com a data e bloqueadas em cinza com a barra de progresso). Ícone e cor saem da `category` (`categoryLooks`).
+* A tela de lição concluída mostra `UnlockedAchievementsCard` quando `achievementsUnlocked` não está vazio. As conquistas entram no anúncio do resultado para leitores de tela, e o háptico toca uma vez para streak e conquistas juntos.
+* Quando o BFF confirma uma conclusão (na hora ou pela fila), as conquistas são recarregadas junto com a home. Conquistas de uma lição enviada pela fila aparecem só no perfil. Ao sair da conta, a lista é apagada.
 
 ## Imagens
 

@@ -6,6 +6,7 @@ import { UpdateProfile } from './modules/profile/application/UpdateProfile';
 import { DrizzleProfileRepository } from './modules/profile/infrastructure/DrizzleProfileRepository';
 import { SupabaseAuthAdmin } from './modules/profile/infrastructure/SupabaseAuthAdmin';
 import { CompleteLesson } from './modules/progress/application/CompleteLesson';
+import { GetAchievements } from './modules/progress/application/GetAchievements';
 import { GetHome } from './modules/progress/application/GetHome';
 import { GetLesson } from './modules/progress/application/GetLesson';
 import { CurriculumTrailCatalog } from './modules/progress/infrastructure/CurriculumTrailCatalog';
@@ -25,6 +26,7 @@ export interface Container {
   clock: Clock;
   verifyAccessToken: AccessTokenVerifier;
   completeLesson: CompleteLesson;
+  getAchievements: GetAchievements;
   getHome: GetHome;
   getLesson: GetLesson;
   getProfile: GetProfile;
@@ -57,7 +59,16 @@ export function createContainer(
       audience: 'authenticated',
       clock,
     }),
-    completeLesson: new CompleteLesson(progress, progress, lessons, trails, progress, clock),
+    completeLesson: new CompleteLesson(
+      progress,
+      progress,
+      lessons,
+      trails,
+      progress,
+      progress,
+      clock,
+    ),
+    getAchievements: new GetAchievements(trails, progress, progress, progress),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),
     getProfile: new GetProfile(profiles),

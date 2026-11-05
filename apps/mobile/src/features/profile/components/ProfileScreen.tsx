@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AchievementsSection } from '@/features/achievements';
 import {
   completedUnits,
   daysLabel,
@@ -116,6 +117,8 @@ export function ProfileScreen() {
           <Stats home={home} />
           {home && <TrailProgress home={home} />}
         </View>
+
+        <AchievementsSection />
       </ScrollView>
     </SafeAreaView>
   );

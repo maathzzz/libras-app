@@ -28,6 +28,7 @@ function result(streakIncreased: boolean): CompleteLessonResponse {
     xpEarned: 50,
     streak: { current: 8, longest: 12, status: 'done_today' },
     streakIncreased,
+    achievementsUnlocked: [],
   };
 }
 
@@ -59,6 +60,33 @@ describe('LessonCompleteScreen', () => {
     expect(screen.queryByText('+1 hoje')).toBeNull();
     expect(screen.getByText('A lição de hoje já contou para a sequência.')).toBeOnTheScreen();
     expect(haptics.correct).not.toHaveBeenCalled();
+  });
+
+  it('shows the achievements the lesson unlocked and vibrates once', async () => {
+    const achievementsUnlocked = [
+      {
+        id: 'first-review',
+        title: 'Revisão',
+        description: 'Refaça uma lição que você já concluiu.',
+        category: 'review' as const,
+      },
+    ];
+
+    await renderWith({
+      status: 'completed',
+      summary,
+      result: { ...result(false), achievementsUnlocked },
+    });
+
+    expect(screen.getByText('Conquista desbloqueada!')).toBeOnTheScreen();
+    expect(screen.getByText('Revisão')).toBeOnTheScreen();
+    expect(haptics.correct).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no achievements card when nothing was unlocked', async () => {
+    await renderWith({ status: 'completed', summary, result: result(true) });
+
+    expect(screen.queryByText(/Conquistas? desbloqueadas?!/)).toBeNull();
   });
 
   it('shows the local summary while the lesson is being saved', async () => {

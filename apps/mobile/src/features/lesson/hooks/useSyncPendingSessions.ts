@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { reloadAchievements } from '@/features/achievements';
 import { useAuthStatus } from '@/features/auth';
 import { reloadHome } from '@/features/home';
 import { onAppForeground } from '@/shared/lib/appForeground';
@@ -8,8 +9,10 @@ import { pendingSessions } from '../api/pendingSessions';
 
 async function sendPendingSessions() {
   const { sent } = await pendingSessions.flush();
-  // A lesson that just reached the BFF changes the streak and XP on the home.
-  if (sent > 0) await reloadHome();
+  // A lesson that just reached the BFF changes the streak and XP on the home, and may unlock
+  // achievements. Those are only seen on the profile: the lesson result is long gone.
+  if (sent === 0) return;
+  await Promise.all([reloadHome(), reloadAchievements()]);
 }
 
 // Sends lessons finished without network when a session starts (app opening or sign in) and

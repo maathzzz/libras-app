@@ -7,6 +7,7 @@ import { UpdateProfile } from '../modules/profile/application/UpdateProfile';
 import { InMemoryAuthAdmin } from '../modules/profile/testing/InMemoryAuthAdmin';
 import { InMemoryProfileRepository } from '../modules/profile/testing/InMemoryProfileRepository';
 import { CompleteLesson } from '../modules/progress/application/CompleteLesson';
+import { GetAchievements } from '../modules/progress/application/GetAchievements';
 import { GetHome } from '../modules/progress/application/GetHome';
 import { GetLesson } from '../modules/progress/application/GetLesson';
 import { InMemoryLessonCatalog } from '../modules/progress/testing/InMemoryLessonCatalog';
@@ -47,7 +48,16 @@ export function createInMemoryContainer(
       audience: 'authenticated',
       clock,
     }),
-    completeLesson: new CompleteLesson(progress, progress, lessons, trails, progress, clock),
+    completeLesson: new CompleteLesson(
+      progress,
+      progress,
+      lessons,
+      trails,
+      progress,
+      progress,
+      clock,
+    ),
+    getAchievements: new GetAchievements(trails, progress, progress, progress),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),
     getProfile: new GetProfile(profiles),

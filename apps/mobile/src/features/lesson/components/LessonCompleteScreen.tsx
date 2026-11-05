@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { UnlockedAchievementsCard } from '@/features/achievements';
 import { ReminderOffer } from '@/features/reminder';
 import { haptics } from '@/shared/lib/haptics';
 import { colors, duration, spacing } from '@/shared/theme';
@@ -89,10 +90,15 @@ export function LessonCompleteScreen() {
             <StreakResultCard result={result} />
           </Animated.View>
         )}
+        {status === 'completed' && result && result.achievementsUnlocked.length > 0 && (
+          <Animated.View entering={enter(3)}>
+            <UnlockedAchievementsCard achievements={result.achievementsUnlocked} />
+          </Animated.View>
+        )}
         {status === 'pending' && <Notice tone="warning" message={pendingMessage} />}
         {status === 'failed' && <Notice tone="danger" message={failedMessage} />}
         {status !== 'failed' && (
-          <Animated.View entering={enter(3)}>
+          <Animated.View entering={enter(4)}>
             <ReminderOffer />
           </Animated.View>
         )}
@@ -153,16 +159,16 @@ function SummaryTiles({ summary, result }: SummaryTilesProps) {
 }
 
 // A growing streak is the reward of the day: the tile pulses, the phone vibrates and
-// screen readers announce it.
+// screen readers announce it. A new achievement also vibrates, once for both.
 function StreakDaysTile({ result }: { result: CompleteLessonResponse }) {
   const scale = useSharedValue(1);
   const pulse = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(resultAnnouncement(result));
+    if (result.streakIncreased || result.achievementsUnlocked.length > 0) void haptics.correct();
     if (!result.streakIncreased) return;
 
-    void haptics.correct();
     scale.set(
       withSequence(
         withTiming(1.12, { duration: duration.pulse }),

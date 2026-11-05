@@ -1,5 +1,6 @@
 import type { CompleteLessonRequest, CompleteLessonResponse } from '@libras/contracts';
 
+import { reloadAchievements } from '@/features/achievements';
 import { reloadHome } from '@/features/home';
 import { markLessonDoneForReminder } from '@/features/reminder';
 import { ApiError } from '@/shared/api/client';
@@ -8,6 +9,7 @@ import { pendingSessions } from '../api/pendingSessions';
 import { submitSession } from '../api/submitSession';
 import { useCompletionStore } from './completionStore';
 
+jest.mock('@/features/achievements', () => ({ reloadAchievements: jest.fn() }));
 jest.mock('@/features/home', () => ({ reloadHome: jest.fn() }));
 jest.mock('@/features/reminder', () => ({ markLessonDoneForReminder: jest.fn() }));
 jest.mock('../api/submitSession');
@@ -16,6 +18,7 @@ jest.mock('../api/pendingSessions', () => ({ pendingSessions: { enqueue: jest.fn
 const submitMock = jest.mocked(submitSession);
 const enqueueMock = jest.mocked(pendingSessions.enqueue);
 const reloadHomeMock = jest.mocked(reloadHome);
+const reloadAchievementsMock = jest.mocked(reloadAchievements);
 const markLessonDoneMock = jest.mocked(markLessonDoneForReminder);
 const networkError = () => new ApiError('network', 'Sem resposta');
 const initialState = useCompletionStore.getState();
@@ -31,6 +34,7 @@ const response: CompleteLessonResponse = {
   xpEarned: 50,
   streak: { current: 8, longest: 12, status: 'done_today' },
   streakIncreased: true,
+  achievementsUnlocked: [],
 };
 
 beforeEach(() => {
@@ -38,6 +42,7 @@ beforeEach(() => {
   submitMock.mockReset();
   enqueueMock.mockReset();
   reloadHomeMock.mockReset().mockResolvedValue(undefined);
+  reloadAchievementsMock.mockReset().mockResolvedValue(undefined);
   markLessonDoneMock.mockReset();
 });
 
@@ -66,6 +71,7 @@ describe('useCompletionStore', () => {
     await submitting;
 
     expect(reloadHomeMock).toHaveBeenCalledTimes(1);
+    expect(reloadAchievementsMock).toHaveBeenCalledTimes(1);
   });
 
   it('queues the session when there is no network', async () => {

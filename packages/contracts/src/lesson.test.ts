@@ -124,10 +124,31 @@ describe('CompleteLessonResponse', () => {
   };
 
   it('accepts a valid response', () => {
-    expect(CompleteLessonResponse.parse(response)).toEqual(response);
+    expect(CompleteLessonResponse.parse(response)).toEqual({ ...response, achievementsUnlocked: [] });
   });
 
   it('rejects negative XP', () => {
     expect(CompleteLessonResponse.safeParse({ ...response, xpEarned: -1 }).success).toBe(false);
+  });
+
+  it('carries the achievements the lesson unlocked', () => {
+    const achievementsUnlocked = [
+      {
+        id: 'first-lesson',
+        title: 'Primeiro sinal',
+        description: 'Conclua sua primeira lição.',
+        category: 'lessons',
+      },
+    ];
+
+    expect(CompleteLessonResponse.parse({ ...response, achievementsUnlocked })).toEqual({
+      ...response,
+      achievementsUnlocked,
+    });
+  });
+
+  // Sessions saved before achievements existed are replayed without the field.
+  it('defaults to no achievements when the field is missing', () => {
+    expect(CompleteLessonResponse.parse(response).achievementsUnlocked).toEqual([]);
   });
 });

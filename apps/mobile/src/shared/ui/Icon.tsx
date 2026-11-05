@@ -27,6 +27,8 @@ const icons = {
   tip: { ios: 'lightbulb.fill', android: 'lightbulb', web: 'lightbulb' },
   back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
   trophy: { ios: 'trophy.fill', android: 'emoji_events', web: 'emoji_events' },
+  star: { ios: 'star.fill', android: 'star', web: 'star' },
+  review: { ios: 'arrow.counterclockwise', android: 'replay', web: 'replay' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof icons;

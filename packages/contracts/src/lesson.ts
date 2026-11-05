@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { Achievement } from './achievement';
 import { Exercise, ExerciseAnswer } from './exercises';
 import { IdempotencyKey } from './idempotencyKey';
 import { StreakSummary } from './streak';
@@ -70,10 +71,13 @@ export const CompleteLessonRequest = z
   .superRefine(rejectRepeatedAnswers);
 export type CompleteLessonRequest = z.infer<typeof CompleteLessonRequest>;
 
-// XP and streak are computed by the BFF after re-grading the answers.
+// XP, streak and achievements are computed by the BFF after re-grading the answers.
 export const CompleteLessonResponse = z.object({
   xpEarned: z.number().int().nonnegative(),
   streak: StreakSummary,
   streakIncreased: z.boolean(),
+  // Achievements this lesson unlocked; empty most of the time. Defaults to empty because
+  // sessions saved before achievements existed are replayed without it.
+  achievementsUnlocked: z.array(Achievement).default([]),
 });
 export type CompleteLessonResponse = z.infer<typeof CompleteLessonResponse>;

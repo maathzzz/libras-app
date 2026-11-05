@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { LocalDate } from '../../../shared/domain/LocalDate';
 import { Streak } from '../domain/Streak';
 import type { CatalogTrail } from '../domain/TrailCatalog';
+import { emptyStats } from '../domain/UserStatsRepository';
 import { InMemoryProgressStore } from '../testing/InMemoryProgressStore';
 import { InMemoryTrailCatalog } from '../testing/InMemoryTrailCatalog';
 import { GetHome } from './GetHome';
@@ -129,7 +130,7 @@ describe('GetHome', () => {
   });
 
   it('returns the total XP', async () => {
-    store.seedStats({ userId, totalXp: 1240, streak: Streak.empty() });
+    store.seedStats({ ...emptyStats(userId), totalXp: 1240 });
 
     expect((await home()).totalXp).toBe(1240);
   });
@@ -137,7 +138,7 @@ describe('GetHome', () => {
   describe('streak', () => {
     const seedStreak = (lastActivity: LocalDate) =>
       store.seedStats({
-        userId,
+        ...emptyStats(userId),
         totalXp: 100,
         streak: Streak.restore({ current: 7, longest: 12, lastActivity }),
       });

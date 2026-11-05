@@ -6,6 +6,7 @@ import { LocalDate } from '../../../shared/domain/LocalDate';
 import type { Result } from '../../../shared/domain/Result';
 import { Streak } from '../domain/Streak';
 import type { CatalogTrail } from '../domain/TrailCatalog';
+import { emptyStats } from '../domain/UserStatsRepository';
 import { InMemoryLessonCatalog } from '../testing/InMemoryLessonCatalog';
 import { InMemoryProgressStore } from '../testing/InMemoryProgressStore';
 import { InMemoryTrailCatalog } from '../testing/InMemoryTrailCatalog';
@@ -97,6 +98,7 @@ describe('CompleteLesson', () => {
       new InMemoryLessonCatalog([lesson, nextLesson]),
       new InMemoryTrailCatalog([trail]),
       store,
+      store,
       new FixedClock(new Date(instant)),
     ).execute({
       userId,
@@ -117,10 +119,16 @@ describe('CompleteLesson', () => {
     it('grants XP, starts the streak and saves the session and stats', async () => {
       const response = expectOk(await completeAt('2026-03-15T12:00:00-03:00'));
 
+      // The trail's first unit has only this lesson, so it is complete too.
       expect(response).toEqual({
         xpEarned: 15,
         streak: { current: 1, longest: 1, status: 'done_today' },
         streakIncreased: true,
+        achievementsUnlocked: [
+          expect.objectContaining({ id: 'first-lesson' }),
+          expect.objectContaining({ id: 'first-perfect' }),
+          expect.objectContaining({ id: 'first-module' }),
+        ],
       });
 
       const stats = await store.findByUserId(userId);
@@ -223,10 +231,12 @@ describe('CompleteLesson', () => {
         }),
       );
 
+      // The same lesson again: a review.
       expect(second).toEqual({
         xpEarned: 10,
         streak: { current: 1, longest: 1, status: 'done_today' },
         streakIncreased: false,
+        achievementsUnlocked: [expect.objectContaining({ id: 'first-review' })],
       });
       expect((await store.findByUserId(userId))?.totalXp).toBe(25);
     });
@@ -271,7 +281,7 @@ describe('CompleteLesson', () => {
 
     it('restarts at 1 after a skipped day and reports it as an increase from the 0 shown', async () => {
       store.seedStats({
-        userId,
+        ...emptyStats(userId),
         totalXp: 100,
         streak: Streak.restore({ current: 5, longest: 5, lastActivity: d('2026-03-12') }),
       });
@@ -285,7 +295,7 @@ describe('CompleteLesson', () => {
 
     it('continues a streak saved from earlier days', async () => {
       store.seedStats({
-        userId,
+        ...emptyStats(userId),
         totalXp: 100,
         streak: Streak.restore({ current: 5, longest: 7, lastActivity: d('2026-03-14') }),
       });
@@ -334,7 +344,7 @@ describe('CompleteLesson', () => {
   describe('lesson sent late by the offline queue', () => {
     it('accepts a date before the last activity and grants XP without changing the streak', async () => {
       store.seedStats({
-        userId,
+        ...emptyStats(userId),
         totalXp: 100,
         streak: Streak.restore({ current: 4, longest: 6, lastActivity: d('2026-03-15') }),
       });
@@ -353,7 +363,7 @@ describe('CompleteLesson', () => {
 
     it('counts a date after the last activity, even if it is no longer today', async () => {
       store.seedStats({
-        userId,
+        ...emptyStats(userId),
         totalXp: 100,
         streak: Streak.restore({ current: 4, longest: 4, lastActivity: d('2026-03-14') }),
       });
@@ -366,6 +376,106 @@ describe('CompleteLesson', () => {
       expect(response.streak).toEqual({ current: 5, longest: 5, status: 'done_today' });
       expect((await store.findByUserId(userId))?.streak.lastActivity?.toString()).toBe(
         '2026-03-15',
+      );
+    });
+  });
+
+  describe('achievements', () => {
+    const unlockedIds = (response: CompleteLessonResponse) =>
+      response.achievementsUnlocked.map(({ id }) => id);
+
+    it('sends the unlocked ones with the catalog fields only', async () => {
+      const response = expectOk(await completeAt('2026-03-15T12:00:00-03:00'));
+
+      expect(response.achievementsUnlocked[0]).toEqual({
+        id: 'first-lesson',
+        title: 'Primeiro sinal',
+        description: 'Conclua sua primeira lição.',
+        category: 'lessons',
+      });
+    });
+
+    it('saves the unlocked ones at the completion instant', async () => {
+      await completeAt('2026-03-15T12:00:00-03:00');
+
+      expect(await store.findUnlocked(userId)).toEqual([
+        { achievementId: 'first-lesson', unlockedAt: new Date('2026-03-15T12:00:00-03:00') },
+        { achievementId: 'first-perfect', unlockedAt: new Date('2026-03-15T12:00:00-03:00') },
+        { achievementId: 'first-module', unlockedAt: new Date('2026-03-15T12:00:00-03:00') },
+      ]);
+    });
+
+    it('does not count a lesson with mistakes as perfect', async () => {
+      const response = expectOk(
+        await completeAt('2026-03-15T12:00:00-03:00', { answers: answersWithOneMistake }),
+      );
+
+      expect(unlockedIds(response)).not.toContain('first-perfect');
+      expect(await store.findByUserId(userId)).toMatchObject({
+        lessonsCompleted: 1,
+        perfectLessons: 0,
+      });
+    });
+
+    it('never unlocks the same achievement twice', async () => {
+      await completeAt('2026-03-15T12:00:00-03:00', { idempotencyKey: keys.first });
+
+      const again = expectOk(
+        await completeAt('2026-03-15T13:00:00-03:00', {
+          idempotencyKey: keys.second,
+          lessonId: nextLesson.id,
+        }),
+      );
+
+      expect(unlockedIds(again)).not.toContain('first-lesson');
+      expect(unlockedIds(again)).not.toContain('first-perfect');
+    });
+
+    it('replays the unlocked ones to a retry with the same key, without unlocking again', async () => {
+      const first = expectOk(await completeAt('2026-03-15T12:00:00-03:00'));
+
+      const retry = expectOk(await completeAt('2026-03-15T12:05:00-03:00'));
+
+      expect(retry.achievementsUnlocked).toEqual(first.achievementsUnlocked);
+      expect(await store.findUnlocked(userId)).toHaveLength(3);
+    });
+
+    it('unlocks the ones reached by progress made before they existed', async () => {
+      store.seedStats({
+        ...emptyStats(userId),
+        totalXp: 95,
+        lessonsCompleted: 9,
+        streak: Streak.restore({ current: 2, longest: 3, lastActivity: d('2026-03-14') }),
+      });
+      store.seedAchievements(userId, [
+        { achievementId: 'first-lesson', unlockedAt: new Date('2026-03-01T12:00:00Z') },
+      ]);
+
+      const response = expectOk(
+        await completeAt('2026-03-15T12:00:00-03:00', { answers: answersWithOneMistake }),
+      );
+
+      // 10 completions of a trail with only 2 lessons, so some were redone; 105 XP and a
+      // longest streak of 3. The trail's first unit is done too.
+      expect(unlockedIds(response)).toEqual([
+        'lessons-10',
+        'first-review',
+        'xp-100',
+        'streak-3',
+        'first-module',
+      ]);
+    });
+
+    it('completes the trail when every unit is done', async () => {
+      store.seedCompletedLessons(userId, [lesson.id]);
+      store.seedStats({ ...emptyStats(userId), totalXp: 15, lessonsCompleted: 1 });
+
+      const response = expectOk(
+        await completeAt('2026-03-15T12:00:00-03:00', { lessonId: nextLesson.id }),
+      );
+
+      expect(unlockedIds(response)).toEqual(
+        expect.arrayContaining(['first-module', 'trail-complete']),
       );
     });
   });

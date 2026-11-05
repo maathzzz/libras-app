@@ -5,9 +5,11 @@ import { LocalDate } from '../../../shared/domain/LocalDate';
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import {
   lessonSessions,
+  userAchievements,
   userLessonProgress,
   userStats,
 } from '../../../shared/infrastructure/db/schema';
+import type { AchievementRepository, UnlockedAchievement } from '../domain/AchievementRepository';
 import type { LessonProgressRepository } from '../domain/LessonProgressRepository';
 import type {
   LessonCompletion,
@@ -18,9 +20,14 @@ import { Streak } from '../domain/Streak';
 import type { UserStats, UserStatsRepository } from '../domain/UserStatsRepository';
 
 // One class behind the progress repositories, like InMemoryProgressStore: saveCompletion
-// writes sessions, lesson progress and stats together, so they share the same executor.
+// writes sessions, lesson progress, stats and achievements together, so they share the same
+// executor.
 export class DrizzleProgressStore
-  implements LessonSessionRepository, UserStatsRepository, LessonProgressRepository
+  implements
+    LessonSessionRepository,
+    UserStatsRepository,
+    LessonProgressRepository,
+    AchievementRepository
 {
   constructor(private readonly db: DbExecutor) {}
 
@@ -58,7 +65,19 @@ export class DrizzleProgressStore
         longest: row.streakLongest,
         lastActivity: row.lastActiveDate === null ? null : LocalDate.parse(row.lastActiveDate),
       }),
+      lessonsCompleted: row.lessonsCompleted,
+      perfectLessons: row.perfectLessons,
     };
+  }
+
+  async findUnlocked(userId: string): Promise<UnlockedAchievement[]> {
+    return this.db
+      .select({
+        achievementId: userAchievements.achievementId,
+        unlockedAt: userAchievements.unlockedAt,
+      })
+      .from(userAchievements)
+      .where(eq(userAchievements.userId, userId));
   }
 
   async findCompletedLessonIds(userId: string): Promise<ReadonlySet<string>> {
@@ -71,7 +90,11 @@ export class DrizzleProgressStore
 
   // The session goes first: a repeated (user_id, idempotency_key) fails there, and the
   // rollback keeps the second retry from adding XP or a completion.
-  async saveCompletion({ session, stats }: LessonCompletion): Promise<void> {
+  async saveCompletion({
+    session,
+    stats,
+    unlockedAchievementIds,
+  }: LessonCompletion): Promise<void> {
     await this.db.transaction(async (tx) => {
       await tx.insert(lessonSessions).values({
         userId: session.userId,
@@ -101,11 +124,26 @@ export class DrizzleProgressStore
         streakCurrent: stats.streak.current,
         streakLongest: stats.streak.longest,
         lastActiveDate: stats.streak.lastActivity?.toString() ?? null,
+        lessonsCompleted: stats.lessonsCompleted,
+        perfectLessons: stats.perfectLessons,
       };
       await tx
         .insert(userStats)
         .values({ userId: stats.userId, ...values })
         .onConflictDoUpdate({ target: userStats.userId, set: values });
+
+      if (unlockedAchievementIds.length === 0) return;
+      // A concurrent lesson may have unlocked the same achievement: the first date stays.
+      await tx
+        .insert(userAchievements)
+        .values(
+          unlockedAchievementIds.map((achievementId) => ({
+            userId: session.userId,
+            achievementId,
+            unlockedAt: session.completedAt,
+          })),
+        )
+        .onConflictDoNothing();
     });
   }
 }

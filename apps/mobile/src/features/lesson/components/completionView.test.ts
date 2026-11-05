@@ -9,6 +9,7 @@ const result = (current: number, streakIncreased: boolean) => ({
   xpEarned: 50,
   streak: { current, longest: 12, status: 'done_today' as const },
   streakIncreased,
+  achievementsUnlocked: [],
 });
 
 describe('formatDuration', () => {
@@ -57,6 +58,30 @@ describe('resultAnnouncement', () => {
     );
     expect(resultAnnouncement(result(8, false))).toBe(
       'Lição concluída. Você ganhou 50 pontos de experiência.',
+    );
+  });
+
+  const achievement = (title: string) => ({
+    id: title,
+    title,
+    description: 'Descrição.',
+    category: 'lessons' as const,
+  });
+
+  it('names the unlocked achievements at the end', () => {
+    expect(
+      resultAnnouncement({ ...result(8, false), achievementsUnlocked: [achievement('Revisão')] }),
+    ).toBe(
+      'Lição concluída. Você ganhou 50 pontos de experiência. Conquista desbloqueada: Revisão.',
+    );
+    expect(
+      resultAnnouncement({
+        ...result(1, true),
+        achievementsUnlocked: [achievement('Primeiro sinal'), achievement('Sem errar nada')],
+      }),
+    ).toBe(
+      'Lição concluída. Você ganhou 50 pontos de experiência. Sua sequência aumentou para 1 dia. ' +
+        'Conquistas desbloqueadas: Primeiro sinal, Sem errar nada.',
     );
   });
 });

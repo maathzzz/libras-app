@@ -1,3 +1,4 @@
+import type { AchievementRepository, UnlockedAchievement } from '../domain/AchievementRepository';
 import type { LessonProgressRepository } from '../domain/LessonProgressRepository';
 import type {
   LessonCompletion,
@@ -7,13 +8,19 @@ import type {
 import type { UserStats, UserStatsRepository } from '../domain/UserStatsRepository';
 
 // For tests: one object behind the progress repositories, so saveCompletion updates
-// sessions, completed lessons and stats together, as the real transaction does.
+// sessions, completed lessons, stats and achievements together, as the real transaction does.
 export class InMemoryProgressStore
-  implements LessonSessionRepository, UserStatsRepository, LessonProgressRepository
+  implements
+    LessonSessionRepository,
+    UserStatsRepository,
+    LessonProgressRepository,
+    AchievementRepository
 {
   private readonly savedSessions: LessonSession[] = [];
   private readonly statsByUser = new Map<string, UserStats>();
   private readonly completedByUser = new Map<string, Set<string>>();
+  // Achievement id → unlock date, per user.
+  private readonly achievementsByUser = new Map<string, Map<string, Date>>();
 
   get sessions(): readonly LessonSession[] {
     return this.savedSessions;
@@ -46,10 +53,35 @@ export class InMemoryProgressStore
     return new Set(this.completedByUser.get(userId));
   }
 
-  async saveCompletion({ session, stats }: LessonCompletion): Promise<void> {
+  seedAchievements(userId: string, achievements: readonly UnlockedAchievement[]): void {
+    for (const { achievementId, unlockedAt } of achievements) {
+      this.unlock(userId, achievementId, unlockedAt);
+    }
+  }
+
+  async findUnlocked(userId: string): Promise<UnlockedAchievement[]> {
+    const unlocked = this.achievementsByUser.get(userId) ?? new Map<string, Date>();
+    return [...unlocked].map(([achievementId, unlockedAt]) => ({ achievementId, unlockedAt }));
+  }
+
+  async saveCompletion({
+    session,
+    stats,
+    unlockedAchievementIds,
+  }: LessonCompletion): Promise<void> {
     this.savedSessions.push(session);
     this.markCompleted(session.userId, session.lessonId);
     this.statsByUser.set(stats.userId, stats);
+    for (const achievementId of unlockedAchievementIds) {
+      this.unlock(session.userId, achievementId, session.completedAt);
+    }
+  }
+
+  // Like the database, the first unlock date stays.
+  private unlock(userId: string, achievementId: string, unlockedAt: Date): void {
+    const unlocked = this.achievementsByUser.get(userId) ?? new Map<string, Date>();
+    if (!unlocked.has(achievementId)) unlocked.set(achievementId, unlockedAt);
+    this.achievementsByUser.set(userId, unlocked);
   }
 
   private markCompleted(userId: string, lessonId: string): void {

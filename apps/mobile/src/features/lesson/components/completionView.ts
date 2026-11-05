@@ -31,11 +31,28 @@ export function streakResultCopy({ streak, streakIncreased }: CompleteLessonResp
   };
 }
 
+function achievementsAnnouncement(titles: readonly string[]): string | null {
+  if (titles.length === 0) return null;
+  const [only] = titles;
+  if (titles.length === 1) return `Conquista desbloqueada: ${only}.`;
+  return `Conquistas desbloqueadas: ${titles.join(', ')}.`;
+}
+
 // Read aloud by screen readers when the result arrives, since it replaces a spinner.
-export function resultAnnouncement({ xpEarned, streak, streakIncreased }: CompleteLessonResponse) {
-  const xp = `Você ganhou ${xpEarned} pontos de experiência.`;
-  if (!streakIncreased) return `Lição concluída. ${xp}`;
-  return `Lição concluída. ${xp} Sua sequência aumentou para ${daysLabel(streak.current)}.`;
+export function resultAnnouncement({
+  xpEarned,
+  streak,
+  streakIncreased,
+  achievementsUnlocked,
+}: CompleteLessonResponse) {
+  return [
+    'Lição concluída.',
+    `Você ganhou ${xpEarned} pontos de experiência.`,
+    streakIncreased ? `Sua sequência aumentou para ${daysLabel(streak.current)}.` : null,
+    achievementsAnnouncement(achievementsUnlocked.map(({ title }) => title)),
+  ]
+    .filter((sentence) => sentence !== null)
+    .join(' ');
 }
 
 // Shown for no connection and for a server failure alike: both are sent again later.
