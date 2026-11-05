@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
-import { CompleteLessonResponse, HomeResponse, type CompleteLessonBody } from '@libras/contracts';
+import {
+  AchievementsResponse,
+  CompleteLessonResponse,
+  HomeResponse,
+  type CompleteLessonBody,
+} from '@libras/contracts';
 import { eq } from 'drizzle-orm';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -101,6 +106,17 @@ describe('lesson completion, end to end', () => {
         expect(response.statusCode).toBe(200);
         return HomeResponse.parse(response.json());
       };
+      const getAchievements = async () => {
+        const response = await app.inject({
+          method: 'GET',
+          url: '/v1/achievements',
+          headers: { authorization },
+        });
+        expect(response.statusCode).toBe(200);
+        return AchievementsResponse.parse(response.json()).achievements;
+      };
+      const unlockedIds = async () =>
+        (await getAchievements()).filter(({ unlockedAt }) => unlockedAt !== null).map(({ id }) => id);
       const completeFirstLesson = async (optionId: string) => {
         const payload: CompleteLessonBody = {
           answers: [{ exerciseId: 'it-e2e-ex-1', answer: { type: 'sign_to_word', optionId } }],
@@ -122,12 +138,21 @@ describe('lesson completion, end to end', () => {
       expect(before.streak).toEqual({ current: 0, longest: 0, status: 'broken' });
       expect(before.totalXp).toBe(0);
 
+      expect(await unlockedIds()).toEqual([]);
+
+      // The first unit has only this lesson, so it is complete too.
       const completion = await completeFirstLesson('a');
       expect(completion).toEqual({
         xpEarned: 15,
         streak: { current: 1, longest: 1, status: 'done_today' },
         streakIncreased: true,
+        achievementsUnlocked: [
+          expect.objectContaining({ id: 'first-lesson' }),
+          expect.objectContaining({ id: 'first-perfect' }),
+          expect.objectContaining({ id: 'first-module' }),
+        ],
       });
+      expect(await unlockedIds()).toEqual(['first-lesson', 'first-perfect', 'first-module']);
 
       const after = await getHome();
       expect(statusesOf(after)).toEqual([['completed'], ['available']]);
@@ -138,6 +163,7 @@ describe('lesson completion, end to end', () => {
       const retry = await completeFirstLesson('b');
       expect(retry).toEqual(completion);
       expect(await getHome()).toEqual(after);
+      expect(await unlockedIds()).toEqual(['first-lesson', 'first-perfect', 'first-module']);
 
       const [sessions, progress] = await Promise.all([
         tx.select().from(lessonSessions).where(eq(lessonSessions.userId, userId)),
