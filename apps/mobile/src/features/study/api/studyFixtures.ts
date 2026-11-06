@@ -1,6 +1,7 @@
 import {
   StudiesResponse,
   StudyGuide,
+  type SignImage,
   type StudyBlock,
   type StudyPage,
 } from '@libras/contracts';
@@ -14,10 +15,19 @@ import { mockLatency } from '@/shared/api/mockServer';
 // so both screens show the same placeholders. Like in the seed, the letters have no
 // description yet: it waits for a Libras specialist.
 
+// As in the seed, these letters are shown as two frames side by side.
+const lettersWithMovement = new Set(['H', 'J', 'K', 'X', 'Y', 'Z']);
+
+function letterFrames(letter: (typeof letters)[number]): SignImage[] {
+  if (!lettersWithMovement.has(letter.label)) return [letter.image];
+  const second = { ...letter.image, url: letter.image.url.replace(/\.png$/, '-2.png') };
+  return [letter.image, second];
+}
+
 function letterBlocks(first: string, last: string): StudyBlock[] {
   return letters
     .filter((letter) => letter.label >= first && letter.label <= last)
-    .map((letter) => ({ type: 'sign', label: letter.label, images: [letter.image] }));
+    .map((letter) => ({ type: 'sign', label: letter.label, images: letterFrames(letter) }));
 }
 
 function letterPage(first: string, last: string): StudyPage {

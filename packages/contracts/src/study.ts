@@ -5,6 +5,12 @@ import { SignImageSequence } from './signImage';
 // Studies are reading material shown before a trail's lessons. They are never graded,
 // so there are no answers here: only what each page shows.
 
+// A subtitle inside a page, to split a long page into sections.
+export const HeadingBlock = z.object({
+  type: z.literal('heading'),
+  text: z.string().min(1),
+});
+
 export const TextBlock = z.object({
   type: z.literal('text'),
   body: z.string().min(1),
@@ -24,7 +30,12 @@ export const TipBlock = z.object({
   body: z.string().min(1),
 });
 
-export const StudyBlock = z.discriminatedUnion('type', [TextBlock, SignBlock, TipBlock]);
+export const StudyBlock = z.discriminatedUnion('type', [
+  HeadingBlock,
+  TextBlock,
+  SignBlock,
+  TipBlock,
+]);
 export type StudyBlock = z.infer<typeof StudyBlock>;
 export type StudyBlockType = StudyBlock['type'];
 

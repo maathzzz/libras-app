@@ -44,6 +44,41 @@ describe('StudyGuide', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts a sign block with frames side by side', () => {
+    const sign = {
+      type: 'sign',
+      label: 'H',
+      images: [
+        { url: 'https://cdn.example/h-1.png', alt: 'Início do sinal da letra H' },
+        { url: 'https://cdn.example/h-2.png', alt: 'Fim do sinal da letra H' },
+      ],
+    };
+    const result = StudyGuide.safeParse({
+      ...guide,
+      pages: [{ id: 'p1', title: 'H', blocks: [sign] }],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts a heading block', () => {
+    const result = StudyGuide.safeParse({
+      ...guide,
+      pages: [{ id: 'p1', title: 'Seções', blocks: [{ type: 'heading', text: 'Vogais' }] }],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects an empty heading', () => {
+    const result = StudyGuide.safeParse({
+      ...guide,
+      pages: [{ id: 'p1', title: 'Seções', blocks: [{ type: 'heading', text: '' }] }],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('rejects a study without pages', () => {
     expect(StudyGuide.safeParse({ ...guide, pages: [] }).success).toBe(false);
   });

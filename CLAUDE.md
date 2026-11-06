@@ -60,7 +60,7 @@ Fonte única de verdade dos dados trocados entre app e BFF.
 * Exercícios são uma `z.discriminatedUnion('type', \[...])`. Tipos atuais: `sign\_to\_word`, `word\_to\_sign`, `fingerspelling`, `match\_pairs`, `handshape`.
 * Imagens são representadas por `SignImage` (`url` + `alt`). Um sinal com movimento usa uma lista de imagens em sequência. O `alt` é só para leitores de tela e não pode entregar a resposta de um exercício; o texto visível de como executar o sinal é a `description` do sinal.
 * Conquistas ficam em `achievement.ts`: `Achievement` (o que a conclusão de lição devolve em `achievementsUnlocked`) e `AchievementStatus` (com `progress` e `unlockedAt`, para o perfil).
-* Estudos ficam em `study.ts`. Os blocos de uma página também são uma `z.discriminatedUnion('type', \[...])` (`StudyBlock`). Tipos atuais: `text`, `sign` (rótulo + `SignImageSequence` + `description` opcional, exibida uma vez abaixo de todas as imagens) e `tip`.
+* Estudos ficam em `study.ts`. Os blocos de uma página também são uma `z.discriminatedUnion('type', \[...])` (`StudyBlock`). Tipos atuais: `heading` (subtítulo dentro da página), `text`, `sign` (rótulo + `SignImageSequence` + `description` opcional, exibida uma vez abaixo de todas as imagens) e `tip`.
 * Ao alterar um contrato, atualize o BFF e o app na mesma tarefa.
 
 ## Banco de dados
