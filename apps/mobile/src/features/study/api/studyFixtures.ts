@@ -1,9 +1,18 @@
-import type { StudiesResponse, StudyBlock, StudyGuide, StudyPage } from '@libras/contracts';
+import {
+  StudiesResponse,
+  StudyGuide,
+  type StudyBlock,
+  type StudyPage,
+} from '@libras/contracts';
 
 import { letters } from '@/features/alphabet';
+import { ApiError } from '@/shared/api/client';
+import { mockLatency } from '@/shared/api/mockServer';
 
-// Provisional content: the texts still need review by a Libras specialist. The letter
-// pictures come from the alphabet feature, so both screens show the same placeholders.
+// Development fixtures for the study routes, used when EXPO_PUBLIC_USE_MOCKS=true. The same
+// "Alfabeto manual" the BFF seed creates. The letter pictures come from the alphabet feature,
+// so both screens show the same placeholders. Like in the seed, the letters have no
+// description yet: it waits for a Libras specialist.
 
 function letterBlocks(first: string, last: string): StudyBlock[] {
   return letters
@@ -74,8 +83,9 @@ const alphabetGuide: StudyGuide = {
 
 const guides: readonly StudyGuide[] = [alphabetGuide];
 
-export function mockStudies(): StudiesResponse {
-  return {
+export async function mockGetStudies(): Promise<StudiesResponse> {
+  await mockLatency();
+  return StudiesResponse.parse({
     trails: [
       {
         id: 'primeiros-contatos',
@@ -88,9 +98,15 @@ export function mockStudies(): StudiesResponse {
         })),
       },
     ],
-  };
+  });
 }
 
-export function mockStudy(studyId: string): StudyGuide | undefined {
-  return guides.find((guide) => guide.id === studyId);
+// An unknown id fails like the BFF's 404.
+export async function mockGetStudy(studyId: string): Promise<StudyGuide> {
+  await mockLatency();
+  const guide = guides.find((candidate) => candidate.id === studyId);
+  if (!guide) {
+    throw new ApiError('request', `Study ${studyId} not found`, 404, 'STUDY_NOT_FOUND');
+  }
+  return StudyGuide.parse(guide);
 }

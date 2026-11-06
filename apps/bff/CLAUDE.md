@@ -93,7 +93,7 @@ src/
 **Estudos** (módulo `curriculum`):
 
 * São conteúdo de leitura: `GetStudies` (lista por trilha) e `GetStudy` (páginas de um estudo). Não há escrita, correção, XP nem streak.
-* Fazem parte do cache de currículo invalidado por `content\_version`.
+* Ainda não há cache de currículo: cada requisição lê do banco. O `pages` lido é validado com `StudyGuide`; conteúdo fora do contrato é erro de conteúdo e lança exceção.
 * Não bloqueiam lições: a liberação das lições continua decidida só pelo progresso de exercícios.
 * Marcar um estudo como visto fica para depois. Quando for feito, a escrita vai para o módulo `progress` e exige `Idempotency-Key`.
 
@@ -105,7 +105,7 @@ src/
 * Lição: `GET /v1/lessons/:lessonId` (`LessonBundle`). Lição inexistente retorna 404 `LESSON_NOT_FOUND`; lição bloqueada para o usuário retorna 403 `LESSON_LOCKED`.
 * Conclusão de lição: `POST /v1/lessons/:lessonId/sessions` (corpo `CompleteLessonBody`, header `Idempotency-Key`, resposta `CompleteLessonResponse`). Header ausente ou que não é UUID retorna 400 `INVALID_IDEMPOTENCY_KEY` (lido com `readIdempotencyKey`, `shared/infrastructure/idempotencyKeyHeader.ts`); corpo inválido, 400 `VALIDATION_ERROR`; lição inexistente, 404 `LESSON_NOT_FOUND`; lição bloqueada, 403 `LESSON_LOCKED`; `localDate` além do limite, 422 `LOCAL_DATE_TOO_FAR_AHEAD`. O reenvio com a mesma `Idempotency-Key` retorna 200 com o resultado original.
 * Conquistas: `GET /v1/achievements` (`AchievementsResponse`, todo o catálogo na ordem de exibição, com `progress` e `unlockedAt`). Não exige `X-Local-Date`.
-* Estudos: `GET /v1/studies` (aba "Estudar", `StudiesResponse`) e `GET /v1/studies/:studyId` (`StudyGuide`). Id desconhecido retorna 404.
+* Estudos: `GET /v1/studies` (aba "Estudar", `StudiesResponse`, trilhas sem estudos ficam de fora) e `GET /v1/studies/:studyId` (`StudyGuide`). Id desconhecido retorna 404 `STUDY_NOT_FOUND`. Não exigem `X-Local-Date`.
 * Perfil: `GET /v1/me` (cria o perfil no primeiro acesso, com o nome tirado do e-mail do token), `PATCH /v1/me` (`UpdateProfileRequest`) e `DELETE /v1/me` (exclui os dados no schema `app` e o usuário do Supabase Auth; idempotente, responde 204).
 * Toda rota autenticada valida o JWT do Supabase no plugin de auth. O `userId` vem do token, nunca do corpo da requisição.
 * O plugin de auth (`shared/infrastructure/auth.ts`) é registrado no escopo `/v1`. Ele verifica a assinatura pelo JWKS do projeto (só ES256/RS256: o segredo HS256 legado é recusado), a expiração, o `iss` (`<SUPABASE_URL>/auth/v1`) e o `aud` (`authenticated`). Token ausente ou inválido retorna 401 `UNAUTHORIZED`; falha ao buscar as chaves retorna 500.

@@ -43,7 +43,8 @@ type SignCardProps = {
   width: number;
 };
 
-// A sign with movement is a series of frames, shown side by side in order.
+// A sign with movement is a series of frames, shown side by side in order. The description
+// covers the whole sign, so it comes once, below all of the frames.
 function SignCard({ block, width }: SignCardProps) {
   const inner = width - spacing.xl * 2;
   const gaps = spacing.xs * (block.images.length - 1);
@@ -59,9 +60,9 @@ function SignCard({ block, width }: SignCardProps) {
           <SignImage key={`${index}-${image.url}`} image={image} size={frameSize} />
         ))}
       </View>
-      {block.hint && (
+      {block.description && (
         <AppText variant="caption" align="center">
-          {block.hint}
+          {block.description}
         </AppText>
       )}
     </View>

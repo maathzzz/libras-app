@@ -68,7 +68,8 @@ src/
 * Ao abrir um estudo, buscar o `StudyGuide` e fazer `Image.prefetch()` das imagens antes de mostrar a primeira página.
 * Cada tipo de bloco é um `case` em `features/study/components/StudyBlockView.tsx`. Para adicionar um tipo: criar o schema em `contracts` e o `case` correspondente; o `switch` não tem `default`, então o typecheck aponta o caso que falta.
 * Nada é enviado ao BFF ao concluir: "Concluir" só fecha o leitor.
-* Enquanto o BFF não existe, `api/studyMocks.ts` traz o estudo "Alfabeto manual", que reaproveita as letras exportadas por `features/alphabet`. O texto é provisório e precisa de revisão por especialista em Libras.
+* Os estudos vêm do BFF (`GET /v1/studies` e `GET /v1/studies/:studyId`). Com `EXPO\_PUBLIC\_USE\_MOCKS=true`, `api/studyFixtures.ts` traz o mesmo "Alfabeto manual" do seed, reaproveitando as letras de `features/alphabet`. O texto é provisório e precisa de revisão por especialista em Libras.
+* A `description` de um bloco de sinal aparece uma vez, abaixo de todas as imagens do sinal. O modal do alfabeto (`HandSignSheet`) mostra a `description` do sinal tocado; o conteúdo do alfabeto continua embarcado no app.
 
 ## Lembrete de streak
 

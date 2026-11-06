@@ -6,6 +6,7 @@ import {
 } from 'fastify-type-provider-zod';
 
 import type { Container } from './container';
+import { studyRoutes } from './modules/curriculum/http/studyRoutes';
 import { profileRoutes } from './modules/profile/http/profileRoutes';
 import { progressRoutes } from './modules/progress/http/progressRoutes';
 import { authPlugin } from './shared/infrastructure/auth';
@@ -32,6 +33,7 @@ export function buildApp(container: Container, { logger }: AppOptions) {
       await v1.register(authPlugin(container.verifyAccessToken));
       await v1.register(profileRoutes(container));
       await v1.register(progressRoutes(container));
+      await v1.register(studyRoutes(container));
     },
     { prefix: '/v1' },
   );

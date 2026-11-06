@@ -2,8 +2,11 @@ import {
   Exercise,
   LessonBundle,
   SignImage,
+  StudyGuide,
   type SignImageSequence,
   type SignToWordExercise,
+  type StudyBlock,
+  type StudyPage,
   type WordToSignExercise,
 } from '@libras/contracts';
 
@@ -15,6 +18,8 @@ export interface SeedSign {
   label: string;
   imagePaths: string[];
   alt: string;
+  // Visible text on how to perform the sign. Null while nobody has written it.
+  description: string | null;
 }
 
 export interface SeedExercise {
@@ -30,6 +35,16 @@ export interface SeedContent {
   lessons: { id: string; unitId: string; title: string; position: number }[];
   signs: SeedSign[];
   exercises: SeedExercise[];
+  studies: SeedStudy[];
+}
+
+export interface SeedStudy {
+  id: string;
+  trailId: string;
+  position: number;
+  title: string;
+  description: string;
+  pages: StudyPage[];
 }
 
 const OPTIONS_PER_EXERCISE = 4;
@@ -58,6 +73,22 @@ const NUMBER_ALTS = [
   'Indicador estendido com o polegar para cima, com um pequeno balanço',
 ] as const;
 
+// Provisional, like the alt texts: they need review by a Libras specialist. The letters have
+// none yet: a wrong description would teach the wrong hand, so they wait for the specialist.
+const NUMBER_DESCRIPTIONS = [
+  'Dedos curvados formando um círculo com o polegar. Palma para o interlocutor, sem movimento.',
+  'Indicador estendido, demais dedos fechados. Palma para o interlocutor.',
+  'Indicador e médio estendidos, em V. Palma para o interlocutor.',
+  'Indicador, médio e anelar estendidos. Palma para o interlocutor.',
+  'Quatro dedos estendidos, polegar dobrado sobre a palma.',
+  'Mão aberta, cinco dedos estendidos e afastados.',
+  'Indicador, médio e anelar estendidos com o polegar; mínimo dobrado.',
+  'Indicador e médio estendidos com o polegar; anelar e mínimo dobrados.',
+  'Indicador e polegar estendidos, demais dobrados. Palma para o interlocutor.',
+  'Dedos curvados em garra, polegar afastado. Palma para o interlocutor.',
+  'Indicador estendido com o polegar para cima; pequeno movimento de balanço.',
+] as const;
+
 function letterSign(letter: string): SeedSign {
   const id = `letter-${letter.toLowerCase()}`;
   const frames = LETTERS_WITH_MOVEMENT.has(letter) ? 2 : 1;
@@ -66,12 +97,19 @@ function letterSign(letter: string): SeedSign {
     label: letter,
     imagePaths: Array.from({ length: frames }, (_, index) => placeholderPath(id, index + 1)),
     alt: LETTER_ALT,
+    description: null,
   };
 }
 
 function numberSign(value: number, alt: string): SeedSign {
   const id = `number-${value}`;
-  return { id, label: String(value), imagePaths: [placeholderPath(id, 1)], alt };
+  return {
+    id,
+    label: String(value),
+    imagePaths: [placeholderPath(id, 1)],
+    alt,
+    description: NUMBER_DESCRIPTIONS[value] ?? null,
+  };
 }
 
 const signs: SeedSign[] = [
@@ -197,7 +235,82 @@ export function buildSeedContent(): SeedContent {
     }));
   });
 
-  return { course: COURSE, units, lessons, signs, exercises };
+  return { course: COURSE, units, lessons, signs, exercises, studies: buildStudies() };
+}
+
+// Studies
+
+const text = (body: string): StudyBlock => ({ type: 'text', body });
+const tip = (body: string): StudyBlock => ({ type: 'tip', body });
+
+// A sign block carries its own copy of the sign, like an exercise does, so the app gets the
+// page in one read. The description comes from the sign, so it is written in one place.
+function sign(id: string): StudyBlock {
+  const found = findSign(id);
+  const block = { type: 'sign' as const, label: found.label, images: imagesOf(found) };
+  return found.description === null ? block : { ...block, description: found.description };
+}
+
+function letterPage(first: string, last: string): StudyPage {
+  const range = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    .split('')
+    .filter((letter) => letter >= first && letter <= last);
+  return {
+    id: `letras-${first.toLowerCase()}-${last.toLowerCase()}`,
+    title: `Letras de ${first} a ${last}`,
+    blocks: [
+      text('Olhe cada imagem com calma e repita a forma da mão. Não precisa decorar tudo agora.'),
+      ...range.map((letter) => sign(`letter-${letter.toLowerCase()}`)),
+    ],
+  };
+}
+
+// Provisional text, to be reviewed by a Libras specialist.
+const ALPHABET_STUDY: SeedStudy = {
+  id: 'alfabeto-manual',
+  trailId: COURSE.id,
+  position: 1,
+  title: 'Alfabeto manual',
+  description: 'As 26 letras em Libras, para soletrar nomes e palavras.',
+  pages: [
+    {
+      id: 'o-que-e-datilologia',
+      title: 'O que é datilologia',
+      blocks: [
+        text('Datilologia é soletrar com as mãos. Cada letra do português tem uma forma de mão.'),
+        text(
+          'Ela serve para nomes de pessoas, lugares e palavras que ainda não têm sinal. Ela não substitui os sinais: quando existe um sinal, use o sinal.',
+        ),
+        tip(
+          'Use a mão que você mais usa. Deixe a mão na altura do ombro, com a palma para quem conversa com você.',
+        ),
+      ],
+    },
+    letterPage('A', 'F'),
+    letterPage('G', 'L'),
+    letterPage('M', 'R'),
+    letterPage('S', 'Z'),
+    {
+      id: 'dicas-para-soletrar',
+      title: 'Dicas para soletrar',
+      blocks: [
+        text('Faça uma letra de cada vez, sem pressa. O braço fica parado.'),
+        text('Entre uma palavra e outra, faça uma pausa curta.'),
+        text(
+          'Quando a mesma letra aparece duas vezes seguidas, como em "Anna", mova a mão um pouco para o lado na segunda letra.',
+        ),
+        tip(
+          'Treine soletrando seu nome na aba Alfabeto. Depois, faça as lições da unidade Alfabeto na trilha.',
+        ),
+      ],
+    },
+  ],
+};
+
+// Validated with the schema the BFF serves, so the seed can never hold a page the app
+// cannot render.
+function buildStudies(): SeedStudy[] {
+  return [ALPHABET_STUDY].map((study) => ({ ...study, pages: StudyGuide.parse(study).pages }));
 }
 
 // Option ids are sign ids, so the options list every sign the exercise shows.

@@ -54,7 +54,7 @@ function SheetContent({ sign }: { sign: HandSign }) {
         <SignImage image={sign.image} size={sizes.handSignFrame} />
       </View>
       <AppText variant="body" color="textMuted">
-        {sign.hint}
+        {sign.description}
       </AppText>
       <Button label="Entendi" onPress={close} />
     </BottomSheet>
