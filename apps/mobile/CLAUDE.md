@@ -91,7 +91,7 @@ src/
 
 * Sempre use `expo-image` com `cachePolicy="memory-disk"`. Nunca use o `Image` do React Native.
 * Toda imagem de sinal tem `accessibilityLabel` a partir do campo `alt`.
-* Imagens do alfabeto manual e dos números são embarcadas no app. As demais vêm do Supabase Storage.
+* Imagens do alfabeto manual e dos números são embarcadas no app, em `assets/images/hand-signs/` (`letter-a.webp`, `number-1.webp`), importadas em `features/alphabet/content/handSigns.ts` e passadas ao `SignImage` como `BundledSignImage` (`source` + `alt`). Um sinal ainda sem imagem mostra o placeholder. As demais vêm do Supabase Storage.
 
 ## Acessibilidade
 

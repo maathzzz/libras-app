@@ -11,17 +11,23 @@ import { ApiError } from '@/shared/api/client';
 import { mockLatency } from '@/shared/api/mockServer';
 
 // Development fixtures for the study routes, used when EXPO_PUBLIC_USE_MOCKS=true. The same
-// "Alfabeto manual" the BFF seed creates. The letter pictures come from the alphabet feature,
-// so both screens show the same placeholders. Like in the seed, the letters have no
-// description yet: it waits for a Libras specialist.
+// "Alfabeto manual" the BFF seed creates, with the letters and alt texts of the alphabet feature.
+// The pictures are placeholders: a study carries image URLs (Supabase Storage in the real one),
+// and the alphabet pictures are bundled with the app. `.invalid` never resolves (RFC 2606), so
+// SignImage shows its placeholder. Like in the seed, the letters have no description yet: it
+// waits for a Libras specialist.
 
 // As in the seed, these letters are shown as two frames side by side.
 const lettersWithMovement = new Set(['H', 'J', 'K', 'X', 'Y', 'Z']);
 
 function letterFrames(letter: (typeof letters)[number]): SignImage[] {
-  if (!lettersWithMovement.has(letter.label)) return [letter.image];
-  const second = { ...letter.image, url: letter.image.url.replace(/\.png$/, '-2.png') };
-  return [letter.image, second];
+  const slug = `letter-${letter.label.toLowerCase()}`;
+  const frame = (suffix: string): SignImage => ({
+    url: `https://placeholder.invalid/hand-signs/${slug}${suffix}.png`,
+    alt: letter.image.alt,
+  });
+  if (!lettersWithMovement.has(letter.label)) return [frame('')];
+  return [frame(''), frame('-2')];
 }
 
 function letterBlocks(first: string, last: string): StudyBlock[] {

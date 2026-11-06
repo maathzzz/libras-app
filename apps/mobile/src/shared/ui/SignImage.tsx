@@ -7,8 +7,14 @@ import { colors, radius, spacing } from '@/shared/theme';
 
 import { AppText } from './AppText';
 
+/** A picture bundled with the app (what importing the image file returns), like the manual alphabet. */
+export type BundledSignImage = {
+  source: number;
+  alt: string;
+};
+
 type SignImageProps = {
-  image: SignImageData;
+  image: SignImageData | BundledSignImage;
   size: number;
   // Small frames have no room for the alt text: the placeholder is only the gray square,
   // and the alt still reaches screen readers through the label.
@@ -20,8 +26,9 @@ type LoadState = 'loading' | 'loaded' | 'failed';
 // Every sign image in the app goes through here, so a missing or broken picture still
 // leaves a square of the same size that says, through its alt text, which sign it is.
 export function SignImage({ image, size, compact = false }: SignImageProps) {
-  // Keyed by url so a new image starts loading from scratch instead of keeping the old state.
-  return <SignImageFrame key={image.url} image={image} size={size} compact={compact} />;
+  // Keyed by its source so a new image starts loading from scratch instead of keeping the old state.
+  const key = 'source' in image ? image.source : image.url;
+  return <SignImageFrame key={key} image={image} size={size} compact={compact} />;
 }
 
 function SignImageFrame({ image, size, compact }: SignImageProps) {
@@ -45,7 +52,7 @@ function SignImageFrame({ image, size, compact }: SignImageProps) {
       )}
       {state !== 'failed' && (
         <Image
-          source={{ uri: image.url }}
+          source={'source' in image ? image.source : { uri: image.url }}
           cachePolicy="memory-disk"
           contentFit="contain"
           style={StyleSheet.absoluteFill}
