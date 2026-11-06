@@ -56,10 +56,33 @@ export interface SeedStudy {
 
 const OPTIONS_PER_EXERCISE = 4;
 
-// There are no sign pictures yet. `.invalid` never resolves (RFC 2606), so the app shows its
+// Signs whose picture is already in the public `signs` bucket of the development project, as
+// `<sign id>.webp`. The same files ship with the app (apps/mobile/assets/images/hand-signs).
+// Only single-frame signs so far, so the file has no frame number.
+const UPLOADED_SIGNS = new Set([
+  'letter-a',
+  'letter-b',
+  'letter-c',
+  'letter-d',
+  'letter-e',
+  'letter-f',
+  'number-1',
+  'number-2',
+  'number-3',
+  'number-4',
+]);
+const SIGNS_BUCKET_URL =
+  'https://smbrmnevkdqpxkparxon.supabase.co/storage/v1/object/public/signs';
+
+// The others have no picture yet. `.invalid` never resolves (RFC 2606), so the app shows its
 // placeholder with the alt text, as it does with its own mocks.
 const placeholderPath = (signId: string, frame: number) =>
   `https://placeholder.invalid/signs/${signId}-${frame}.png`;
+
+function imagePathsOf(signId: string, frames: number): string[] {
+  if (UPLOADED_SIGNS.has(signId) && frames === 1) return [`${SIGNS_BUCKET_URL}/${signId}.webp`];
+  return Array.from({ length: frames }, (_, index) => placeholderPath(signId, index + 1));
+}
 
 // Provisional: needs review by a Libras specialist, like the rest of this text. The alt text
 // describes the hand, not the answer, so it does not give the exercise away.
@@ -102,7 +125,7 @@ function letterSign(letter: string): SeedSign {
   return {
     id,
     label: letter,
-    imagePaths: Array.from({ length: frames }, (_, index) => placeholderPath(id, index + 1)),
+    imagePaths: imagePathsOf(id, frames),
     alt: LETTER_ALT,
     description: null,
   };
@@ -113,7 +136,7 @@ function numberSign(value: number, alt: string): SeedSign {
   return {
     id,
     label: String(value),
-    imagePaths: [placeholderPath(id, 1)],
+    imagePaths: imagePathsOf(id, 1),
     alt,
     description: NUMBER_DESCRIPTIONS[value] ?? null,
   };
