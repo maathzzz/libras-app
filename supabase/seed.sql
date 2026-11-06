@@ -31,48 +31,49 @@ on conflict (id) do update set
   title = excluded.title,
   position = excluded.position;
 
-insert into app.signs (id, label, image_paths, alt) values
-  ('letter-a', 'A', array['https://placeholder.invalid/signs/letter-a-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-b', 'B', array['https://placeholder.invalid/signs/letter-b-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-c', 'C', array['https://placeholder.invalid/signs/letter-c-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-d', 'D', array['https://placeholder.invalid/signs/letter-d-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-e', 'E', array['https://placeholder.invalid/signs/letter-e-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-f', 'F', array['https://placeholder.invalid/signs/letter-f-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-g', 'G', array['https://placeholder.invalid/signs/letter-g-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-h', 'H', array['https://placeholder.invalid/signs/letter-h-1.png', 'https://placeholder.invalid/signs/letter-h-2.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-i', 'I', array['https://placeholder.invalid/signs/letter-i-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-j', 'J', array['https://placeholder.invalid/signs/letter-j-1.png', 'https://placeholder.invalid/signs/letter-j-2.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-k', 'K', array['https://placeholder.invalid/signs/letter-k-1.png', 'https://placeholder.invalid/signs/letter-k-2.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-l', 'L', array['https://placeholder.invalid/signs/letter-l-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-m', 'M', array['https://placeholder.invalid/signs/letter-m-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-n', 'N', array['https://placeholder.invalid/signs/letter-n-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-o', 'O', array['https://placeholder.invalid/signs/letter-o-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-p', 'P', array['https://placeholder.invalid/signs/letter-p-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-q', 'Q', array['https://placeholder.invalid/signs/letter-q-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-r', 'R', array['https://placeholder.invalid/signs/letter-r-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-s', 'S', array['https://placeholder.invalid/signs/letter-s-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-t', 'T', array['https://placeholder.invalid/signs/letter-t-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-u', 'U', array['https://placeholder.invalid/signs/letter-u-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-v', 'V', array['https://placeholder.invalid/signs/letter-v-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-w', 'W', array['https://placeholder.invalid/signs/letter-w-1.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-x', 'X', array['https://placeholder.invalid/signs/letter-x-1.png', 'https://placeholder.invalid/signs/letter-x-2.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-y', 'Y', array['https://placeholder.invalid/signs/letter-y-1.png', 'https://placeholder.invalid/signs/letter-y-2.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('letter-z', 'Z', array['https://placeholder.invalid/signs/letter-z-1.png', 'https://placeholder.invalid/signs/letter-z-2.png'], 'Mão formando uma letra do alfabeto manual'),
-  ('number-0', '0', array['https://placeholder.invalid/signs/number-0-1.png'], 'Dedos curvados formando um círculo com o polegar'),
-  ('number-1', '1', array['https://placeholder.invalid/signs/number-1-1.png'], 'Indicador estendido, demais dedos fechados'),
-  ('number-2', '2', array['https://placeholder.invalid/signs/number-2-1.png'], 'Indicador e médio estendidos, em V'),
-  ('number-3', '3', array['https://placeholder.invalid/signs/number-3-1.png'], 'Indicador, médio e anelar estendidos'),
-  ('number-4', '4', array['https://placeholder.invalid/signs/number-4-1.png'], 'Quatro dedos estendidos, polegar dobrado sobre a palma'),
-  ('number-5', '5', array['https://placeholder.invalid/signs/number-5-1.png'], 'Mão aberta, cinco dedos estendidos e afastados'),
-  ('number-6', '6', array['https://placeholder.invalid/signs/number-6-1.png'], 'Indicador, médio e anelar estendidos com o polegar; mínimo dobrado'),
-  ('number-7', '7', array['https://placeholder.invalid/signs/number-7-1.png'], 'Indicador e médio estendidos com o polegar; anelar e mínimo dobrados'),
-  ('number-8', '8', array['https://placeholder.invalid/signs/number-8-1.png'], 'Indicador e polegar estendidos, demais dedos dobrados'),
-  ('number-9', '9', array['https://placeholder.invalid/signs/number-9-1.png'], 'Dedos curvados em garra, polegar afastado'),
-  ('number-10', '10', array['https://placeholder.invalid/signs/number-10-1.png'], 'Indicador estendido com o polegar para cima, com um pequeno balanço')
+insert into app.signs (id, label, image_paths, alt, description) values
+  ('letter-a', 'A', array['https://placeholder.invalid/signs/letter-a-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-b', 'B', array['https://placeholder.invalid/signs/letter-b-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-c', 'C', array['https://placeholder.invalid/signs/letter-c-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-d', 'D', array['https://placeholder.invalid/signs/letter-d-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-e', 'E', array['https://placeholder.invalid/signs/letter-e-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-f', 'F', array['https://placeholder.invalid/signs/letter-f-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-g', 'G', array['https://placeholder.invalid/signs/letter-g-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-h', 'H', array['https://placeholder.invalid/signs/letter-h-1.png', 'https://placeholder.invalid/signs/letter-h-2.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-i', 'I', array['https://placeholder.invalid/signs/letter-i-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-j', 'J', array['https://placeholder.invalid/signs/letter-j-1.png', 'https://placeholder.invalid/signs/letter-j-2.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-k', 'K', array['https://placeholder.invalid/signs/letter-k-1.png', 'https://placeholder.invalid/signs/letter-k-2.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-l', 'L', array['https://placeholder.invalid/signs/letter-l-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-m', 'M', array['https://placeholder.invalid/signs/letter-m-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-n', 'N', array['https://placeholder.invalid/signs/letter-n-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-o', 'O', array['https://placeholder.invalid/signs/letter-o-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-p', 'P', array['https://placeholder.invalid/signs/letter-p-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-q', 'Q', array['https://placeholder.invalid/signs/letter-q-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-r', 'R', array['https://placeholder.invalid/signs/letter-r-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-s', 'S', array['https://placeholder.invalid/signs/letter-s-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-t', 'T', array['https://placeholder.invalid/signs/letter-t-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-u', 'U', array['https://placeholder.invalid/signs/letter-u-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-v', 'V', array['https://placeholder.invalid/signs/letter-v-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-w', 'W', array['https://placeholder.invalid/signs/letter-w-1.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-x', 'X', array['https://placeholder.invalid/signs/letter-x-1.png', 'https://placeholder.invalid/signs/letter-x-2.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-y', 'Y', array['https://placeholder.invalid/signs/letter-y-1.png', 'https://placeholder.invalid/signs/letter-y-2.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('letter-z', 'Z', array['https://placeholder.invalid/signs/letter-z-1.png', 'https://placeholder.invalid/signs/letter-z-2.png'], 'Mão formando uma letra do alfabeto manual', null),
+  ('number-0', '0', array['https://placeholder.invalid/signs/number-0-1.png'], 'Dedos curvados formando um círculo com o polegar', 'Dedos curvados formando um círculo com o polegar. Palma para o interlocutor, sem movimento.'),
+  ('number-1', '1', array['https://placeholder.invalid/signs/number-1-1.png'], 'Indicador estendido, demais dedos fechados', 'Indicador estendido, demais dedos fechados. Palma para o interlocutor.'),
+  ('number-2', '2', array['https://placeholder.invalid/signs/number-2-1.png'], 'Indicador e médio estendidos, em V', 'Indicador e médio estendidos, em V. Palma para o interlocutor.'),
+  ('number-3', '3', array['https://placeholder.invalid/signs/number-3-1.png'], 'Indicador, médio e anelar estendidos', 'Indicador, médio e anelar estendidos. Palma para o interlocutor.'),
+  ('number-4', '4', array['https://placeholder.invalid/signs/number-4-1.png'], 'Quatro dedos estendidos, polegar dobrado sobre a palma', 'Quatro dedos estendidos, polegar dobrado sobre a palma.'),
+  ('number-5', '5', array['https://placeholder.invalid/signs/number-5-1.png'], 'Mão aberta, cinco dedos estendidos e afastados', 'Mão aberta, cinco dedos estendidos e afastados.'),
+  ('number-6', '6', array['https://placeholder.invalid/signs/number-6-1.png'], 'Indicador, médio e anelar estendidos com o polegar; mínimo dobrado', 'Indicador, médio e anelar estendidos com o polegar; mínimo dobrado.'),
+  ('number-7', '7', array['https://placeholder.invalid/signs/number-7-1.png'], 'Indicador e médio estendidos com o polegar; anelar e mínimo dobrados', 'Indicador e médio estendidos com o polegar; anelar e mínimo dobrados.'),
+  ('number-8', '8', array['https://placeholder.invalid/signs/number-8-1.png'], 'Indicador e polegar estendidos, demais dedos dobrados', 'Indicador e polegar estendidos, demais dobrados. Palma para o interlocutor.'),
+  ('number-9', '9', array['https://placeholder.invalid/signs/number-9-1.png'], 'Dedos curvados em garra, polegar afastado', 'Dedos curvados em garra, polegar afastado. Palma para o interlocutor.'),
+  ('number-10', '10', array['https://placeholder.invalid/signs/number-10-1.png'], 'Indicador estendido com o polegar para cima, com um pequeno balanço', 'Indicador estendido com o polegar para cima; pequeno movimento de balanço.')
 on conflict (id) do update set
   label = excluded.label,
   image_paths = excluded.image_paths,
-  alt = excluded.alt;
+  alt = excluded.alt,
+  description = excluded.description;
 
 insert into app.exercises (id, lesson_id, type, position, payload) values
   ('alfabeto-vogais:sign_to_word:letter-a', 'alfabeto-vogais', 'sign_to_word', 1, '{"id":"alfabeto-vogais:sign_to_word:letter-a","type":"sign_to_word","images":[{"url":"https://placeholder.invalid/signs/letter-a-1.png","alt":"Mão formando uma letra do alfabeto manual"}],"options":[{"id":"letter-a","label":"A"},{"id":"letter-e","label":"E"},{"id":"letter-i","label":"I"},{"id":"letter-o","label":"O"}],"correctOptionId":"letter-a"}'::jsonb),
@@ -456,3 +457,12 @@ insert into app.exercise_signs (exercise_id, sign_id) values
   ('numeros-6-10:word_to_sign:number-10', 'number-7'),
   ('numeros-6-10:word_to_sign:number-10', 'number-8')
 on conflict do nothing;
+
+insert into app.studies (id, trail_id, position, title, description, pages) values
+  ('alfabeto-manual', 'libras-iniciante', 1, 'Alfabeto manual', 'As 26 letras em Libras, para soletrar nomes e palavras.', '[{"id":"o-que-e-datilologia","title":"O que é datilologia","blocks":[{"type":"text","body":"Datilologia é soletrar com as mãos. Cada letra do português tem uma forma de mão."},{"type":"text","body":"Ela serve para nomes de pessoas, lugares e palavras que ainda não têm sinal. Ela não substitui os sinais: quando existe um sinal, use o sinal."},{"type":"tip","body":"Use a mão que você mais usa. Deixe a mão na altura do ombro, com a palma para quem conversa com você."}]},{"id":"letras-a-f","title":"Letras de A a F","blocks":[{"type":"text","body":"Olhe cada imagem com calma e repita a forma da mão. Não precisa decorar tudo agora."},{"type":"sign","label":"A","images":[{"url":"https://placeholder.invalid/signs/letter-a-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"B","images":[{"url":"https://placeholder.invalid/signs/letter-b-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"C","images":[{"url":"https://placeholder.invalid/signs/letter-c-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"D","images":[{"url":"https://placeholder.invalid/signs/letter-d-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"E","images":[{"url":"https://placeholder.invalid/signs/letter-e-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"F","images":[{"url":"https://placeholder.invalid/signs/letter-f-1.png","alt":"Mão formando uma letra do alfabeto manual"}]}]},{"id":"letras-g-l","title":"Letras de G a L","blocks":[{"type":"text","body":"Olhe cada imagem com calma e repita a forma da mão. Não precisa decorar tudo agora."},{"type":"sign","label":"G","images":[{"url":"https://placeholder.invalid/signs/letter-g-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"H","images":[{"url":"https://placeholder.invalid/signs/letter-h-1.png","alt":"Mão formando uma letra do alfabeto manual (imagem 1 de 2)"},{"url":"https://placeholder.invalid/signs/letter-h-2.png","alt":"Mão formando uma letra do alfabeto manual (imagem 2 de 2)"}]},{"type":"sign","label":"I","images":[{"url":"https://placeholder.invalid/signs/letter-i-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"J","images":[{"url":"https://placeholder.invalid/signs/letter-j-1.png","alt":"Mão formando uma letra do alfabeto manual (imagem 1 de 2)"},{"url":"https://placeholder.invalid/signs/letter-j-2.png","alt":"Mão formando uma letra do alfabeto manual (imagem 2 de 2)"}]},{"type":"sign","label":"K","images":[{"url":"https://placeholder.invalid/signs/letter-k-1.png","alt":"Mão formando uma letra do alfabeto manual (imagem 1 de 2)"},{"url":"https://placeholder.invalid/signs/letter-k-2.png","alt":"Mão formando uma letra do alfabeto manual (imagem 2 de 2)"}]},{"type":"sign","label":"L","images":[{"url":"https://placeholder.invalid/signs/letter-l-1.png","alt":"Mão formando uma letra do alfabeto manual"}]}]},{"id":"letras-m-r","title":"Letras de M a R","blocks":[{"type":"text","body":"Olhe cada imagem com calma e repita a forma da mão. Não precisa decorar tudo agora."},{"type":"sign","label":"M","images":[{"url":"https://placeholder.invalid/signs/letter-m-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"N","images":[{"url":"https://placeholder.invalid/signs/letter-n-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"O","images":[{"url":"https://placeholder.invalid/signs/letter-o-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"P","images":[{"url":"https://placeholder.invalid/signs/letter-p-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"Q","images":[{"url":"https://placeholder.invalid/signs/letter-q-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"R","images":[{"url":"https://placeholder.invalid/signs/letter-r-1.png","alt":"Mão formando uma letra do alfabeto manual"}]}]},{"id":"letras-s-z","title":"Letras de S a Z","blocks":[{"type":"text","body":"Olhe cada imagem com calma e repita a forma da mão. Não precisa decorar tudo agora."},{"type":"sign","label":"S","images":[{"url":"https://placeholder.invalid/signs/letter-s-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"T","images":[{"url":"https://placeholder.invalid/signs/letter-t-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"U","images":[{"url":"https://placeholder.invalid/signs/letter-u-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"V","images":[{"url":"https://placeholder.invalid/signs/letter-v-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"W","images":[{"url":"https://placeholder.invalid/signs/letter-w-1.png","alt":"Mão formando uma letra do alfabeto manual"}]},{"type":"sign","label":"X","images":[{"url":"https://placeholder.invalid/signs/letter-x-1.png","alt":"Mão formando uma letra do alfabeto manual (imagem 1 de 2)"},{"url":"https://placeholder.invalid/signs/letter-x-2.png","alt":"Mão formando uma letra do alfabeto manual (imagem 2 de 2)"}]},{"type":"sign","label":"Y","images":[{"url":"https://placeholder.invalid/signs/letter-y-1.png","alt":"Mão formando uma letra do alfabeto manual (imagem 1 de 2)"},{"url":"https://placeholder.invalid/signs/letter-y-2.png","alt":"Mão formando uma letra do alfabeto manual (imagem 2 de 2)"}]},{"type":"sign","label":"Z","images":[{"url":"https://placeholder.invalid/signs/letter-z-1.png","alt":"Mão formando uma letra do alfabeto manual (imagem 1 de 2)"},{"url":"https://placeholder.invalid/signs/letter-z-2.png","alt":"Mão formando uma letra do alfabeto manual (imagem 2 de 2)"}]}]},{"id":"dicas-para-soletrar","title":"Dicas para soletrar","blocks":[{"type":"text","body":"Faça uma letra de cada vez, sem pressa. O braço fica parado."},{"type":"text","body":"Entre uma palavra e outra, faça uma pausa curta."},{"type":"text","body":"Quando a mesma letra aparece duas vezes seguidas, como em \"Anna\", mova a mão um pouco para o lado na segunda letra."},{"type":"tip","body":"Treine soletrando seu nome na aba Alfabeto. Depois, faça as lições da unidade Alfabeto na trilha."}]}]'::jsonb)
+on conflict (id) do update set
+  trail_id = excluded.trail_id,
+  position = excluded.position,
+  title = excluded.title,
+  description = excluded.description,
+  pages = excluded.pages;

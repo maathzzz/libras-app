@@ -11,7 +11,7 @@ const page = (id: string) => ({
       type: 'sign',
       label: 'A',
       images: [{ url: 'https://cdn.example/a.png', alt: 'Configuração de mão da letra A' }],
-      hint: 'Mão fechada, polegar ao lado do indicador.',
+      description: 'Mão fechada, polegar ao lado do indicador.',
     },
     { type: 'tip', body: 'Use a mão dominante.' },
   ],
@@ -30,7 +30,7 @@ describe('StudyGuide', () => {
     expect(StudyGuide.parse(guide)).toEqual(guide);
   });
 
-  it('accepts a sign block without a hint', () => {
+  it('accepts a sign block without a description', () => {
     const sign = {
       type: 'sign',
       label: 'B',

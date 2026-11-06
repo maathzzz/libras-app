@@ -15,7 +15,8 @@ export const SignBlock = z.object({
   /** The letter, number or word the sign stands for. */
   label: z.string().min(1),
   images: SignImageSequence,
-  hint: z.string().min(1).optional(),
+  /** How to perform the sign, shown once below all of its frames. Missing while not written. */
+  description: z.string().min(1).optional(),
 });
 
 export const TipBlock = z.object({

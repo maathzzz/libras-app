@@ -1,13 +1,11 @@
 import { StudiesResponse } from '@libras/contracts';
 
-import { mockStudies } from './studyMocks';
+import { apiRequest } from '@/shared/api/client';
+import { mocksEnabled } from '@/shared/api/mockServer';
 
-// Long enough for the loading state to be visible on the device.
-const mockLatencyMs = 600;
+import { mockGetStudies } from './studyFixtures';
 
-// Mocked until the BFF exposes GET /v1/studies. Then only this function changes, to
-// `apiRequest('/v1/studies', StudiesResponse)`; meanwhile the mock goes through the same schema.
-export async function getStudies(): Promise<StudiesResponse> {
-  await new Promise((resolve) => setTimeout(resolve, mockLatencyMs));
-  return StudiesResponse.parse(mockStudies());
+export function getStudies(): Promise<StudiesResponse> {
+  if (mocksEnabled) return mockGetStudies();
+  return apiRequest('/v1/studies', StudiesResponse);
 }

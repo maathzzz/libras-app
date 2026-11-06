@@ -1,4 +1,4 @@
-import type { CompleteLessonResponse, Exercise } from '@libras/contracts';
+import type { CompleteLessonResponse, Exercise, StudyPage } from '@libras/contracts';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -100,9 +100,17 @@ export const signs = app.table(
     label: text('label').notNull(),
     imagePaths: text('image_paths').array().notNull(),
     alt: text('alt').notNull(),
+    // Visible text on how to perform the sign; null while not written.
+    description: text('description'),
     createdAt: createdAt(),
   },
-  (table) => [check('signs_image_paths_check', sql`cardinality(${table.imagePaths}) > 0`)],
+  (table) => [
+    check('signs_image_paths_check', sql`cardinality(${table.imagePaths}) > 0`),
+    check(
+      'signs_description_check',
+      sql`${table.description} is null or char_length(${table.description}) between 1 and 500`,
+    ),
+  ],
 );
 
 export const exerciseSigns = app.table(
@@ -119,6 +127,30 @@ export const exerciseSigns = app.table(
   (table) => [
     primaryKey({ columns: [table.exerciseId, table.signId] }),
     index('exercise_signs_sign_id_idx').on(table.signId),
+  ],
+);
+
+export const studies = app.table(
+  'studies',
+  {
+    id: text('id').primaryKey(),
+    trailId: text('trail_id')
+      .notNull()
+      .references(() => courses.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+    title: text('title').notNull(),
+    description: text('description').notNull(),
+    // Validate with the StudyPage schema from @libras/contracts before writing.
+    pages: jsonb('pages').$type<StudyPage[]>().notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('studies_position_check', sql`${table.position} > 0`),
+    check(
+      'studies_pages_check',
+      sql`jsonb_typeof(${table.pages}) = 'array' and jsonb_array_length(${table.pages}) > 0`,
+    ),
+    index('studies_trail_id_position_idx').on(table.trailId, table.position),
   ],
 );
 

@@ -1,4 +1,7 @@
+import { GetStudies } from './modules/curriculum/application/GetStudies';
+import { GetStudy } from './modules/curriculum/application/GetStudy';
 import { DrizzleLessonRepository } from './modules/curriculum/infrastructure/DrizzleLessonRepository';
+import { DrizzleStudyRepository } from './modules/curriculum/infrastructure/DrizzleStudyRepository';
 import { DrizzleTrailRepository } from './modules/curriculum/infrastructure/DrizzleTrailRepository';
 import { DeleteAccount } from './modules/profile/application/DeleteAccount';
 import { GetProfile } from './modules/profile/application/GetProfile';
@@ -27,6 +30,8 @@ export interface Container {
   verifyAccessToken: AccessTokenVerifier;
   completeLesson: CompleteLesson;
   getAchievements: GetAchievements;
+  getStudies: GetStudies;
+  getStudy: GetStudy;
   getHome: GetHome;
   getLesson: GetLesson;
   getProfile: GetProfile;
@@ -49,6 +54,7 @@ export function createContainer(
   const lessons = new DrizzleLessonRepository(db);
   const trails = new CurriculumTrailCatalog(new DrizzleTrailRepository(db));
   const profiles = new DrizzleProfileRepository(db);
+  const studies = new DrizzleStudyRepository(db);
 
   return {
     clock,
@@ -69,6 +75,8 @@ export function createContainer(
       clock,
     ),
     getAchievements: new GetAchievements(trails, progress, progress, progress),
+    getStudies: new GetStudies(studies),
+    getStudy: new GetStudy(studies),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),
     getProfile: new GetProfile(profiles),

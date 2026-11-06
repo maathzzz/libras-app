@@ -8,7 +8,8 @@ export type HandSign = {
   /** What the tile shows: "A", "7", "10". */
   label: string;
   image: SignImage;
-  hint: string;
+  /** How to perform the sign, shown below the picture. */
+  description: string;
 };
 
 // The alphabet and number pictures will be bundled with the app. Until they exist, `.invalid`
@@ -18,7 +19,8 @@ const placeholderImage = (slug: string, alt: string): SignImage => ({
   alt,
 });
 
-const letterHint = 'Mão na altura do ombro, palma voltada para quem conversa com você.';
+// Provisional: the same text for every letter until a Libras specialist writes each one.
+const letterDescription = 'Mão na altura do ombro, palma voltada para quem conversa com você.';
 
 export const letters: readonly HandSign[] = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   .split('')
@@ -30,10 +32,10 @@ export const letters: readonly HandSign[] = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       `letter-${letter.toLowerCase()}`,
       `Configuração de mão da letra ${letter}`,
     ),
-    hint: letterHint,
+    description: letterDescription,
   }));
 
-const numberHints = [
+const numberDescriptions = [
   'Dedos curvados formando um círculo com o polegar. Palma para o interlocutor, sem movimento.',
   'Indicador estendido, demais dedos fechados. Palma para o interlocutor.',
   'Indicador e médio estendidos, em V. Palma para o interlocutor.',
@@ -47,12 +49,12 @@ const numberHints = [
   'Indicador estendido com o polegar para cima; pequeno movimento de balanço.',
 ] as const;
 
-export const numbers: readonly HandSign[] = numberHints.map((hint, value) => ({
+export const numbers: readonly HandSign[] = numberDescriptions.map((description, value) => ({
   id: `number-${value}`,
   kind: 'number',
   label: String(value),
   image: placeholderImage(`number-${value}`, `Configuração de mão do número ${value}`),
-  hint,
+  description,
 }));
 
 export function findHandSign(id: string): HandSign | undefined {
