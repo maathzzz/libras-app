@@ -1,6 +1,8 @@
 import { createLocalJWKSet, type JWTVerifyGetKey } from 'jose';
 
 import type { Container } from '../container';
+import { AuthorizeAdmin } from '../modules/admin/application/AuthorizeAdmin';
+import { InMemoryAdminRepository } from '../modules/admin/testing/InMemoryAdminRepository';
 import { GetStudies } from '../modules/curriculum/application/GetStudies';
 import { GetStudy } from '../modules/curriculum/application/GetStudy';
 import { InMemoryStudyRepository } from '../modules/curriculum/testing/InMemoryStudyRepository';
@@ -30,6 +32,7 @@ interface InMemoryContainerOptions {
   lessons?: InMemoryLessonCatalog;
   trails?: InMemoryTrailCatalog;
   studies?: InMemoryStudyRepository;
+  admins?: InMemoryAdminRepository;
 }
 
 // For tests of the HTTP layer: a Container with in-memory fakes and no database.
@@ -43,6 +46,7 @@ export function createInMemoryContainer(
     lessons = new InMemoryLessonCatalog([]),
     trails = new InMemoryTrailCatalog([]),
     studies = new InMemoryStudyRepository(),
+    admins = new InMemoryAdminRepository(),
   }: InMemoryContainerOptions = {},
 ): Container {
   return {
@@ -65,6 +69,7 @@ export function createInMemoryContainer(
     getAchievements: new GetAchievements(trails, progress, progress, progress),
     getStudies: new GetStudies(studies),
     getStudy: new GetStudy(studies),
+    authorizeAdmin: new AuthorizeAdmin(admins),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),
     getProfile: new GetProfile(profiles),

@@ -8,6 +8,7 @@ src/
     profile/          # Perfil
     curriculum/       # Unidades, lições, exercícios, sinais, estudos
     progress/         # Sessões de lição, XP, streak, conquistas
+    admin/            # Operadores do CMS e rotas /v1/admin
       domain/         # Entidades, value objects, interfaces de repositório
       application/    # Casos de uso
       infrastructure/ # Implementações Drizzle dos repositórios
@@ -111,6 +112,7 @@ src/
 * O plugin de auth (`shared/infrastructure/auth.ts`) é registrado no escopo `/v1`. Ele verifica a assinatura pelo JWKS do projeto (só ES256/RS256: o segredo HS256 legado é recusado), a expiração, o `iss` (`<SUPABASE_URL>/auth/v1`) e o `aud` (`authenticated`). Token ausente ou inválido retorna 401 `UNAUTHORIZED`; falha ao buscar as chaves retorna 500.
 * Escritas sensíveis exigem o header `Idempotency-Key`.
 * O app envia a data local do dispositivo no header `X-Local-Date` (`YYYY-MM-DD`) em todas as requisições. As rotas que precisam dele o leem com `readLocalDate` (`shared/infrastructure/localDateHeader.ts`), que retorna 400 `INVALID_LOCAL_DATE` quando ausente ou inválido. A conclusão de lição usa a `localDate` do corpo, capturada quando a lição terminou.
+* CMS: rotas em `/v1/admin/*` (módulo `admin`, registradas com o prefixo `/admin`). Depois do plugin de auth, um hook do escopo chama `AuthorizeAdmin`: conta que não é operador ativo em `app.admins` recebe 403 `NOT_ADMIN` (aluno e operador desativado recebem a mesma resposta). O hook fica só nesse escopo e nunca roda nas rotas dos alunos. `GET /v1/admin/me` (`AdminMeResponse`) devolve o operador. Handlers do escopo leem o operador com `currentAdmin(request)`.
 * Formato de erro padronizado: `{ "error": { "code": string, "message": string } }`.
 
 ## Configuração

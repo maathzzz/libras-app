@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:seed:generate": "tsx scripts/seed/generateSeed.ts",
-    "dev:token": "tsx --env-file-if-exists=.env scripts/devToken.ts"
+    "dev:token": "tsx --env-file-if-exists=.env scripts/devToken.ts",
+    "admin:create": "tsx --env-file-if-exists=.env scripts/createAdmin.ts"
   },
   "dependencies": {
     "@libras/contracts": "workspace:*",

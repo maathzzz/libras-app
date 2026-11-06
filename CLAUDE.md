@@ -1,7 +1,7 @@
 CLAUDE.md
 ===
 
-Aplicativo gamificado para ensino de Libras (inspirado no Duolingo). Monorepo com app mobile em React Native, BFF em Node.js e banco no Supabase. Este documento define a arquitetura e as convenções que devem ser seguidas em todo código gerado. As regras específicas de cada app ficam em `apps/bff/CLAUDE.md` e `apps/mobile/CLAUDE.md`, carregados quando o trabalho envolve arquivos dessas pastas.
+Aplicativo gamificado para ensino de Libras (inspirado no Duolingo). Monorepo com app mobile em React Native, CMS web para os operadores de conteúdo, BFF em Node.js e banco no Supabase. Este documento define a arquitetura e as convenções que devem ser seguidas em todo código gerado. As regras específicas de cada app ficam em `apps/bff/CLAUDE.md`, `apps/mobile/CLAUDE.md` e `apps/admin/CLAUDE.md`, carregados quando o trabalho envolve arquivos dessas pastas.
 
 ## Escopo do MVP
 
@@ -32,6 +32,7 @@ O BFF deve ser escalável (stateless), mas sem over engineering. Na dúvida entr
 pnpm install
 pnpm --filter bff dev          # BFF com recarga automática (tsx watch)
 pnpm --filter mobile start     # Expo dev server
+pnpm --filter admin dev        # CMS web (http://localhost:5173), encaminha /v1 para o BFF local
 pnpm --filter <pacote> test
 pnpm lint
 pnpm typecheck
@@ -41,6 +42,7 @@ pnpm exec supabase migration new <nome>   # Nova migration
 pnpm exec supabase db push --dry-run      # Mostra o que seria aplicado no projeto remoto
 pnpm --filter bff db:seed:generate        # Regera supabase/seed.sql a partir de scripts/seed
 pnpm --silent --filter bff dev:token      # Imprime o access token do usuário de teste (só desenvolvimento)
+pnpm --filter bff admin:create --email <email> --name <nome>  # Torna uma conta operadora do CMS
 ```
 
 O desenvolvimento usa um projeto Supabase **na nuvem** (não há Supabase local). Por isso:
@@ -73,6 +75,7 @@ Fonte única de verdade dos dados trocados entre app e BFF.
 * Conexão via pooler do Supabase em modo transação, com prepared statements desativados.
 * O schema Drizzle (`shared/infrastructure/db/schema.ts`) espelha as migrations e serve só para tipar as consultas. As migrations são a fonte da verdade: altere os dois juntos.
 * O seed (`supabase/seed.sql`) é gerado por `apps/bff/scripts/seed`, que valida os exercícios com `contracts`. Não edite o SQL à mão. O seed faz upsert por id, porque o banco remoto nunca é recriado.
+* Operadores do CMS ficam em `app.admins` (`user\_id` do Supabase Auth, `email`, `name`, `active`). Ser operador é decidido só por essa tabela; um operador é desativado, nunca apagado.
 * Conquistas desbloqueadas ficam em `app.user\_achievements` (`user\_id`, `achievement\_id`, `unlocked\_at`). O `achievement\_id` não tem chave estrangeira: o catálogo é código do BFF. Por isso um id de conquista nunca é renomeado nem reaproveitado.
 * A chave secreta do Supabase existe **apenas no BFF** (env do Cloud Run e `.env` local, fora do git). Ela nunca vai para o app, para variáveis `EXPO\_PUBLIC\_\*` nem para o repositório.
 

@@ -1,3 +1,5 @@
+import { AuthorizeAdmin } from './modules/admin/application/AuthorizeAdmin';
+import { DrizzleAdminRepository } from './modules/admin/infrastructure/DrizzleAdminRepository';
 import { GetStudies } from './modules/curriculum/application/GetStudies';
 import { GetStudy } from './modules/curriculum/application/GetStudy';
 import { DrizzleLessonRepository } from './modules/curriculum/infrastructure/DrizzleLessonRepository';
@@ -32,6 +34,7 @@ export interface Container {
   getAchievements: GetAchievements;
   getStudies: GetStudies;
   getStudy: GetStudy;
+  authorizeAdmin: AuthorizeAdmin;
   getHome: GetHome;
   getLesson: GetLesson;
   getProfile: GetProfile;
@@ -77,6 +80,7 @@ export function createContainer(
     getAchievements: new GetAchievements(trails, progress, progress, progress),
     getStudies: new GetStudies(studies),
     getStudy: new GetStudy(studies),
+    authorizeAdmin: new AuthorizeAdmin(new DrizzleAdminRepository(db)),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),
     getProfile: new GetProfile(profiles),

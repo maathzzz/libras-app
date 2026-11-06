@@ -2,6 +2,7 @@ import type { CompleteLessonResponse, Exercise, StudyPage } from '@libras/contra
 import { sql } from 'drizzle-orm';
 import {
   bigint,
+  boolean,
   check,
   date,
   index,
@@ -177,6 +178,23 @@ export const profiles = app.table(
       'profiles_start_level_check',
       sql`${table.startLevel} in ('beginner', 'basic', 'conversational')`,
     ),
+  ],
+);
+
+export const admins = app.table(
+  'admins',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
+    email: text('email').notNull(),
+    name: text('name').notNull(),
+    active: boolean('active').notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('admins_email_check', sql`char_length(${table.email}) between 3 and 254`),
+    check('admins_name_check', sql`char_length(${table.name}) between 1 and 60`),
   ],
 );
 
