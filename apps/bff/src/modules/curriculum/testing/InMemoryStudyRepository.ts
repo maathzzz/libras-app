@@ -1,30 +1,30 @@
-import type { StudyGuide, StudyTrail } from '@libras/contracts';
+import type { StudyGroup, StudyGuide } from '@libras/contracts';
 
 import type { StudyRepository } from '../domain/StudyRepository';
 
-export interface InMemoryTrail {
+export interface InMemoryStudyGroup {
   id: string;
   title: string;
 }
 
-// For tests: trails and studies are listed in the order they are given.
+// For tests: groups and studies are listed in the order they are given.
 export class InMemoryStudyRepository implements StudyRepository {
   constructor(
-    private readonly trails: readonly InMemoryTrail[] = [],
+    private readonly groups: readonly InMemoryStudyGroup[] = [],
     private readonly studies: readonly StudyGuide[] = [],
   ) {}
 
-  async listByTrail(): Promise<StudyTrail[]> {
-    return this.trails.flatMap((trail) => {
+  async listByGroup(): Promise<StudyGroup[]> {
+    return this.groups.flatMap((group) => {
       const studies = this.studies
-        .filter((study) => study.trailId === trail.id)
+        .filter((study) => study.groupId === group.id)
         .map(({ id, title, description, pages }) => ({
           id,
           title,
           description,
           pageCount: pages.length,
         }));
-      return studies.length === 0 ? [] : [{ ...trail, studies }];
+      return studies.length === 0 ? [] : [{ ...group, studies }];
     });
   }
 

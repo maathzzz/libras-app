@@ -17,10 +17,10 @@ afterEach(() => {
 
 describe('mockGetStudies', () => {
   it('lists the alphabet study with its page count', async () => {
-    const { trails } = await resolve(mockGetStudies());
+    const { groups } = await resolve(mockGetStudies());
 
-    expect(trails).toHaveLength(1);
-    expect(trails[0]?.studies).toEqual([
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.studies).toEqual([
       expect.objectContaining({ id: 'alfabeto-manual', pageCount: 6 }),
     ]);
   });

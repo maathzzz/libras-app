@@ -12,7 +12,7 @@ const userId = '7d6f1c2a-1b2d-4c5e-8f90-1a2b3c4d5e01';
 
 const alphabet: StudyGuide = {
   id: 'alfabeto-manual',
-  trailId: 'libras-iniciante',
+  groupId: 'primeiros-passos',
   title: 'Alfabeto manual',
   description: 'As 26 letras em Libras.',
   pages: [
@@ -47,8 +47,8 @@ describe('study routes', () => {
   beforeEach(() => {
     const studies = new InMemoryStudyRepository(
       [
-        { id: 'libras-iniciante', title: 'Libras para iniciantes' },
-        { id: 'sem-estudos', title: 'Trilha sem estudos' },
+        { id: 'primeiros-passos', title: 'Primeiros passos' },
+        { id: 'sem-estudos', title: 'Grupo sem estudos' },
       ],
       [alphabet],
     );
@@ -61,15 +61,15 @@ describe('study routes', () => {
     app.inject({ method: 'GET', url, headers: { authorization: `Bearer ${token}` } });
 
   describe('GET /v1/studies', () => {
-    it('lists the trails that have studies, with the page count of each study', async () => {
+    it('lists the groups that have studies, with the page count of each study', async () => {
       const response = await get('/v1/studies');
 
       expect(response.statusCode).toBe(200);
       expect(StudiesResponse.parse(response.json())).toEqual({
-        trails: [
+        groups: [
           {
-            id: 'libras-iniciante',
-            title: 'Libras para iniciantes',
+            id: 'primeiros-passos',
+            title: 'Primeiros passos',
             studies: [
               {
                 id: 'alfabeto-manual',

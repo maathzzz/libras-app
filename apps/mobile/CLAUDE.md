@@ -64,7 +64,7 @@ src/
 
 ## Estudos
 
-* A feature `features/study/` tem a aba "Estudar" (`StudiesScreen`, lista por trilha) e o leitor (`StudyScreen`, rota `study/\[studyId]`, uma página por vez com "Continuar"/"Voltar" e os segmentos do `Header`).
+* A feature `features/study/` tem a aba "Estudar" (`StudiesScreen`, lista por grupo de estudo) e o leitor (`StudyScreen`, rota `study/\[studyId]`, uma página por vez com "Continuar"/"Voltar" e os segmentos do `Header`).
 * Ao abrir um estudo, buscar o `StudyGuide` e fazer `Image.prefetch()` das imagens antes de mostrar a primeira página.
 * Cada tipo de bloco é um `case` em `features/study/components/StudyBlockView.tsx`. Para adicionar um tipo: criar o schema em `contracts` e o `case` correspondente; o `switch` não tem `default`, então o typecheck aponta o caso que falta.
 * Nada é enviado ao BFF ao concluir: "Concluir" só fecha o leitor.

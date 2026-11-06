@@ -5,9 +5,9 @@ import { InMemoryStudyRepository } from '../testing/InMemoryStudyRepository';
 import { GetStudies } from './GetStudies';
 import { GetStudy } from './GetStudy';
 
-const study = (id: string, trailId: string): StudyGuide => ({
+const study = (id: string, groupId: string): StudyGuide => ({
   id,
-  trailId,
+  groupId,
   title: `Estudo ${id}`,
   description: 'Descrição.',
   pages: [{ id: 'p1', title: 'Página 1', blocks: [{ type: 'text', body: 'Texto.' }] }],
@@ -15,20 +15,20 @@ const study = (id: string, trailId: string): StudyGuide => ({
 
 const repository = new InMemoryStudyRepository(
   [
-    { id: 'trilha-1', title: 'Trilha 1' },
-    { id: 'trilha-2', title: 'Trilha 2' },
-    { id: 'trilha-3', title: 'Trilha 3' },
+    { id: 'grupo-1', title: 'Grupo 1' },
+    { id: 'grupo-2', title: 'Grupo 2' },
+    { id: 'grupo-3', title: 'Grupo 3' },
   ],
-  [study('a', 'trilha-1'), study('b', 'trilha-1'), study('c', 'trilha-3')],
+  [study('a', 'grupo-1'), study('b', 'grupo-1'), study('c', 'grupo-3')],
 );
 
 describe('GetStudies', () => {
-  it('groups the studies by trail and leaves out trails without studies', async () => {
-    const { trails } = await new GetStudies(repository).execute();
+  it('groups the studies by study group and leaves out groups without studies', async () => {
+    const { groups } = await new GetStudies(repository).execute();
 
-    expect(trails.map((trail) => [trail.id, trail.studies.map(({ id }) => id)])).toEqual([
-      ['trilha-1', ['a', 'b']],
-      ['trilha-3', ['c']],
+    expect(groups.map((group) => [group.id, group.studies.map(({ id }) => id)])).toEqual([
+      ['grupo-1', ['a', 'b']],
+      ['grupo-3', ['c']],
     ]);
   });
 });
@@ -37,7 +37,7 @@ describe('GetStudy', () => {
   it('returns the study', async () => {
     const result = await new GetStudy(repository).execute({ studyId: 'b' });
 
-    expect(result).toEqual({ ok: true, value: study('b', 'trilha-1') });
+    expect(result).toEqual({ ok: true, value: study('b', 'grupo-1') });
   });
 
   it('fails with STUDY_NOT_FOUND for an unknown study', async () => {

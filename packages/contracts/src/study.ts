@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 import { SignImageSequence } from './signImage';
 
-// Studies are reading material shown before a trail's lessons. They are never graded,
-// so there are no answers here: only what each page shows.
+// Studies are reading material, shown in the "Estudar" tab by study group. They are never
+// graded, so there are no answers here: only what each page shows.
 
 // A subtitle inside a page, to split a long page into sections.
 export const HeadingBlock = z.object({
@@ -50,7 +50,7 @@ export type StudyPage = z.infer<typeof StudyPage>;
 export const StudyGuide = z
   .object({
     id: z.string().min(1),
-    trailId: z.string().min(1),
+    groupId: z.string().min(1),
     title: z.string().min(1),
     description: z.string().min(1),
     pages: z.array(StudyPage).min(1),
@@ -79,15 +79,16 @@ export const StudySummary = z.object({
 });
 export type StudySummary = z.infer<typeof StudySummary>;
 
-export const StudyTrail = z.object({
+// A section of the "Estudar" tab. Groups are named freely and have no link to the trails.
+export const StudyGroup = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   studies: z.array(StudySummary).min(1),
 });
-export type StudyTrail = z.infer<typeof StudyTrail>;
+export type StudyGroup = z.infer<typeof StudyGroup>;
 
-// GET /v1/studies. Trails without studies yet are left out.
+// GET /v1/studies. Groups without studies are left out.
 export const StudiesResponse = z.object({
-  trails: z.array(StudyTrail),
+  groups: z.array(StudyGroup),
 });
 export type StudiesResponse = z.infer<typeof StudiesResponse>;

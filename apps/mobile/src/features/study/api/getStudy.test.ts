@@ -17,7 +17,7 @@ const answer = (status: number, body: unknown) =>
 
 const guide: StudyGuide = {
   id: 'alfabeto-manual',
-  trailId: 'libras-iniciante',
+  groupId: 'libras-iniciante',
   title: 'Alfabeto manual',
   description: 'As 26 letras em Libras.',
   pages: [
@@ -39,7 +39,7 @@ const guide: StudyGuide = {
 describe('getStudies', () => {
   it('reads GET /v1/studies from the BFF', async () => {
     const studies: StudiesResponse = {
-      trails: [
+      groups: [
         {
           id: 'libras-iniciante',
           title: 'Libras para iniciantes',

@@ -46,7 +46,7 @@ function letterPage(first: string, last: string): StudyPage {
 
 const alphabetGuide: StudyGuide = {
   id: 'alfabeto-manual',
-  trailId: 'primeiros-contatos',
+  groupId: 'libras-iniciante',
   title: 'Alfabeto manual',
   description: 'As 26 letras em Libras, para soletrar nomes e palavras.',
   pages: [
@@ -96,10 +96,10 @@ const guides: readonly StudyGuide[] = [alphabetGuide];
 export async function mockGetStudies(): Promise<StudiesResponse> {
   await mockLatency();
   return StudiesResponse.parse({
-    trails: [
+    groups: [
       {
-        id: 'primeiros-contatos',
-        title: 'Primeiros contatos',
+        id: 'libras-iniciante',
+        title: 'Libras para iniciantes',
         studies: guides.map((guide) => ({
           id: guide.id,
           title: guide.title,
