@@ -16,6 +16,7 @@ export type AuthFailureReason =
   | 'samePassword'
   | 'rateLimited'
   | 'offline'
+  | 'operatorAccount'
   | 'unknown';
 
 /** An expected Supabase Auth failure, already told apart so the screens can explain it. */
@@ -61,10 +62,18 @@ async function run<T>(call: () => Promise<T>): Promise<T> {
 
 const auth = () => getSupabase().auth;
 
+// CMS operators have their own accounts, marked with this role by the BFF. They are not
+// learners, so the app does not let them in (the BFF refuses them too).
+const OPERATOR_ROLE = 'admin';
+
 export function signInWithPassword(credentials: Credentials): Promise<void> {
   return run(async () => {
-    const { error } = await auth().signInWithPassword(credentials);
+    const { data, error } = await auth().signInWithPassword(credentials);
     if (error) throw error;
+    if (data.user?.app_metadata.role === OPERATOR_ROLE) {
+      await auth().signOut({ scope: 'local' });
+      throw new AuthFailure('operatorAccount');
+    }
   });
 }
 

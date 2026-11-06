@@ -116,7 +116,11 @@ export async function apiRequest<TSchema extends z.ZodType>(
   }
 
   if (!response.ok) {
-    throw await failure(response, label);
+    const error = await failure(response, label);
+    // A CMS operator account has no place in the app: ending the session takes it back to
+    // the login. The login itself already refuses these accounts; this covers older sessions.
+    if (error.code === 'OPERATOR_ACCOUNT') await endSession();
+    throw error;
   }
 
   // 204 No Content (e.g. DELETE /v1/me) has no body to read.

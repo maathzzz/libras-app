@@ -10,6 +10,7 @@ const messages: Record<AuthFailureReason, string> = {
   samePassword: 'A nova senha precisa ser diferente da antiga.',
   rateLimited: 'Muitas tentativas seguidas. Espere um minuto e tente de novo.',
   offline: 'Sem conexão com a internet. Verifique sua rede e tente de novo.',
+  operatorAccount: 'Esta conta é de operador do CMS. Entre com a sua conta de aluno.',
   unknown: 'Algo deu errado. Tente de novo.',
 };
 

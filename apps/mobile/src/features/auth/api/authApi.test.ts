@@ -8,6 +8,7 @@ jest.mock('@/shared/api/supabase', () => ({ getSupabase: jest.fn() }));
 
 const auth = {
   signInWithPassword: jest.fn(),
+  signOut: jest.fn(),
   signUp: jest.fn(),
   verifyOtp: jest.fn(),
 };
@@ -18,6 +19,30 @@ const apiError = (code: string, status = 400) => new AuthApiError('message', sta
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+describe('signInWithPassword', () => {
+  it('lets a learner account in', async () => {
+    auth.signInWithPassword.mockResolvedValue({
+      data: { user: { id: '1', app_metadata: { provider: 'email' } } },
+      error: null,
+    });
+
+    await expect(signInWithPassword(credentials)).resolves.toBeUndefined();
+    expect(auth.signOut).not.toHaveBeenCalled();
+  });
+
+  it('refuses a CMS operator account and ends its session on the device', async () => {
+    auth.signInWithPassword.mockResolvedValue({
+      data: { user: { id: '1', app_metadata: { provider: 'email', role: 'admin' } } },
+      error: null,
+    });
+
+    await expect(signInWithPassword(credentials)).rejects.toEqual(
+      new AuthFailure('operatorAccount'),
+    );
+    expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
 });
 
 describe('Supabase errors', () => {

@@ -11,6 +11,8 @@ const now = new Date('2026-03-15T12:00:00Z');
 const operatorId = '7d6f1c2a-1b2d-4c5e-8f90-1a2b3c4d5e01';
 const formerOperatorId = '7d6f1c2a-1b2d-4c5e-8f90-1a2b3c4d5e02';
 const learnerId = '7d6f1c2a-1b2d-4c5e-8f90-1a2b3c4d5e03';
+// Listed in app.admins, but a learner account: it was never created as an operator.
+const listedLearnerId = '7d6f1c2a-1b2d-4c5e-8f90-1a2b3c4d5e04';
 
 let tokens: TestTokens;
 
@@ -25,17 +27,23 @@ describe('admin routes', () => {
     const admins = new InMemoryAdminRepository([
       { userId: operatorId, email: 'ana@example.com', name: 'Ana', active: true },
       { userId: formerOperatorId, email: 'bia@example.com', name: 'Bia', active: false },
+      { userId: listedLearnerId, email: 'caio@example.com', name: 'Caio', active: true },
     ]);
     app = buildApp(createInMemoryContainer(new FixedClock(now), { jwks: tokens.jwks, admins }), {
       logger: false,
     });
   });
 
+  const operators = new Set([operatorId, formerOperatorId]);
+
+  // Operator accounts carry the operator role in their token; learner accounts do not.
   const getAs = async (userId: string, url: string) =>
     app.inject({
       method: 'GET',
       url,
-      headers: { authorization: `Bearer ${await tokens.sign(userId, { now })}` },
+      headers: {
+        authorization: `Bearer ${await tokens.sign(userId, { now, operator: operators.has(userId) })}`,
+      },
     });
 
   const expectError = (
@@ -66,15 +74,28 @@ describe('admin routes', () => {
       expectError(await getAs(formerOperatorId, '/v1/admin/me'), 403, 'NOT_ADMIN');
     });
 
+    it('answers 403 NOT_ADMIN to a learner account even when it is listed as an operator', async () => {
+      expectError(await getAs(listedLearnerId, '/v1/admin/me'), 403, 'NOT_ADMIN');
+    });
+
     it('answers 401 without a token', async () => {
       expectError(await app.inject({ method: 'GET', url: '/v1/admin/me' }), 401, 'UNAUTHORIZED');
     });
   });
 
-  // The operator check is scoped to /v1/admin: learners keep using their own routes.
-  it('does not apply to the learner routes', async () => {
-    const response = await getAs(learnerId, '/v1/studies');
+  describe('separate accounts', () => {
+    // The operator check is scoped to /v1/admin: learners keep using their own routes.
+    it('lets learner accounts use the learner routes', async () => {
+      const response = await getAs(learnerId, '/v1/studies');
 
-    expect(response.statusCode).toBe(200);
+      expect(response.statusCode).toBe(200);
+    });
+
+    it.each(['/v1/me', '/v1/studies'])(
+      'answers 403 OPERATOR_ACCOUNT to an operator account on %s',
+      async (url) => {
+        expectError(await getAs(operatorId, url), 403, 'OPERATOR_ACCOUNT');
+      },
+    );
   });
 });

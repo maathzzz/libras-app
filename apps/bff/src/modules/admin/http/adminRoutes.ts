@@ -32,8 +32,8 @@ export function adminRoutes({ authorizeAdmin }: AdminUseCases): FastifyPluginAsy
     app.decorateRequest('admin', null);
 
     app.addHook('onRequest', async (request) => {
-      const { userId } = authenticatedUser(request);
-      const result = await authorizeAdmin.execute({ userId });
+      const { userId, operator } = authenticatedUser(request);
+      const result = await authorizeAdmin.execute({ userId, operator });
       if (!result.ok) throw new HttpError(403, result.error.code, result.error.message);
       request.admin = result.value;
     });

@@ -115,6 +115,23 @@ describe('apiRequest', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('ends the session of a CMS operator account', async () => {
+    fetchMock.mockResolvedValue(failed(403, errorBody('OPERATOR_ACCOUNT')));
+
+    await expect(apiRequest('/v1/home', schema)).rejects.toMatchObject({
+      status: 403,
+      code: 'OPERATOR_ACCOUNT',
+    });
+    expect(endSessionMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the session on other refusals', async () => {
+    fetchMock.mockResolvedValue(failed(403, errorBody('LESSON_LOCKED')));
+
+    await expect(apiRequest('/v1/home', schema)).rejects.toMatchObject({ code: 'LESSON_LOCKED' });
+    expect(endSessionMock).not.toHaveBeenCalled();
+  });
+
   it('keeps the session when the renewal fails for lack of network', async () => {
     fetchMock.mockResolvedValueOnce(unauthorized());
     refreshMock.mockRejectedValue(new TypeError('Network request failed'));

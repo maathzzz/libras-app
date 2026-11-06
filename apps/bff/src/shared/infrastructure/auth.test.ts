@@ -42,6 +42,7 @@ interface TokenOptions {
   sub?: string;
   email?: string;
   expiresAt?: number;
+  appMetadata?: Record<string, unknown>;
 }
 
 // Shaped like a Supabase access token.
@@ -52,8 +53,9 @@ function sign({
   sub = userId,
   email = 'ana@example.com',
   expiresAt = nowSeconds + 3600,
+  appMetadata = { provider: 'email', providers: ['email'] },
 }: TokenOptions = {}): Promise<string> {
-  return new SignJWT({ email, role: 'authenticated' })
+  return new SignJWT({ email, role: 'authenticated', app_metadata: appMetadata })
     .setProtectedHeader({ alg: 'ES256', kid, typ: 'JWT' })
     .setSubject(sub)
     .setIssuer(iss)
@@ -102,13 +104,26 @@ describe('authPlugin', () => {
     const response = await whoami(`Bearer ${await sign()}`);
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ userId, email: 'ana@example.com' });
+    expect(response.json()).toEqual({ userId, email: 'ana@example.com', operator: false });
   });
 
   it('accepts a token without email', async () => {
     const response = await whoami(`Bearer ${await sign({ email: '' })}`);
 
-    expect(response.json()).toEqual({ userId, email: null });
+    expect(response.json()).toEqual({ userId, email: null, operator: false });
+  });
+
+  it('marks an operator account by the role in app_metadata', async () => {
+    const response = await whoami(`Bearer ${await sign({ appMetadata: { role: 'admin' } })}`);
+
+    expect(response.json()).toMatchObject({ userId, operator: true });
+  });
+
+  // `role` at the top level is Supabase's database role, the same for every signed-in user.
+  it('ignores the top-level role claim', async () => {
+    const response = await whoami(`Bearer ${await sign({ appMetadata: {} })}`);
+
+    expect(response.json()).toMatchObject({ operator: false });
   });
 
   it('answers 401 when the header is missing', async () => {

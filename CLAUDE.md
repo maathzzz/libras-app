@@ -42,7 +42,7 @@ pnpm exec supabase migration new <nome>   # Nova migration
 pnpm exec supabase db push --dry-run      # Mostra o que seria aplicado no projeto remoto
 pnpm --filter bff db:seed:generate        # Regera supabase/seed.sql a partir de scripts/seed
 pnpm --silent --filter bff dev:token      # Imprime o access token do usuário de teste (só desenvolvimento)
-pnpm --filter bff admin:create --email <email> --name <nome>  # Torna uma conta operadora do CMS
+pnpm --filter bff admin:create --email <email> --name <nome>  # Cria uma conta de operador do CMS (nova, separada das contas do app)
 ```
 
 O desenvolvimento usa um projeto Supabase **na nuvem** (não há Supabase local). Por isso:
@@ -75,7 +75,7 @@ Fonte única de verdade dos dados trocados entre app e BFF.
 * Conexão via pooler do Supabase em modo transação, com prepared statements desativados.
 * O schema Drizzle (`shared/infrastructure/db/schema.ts`) espelha as migrations e serve só para tipar as consultas. As migrations são a fonte da verdade: altere os dois juntos.
 * O seed (`supabase/seed.sql`) é gerado por `apps/bff/scripts/seed`, que valida os exercícios com `contracts`. Não edite o SQL à mão. O seed faz upsert por id, porque o banco remoto nunca é recriado.
-* Operadores do CMS ficam em `app.admins` (`user\_id` do Supabase Auth, `email`, `name`, `active`). Ser operador é decidido só por essa tabela; um operador é desativado, nunca apagado.
+* Operadores do CMS ficam em `app.admins` (`user\_id` do Supabase Auth, `email`, `name`, `active`). Um operador é desativado, nunca apagado. Contas de operador e de aluno são **separadas**: o mesmo projeto Supabase Auth guarda as duas, mas uma conta de operador é criada só pelo BFF, com `app\_metadata.role = 'admin'` (que só a chave secreta grava), e nunca serve como aluno. Como cada e-mail só existe uma vez no Supabase, o operador usa um e-mail diferente do da sua conta de aluno (um alias como `nome+cms@gmail.com` serve).
 * Conquistas desbloqueadas ficam em `app.user\_achievements` (`user\_id`, `achievement\_id`, `unlocked\_at`). O `achievement\_id` não tem chave estrangeira: o catálogo é código do BFF. Por isso um id de conquista nunca é renomeado nem reaproveitado.
 * A chave secreta do Supabase existe **apenas no BFF** (env do Cloud Run e `.env` local, fora do git). Ela nunca vai para o app, para variáveis `EXPO\_PUBLIC\_\*` nem para o repositório.
 
