@@ -1,4 +1,5 @@
 import type { HomeResponse } from '@libras/contracts';
+import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,7 +14,7 @@ import {
   useHome,
 } from '@/features/home';
 import { colors, spacing } from '@/shared/theme';
-import { AppText, Card, ProgressBar, ScreenTitle } from '@/shared/ui';
+import { AppText, Card, IconButton, ProgressBar, ScreenTitle } from '@/shared/ui';
 
 import { startLevelLabels } from '../content/startLevels';
 import { useProfileStore } from '../store/profileStore';
@@ -30,7 +31,7 @@ function Stats({ home }: { home: HomeResponse | null }) {
     <View style={styles.stats}>
       <View style={styles.statsRow}>
         <ProfileStat
-          label="XP total"
+          label="Pontos"
           value={home ? formatXp(home.totalXp) : missingValue}
           icon="xp"
           tone="accent"
@@ -105,7 +106,15 @@ export function ProfileScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenTitle title="Perfil" />
+        <View style={styles.titleRow}>
+          <ScreenTitle title="Perfil" />
+          <IconButton
+            icon="settings"
+            accessibilityLabel="Ajustes"
+            size="lg"
+            onPress={() => router.push('/settings')}
+          />
+        </View>
         {profile && (
           <IdentityCard name={profile.name} level={startLevelLabels[profile.startLevel]} />
         )}
@@ -134,6 +143,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing['3xs'],
     paddingHorizontal: spacing['2xl'],
     paddingBottom: spacing['5xl'],
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   section: {
     gap: spacing.lg,

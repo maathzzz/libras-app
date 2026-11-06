@@ -22,7 +22,7 @@ src/
       index.ts           # API pública da feature
     study/               # Aba "Estudar" e leitor de páginas de estudo
     onboarding/          # Boas-vindas, nível e meta diária
-    settings/            # Ajustes
+    settings/            # Ajustes (rota `settings`, aberta pela engrenagem do Perfil)
     reminder/            # Lembrete de streak (notificação local)
     streak/
     achievements/        # Conquistas: seção do perfil e card da lição concluída

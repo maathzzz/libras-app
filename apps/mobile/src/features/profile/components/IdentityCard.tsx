@@ -44,7 +44,10 @@ export function IdentityCard({ name, level }: IdentityCardProps) {
         <AppText variant="heading" align="center" accessibilityRole="header">
           {name}
         </AppText>
-        <Pill label={level} icon="chart" accessibilityLabel={`Nível: ${level}`} />
+        {/* The pill aligns itself to the start; a centered row puts it under the name. */}
+        <View style={styles.levelRow}>
+          <Pill label={level} icon="chart" accessibilityLabel={`Nível: ${level}`} />
+        </View>
       </View>
     </View>
   );
@@ -69,6 +72,10 @@ const styles = StyleSheet.create({
     marginTop: -sizes.profileAvatar / 2,
     paddingHorizontal: spacing['2xl'],
     paddingBottom: spacing['3xl'],
+  },
+  levelRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   avatar: {
     width: sizes.profileAvatar,

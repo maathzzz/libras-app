@@ -15,13 +15,12 @@ import {
   useReminderTime,
 } from '@/features/reminder';
 import { colors, radius, spacing } from '@/shared/theme';
-import { AppText, Button, ScreenTitle, Switch, TextLink } from '@/shared/ui';
+import { AppText, Button, IconButton, ScreenTitle, Switch, TextLink } from '@/shared/ui';
 
 import { PillButton } from './PillButton';
 import { ProfileCard } from './ProfileCard';
 import { SettingsGroup } from './SettingsGroup';
 import { SettingsRow } from './SettingsRow';
-import { SpeedSelector } from './SpeedSelector';
 
 const appVersion = Constants.expoConfig?.version;
 
@@ -48,9 +47,8 @@ export function SettingsScreen() {
   const reminderBusy = useReminderBusy();
   const reminderTime = useReminderTime();
 
-  // The design keeps these on screen, but the MVP has no sound, video or sketches to apply them to.
+  // The design keeps this on screen, but the MVP has no sound to apply it to.
   const [soundOn, setSoundOn] = useState(true);
-  const [highContrastOn, setHighContrastOn] = useState(false);
 
   useEffect(() => {
     void loadProfile();
@@ -59,13 +57,16 @@ export function SettingsScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenTitle title="Ajustes" />
+        <View style={styles.titleRow}>
+          <IconButton icon="back" accessibilityLabel="Voltar" onPress={() => router.back()} filled />
+          <ScreenTitle title="Ajustes" />
+        </View>
         {profile && (
           <ProfileCard
             name={profile.name}
             totalXp={totalXp}
             streakDays={streakDays}
-            onEdit={() => router.push('/profile')}
+            onEdit={() => router.back()}
           />
         )}
 
@@ -131,20 +132,6 @@ export function SettingsScreen() {
               />
             }
           />
-          <SettingsRow title="Velocidade do vídeo do sinal">
-            <SpeedSelector />
-          </SettingsRow>
-          <SettingsRow
-            title="Alto contraste nos esboços"
-            description="Traço mais escuro nas mãos"
-            trailing={
-              <Switch
-                value={highContrastOn}
-                onValueChange={setHighContrastOn}
-                accessibilityLabel="Alto contraste nos esboços"
-              />
-            }
-          />
         </SettingsGroup>
 
         <View style={styles.credits}>
@@ -170,6 +157,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing['3xs'],
     paddingHorizontal: spacing['2xl'],
     paddingBottom: spacing['5xl'],
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   credits: {
     padding: spacing.lg,

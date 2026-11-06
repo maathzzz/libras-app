@@ -44,6 +44,7 @@ export default function RootLayout() {
             options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
           />
           <Stack.Screen name="study/[studyId]" options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="settings" />
           <Stack.Screen name="daily-goal" />
           <Stack.Screen name="reminder-time" />
           {/* On the root stack so the sheet covers the tab bar and reaches the screen edge. */}
