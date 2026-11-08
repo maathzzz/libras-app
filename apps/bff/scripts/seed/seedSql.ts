@@ -118,5 +118,38 @@ ${upsert(
   ]),
   updateAll(['group_id', 'position', 'title', 'description', 'pages']),
 )}
-`;
+
+${DRAFT_COPY_SQL}`;
 }
+
+// The CMS edits a draft copy of the content (app.draft_*) and, once it exists, the draft
+// belongs to the operators: a later seed must not bring back what they deleted or undo what
+// they changed. So the draft is filled from the published content only while it is empty,
+// as in a fresh environment.
+const DRAFT_COPY_SQL = `-- CMS draft: filled from the published content only while it is empty.
+do $$
+begin
+  if exists (select 1 from app.draft_courses) or exists (select 1 from app.draft_signs) then
+    return;
+  end if;
+
+  insert into app.draft_courses (id, title, position)
+  select id, title, position from app.courses;
+
+  insert into app.draft_units (id, course_id, title, position)
+  select id, course_id, title, position from app.units;
+
+  insert into app.draft_lessons (id, unit_id, title, position)
+  select id, unit_id, title, position from app.lessons;
+
+  insert into app.draft_exercises (id, lesson_id, type, position, payload)
+  select id, lesson_id, type, position, payload from app.exercises;
+
+  insert into app.draft_signs (id, label, image_paths, alt, description)
+  select id, label, image_paths, alt, description from app.signs;
+
+  insert into app.draft_exercise_signs (exercise_id, sign_id)
+  select exercise_id, sign_id from app.exercise_signs;
+end
+$$;
+`;

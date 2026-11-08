@@ -16,8 +16,8 @@ interface NavItem {
 // Sections without `href` arrive in the next phases of the CMS.
 const navItems: readonly NavItem[] = [
   { label: 'Início', href: '/' },
-  { label: 'Trilhas e lições' },
-  { label: 'Sinais' },
+  { label: 'Trilhas e lições', href: '/trilhas' },
+  { label: 'Sinais', href: '/sinais' },
   { label: 'Estudos' },
   { label: 'Publicar' },
   { label: 'Operadores' },
@@ -51,6 +51,13 @@ function NavEntry({ label, href, active }: NavItem & { active: boolean }) {
   );
 }
 
+// A section stays marked on its inner pages (e.g. /sinais/novo).
+function isActive(href: string | undefined, pathname: string): boolean {
+  if (!href) return false;
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function AppLayout({ children }: { children: ReactNode }) {
   const admin = useAdmin();
   const pathname = usePathname();
@@ -63,7 +70,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <ul className="grid gap-1.5">
             {navItems.map((item) => (
               <li key={item.label}>
-                <NavEntry {...item} active={item.href === pathname} />
+                <NavEntry {...item} active={isActive(item.href, pathname)} />
               </li>
             ))}
           </ul>

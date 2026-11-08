@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
-import { Button, cardClassName } from '@/shared/ui';
+import { Button, cardClassName, inputClassName, labelClassName } from '@/shared/ui';
 
 import { signIn } from './session';
 
@@ -10,9 +10,6 @@ const messages = {
   invalid: 'E-mail ou senha incorretos.',
   error: 'Não foi possível entrar agora. Tente de novo em instantes.',
 } as const;
-
-const inputClassName =
-  'min-h-10 rounded-sm border border-border bg-surface px-3 font-normal focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -45,7 +42,7 @@ export function LoginPage() {
           </h1>
           <p className="text-text-muted">Entre com sua conta de operador.</p>
         </div>
-        <label className="grid gap-1.5 font-semibold">
+        <label className={labelClassName}>
           E-mail
           <input
             className={inputClassName}
@@ -56,7 +53,7 @@ export function LoginPage() {
             onChange={(event) => setEmail(event.target.value)}
           />
         </label>
-        <label className="grid gap-1.5 font-semibold">
+        <label className={labelClassName}>
           Senha
           <input
             className={inputClassName}

@@ -171,6 +171,120 @@ export const studies = app.table(
   ],
 );
 
+// CMS draft: the working copy operators edit. Same ids and columns as the published tables
+// above, which stay what the app reads until a publish. The hierarchy cascades.
+
+export const draftCourses = app.table(
+  'draft_courses',
+  {
+    id: text('id').primaryKey(),
+    title: text('title').notNull(),
+    position: integer('position').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('draft_courses_title_check', sql`char_length(${table.title}) between 1 and 80`),
+    check('draft_courses_position_check', sql`${table.position} > 0`),
+  ],
+);
+
+export const draftUnits = app.table(
+  'draft_units',
+  {
+    id: text('id').primaryKey(),
+    courseId: text('course_id')
+      .notNull()
+      .references(() => draftCourses.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    position: integer('position').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('draft_units_title_check', sql`char_length(${table.title}) between 1 and 80`),
+    check('draft_units_position_check', sql`${table.position} > 0`),
+    index('draft_units_course_id_position_idx').on(table.courseId, table.position),
+  ],
+);
+
+export const draftLessons = app.table(
+  'draft_lessons',
+  {
+    id: text('id').primaryKey(),
+    unitId: text('unit_id')
+      .notNull()
+      .references(() => draftUnits.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    position: integer('position').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('draft_lessons_title_check', sql`char_length(${table.title}) between 1 and 80`),
+    check('draft_lessons_position_check', sql`${table.position} > 0`),
+    index('draft_lessons_unit_id_position_idx').on(table.unitId, table.position),
+  ],
+);
+
+export const draftExercises = app.table(
+  'draft_exercises',
+  {
+    id: text('id').primaryKey(),
+    lessonId: text('lesson_id')
+      .notNull()
+      .references(() => draftLessons.id, { onDelete: 'cascade' }),
+    type: text('type').$type<Exercise['type']>().notNull(),
+    position: integer('position').notNull(),
+    // Validate with the Exercise schema from @libras/contracts before writing.
+    payload: jsonb('payload').$type<Exercise>().notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('draft_exercises_position_check', sql`${table.position} > 0`),
+    check(
+      'draft_exercises_payload_matches_columns',
+      sql`${table.payload} ->> 'id' = ${table.id} and ${table.payload} ->> 'type' = ${table.type}`,
+    ),
+    index('draft_exercises_lesson_id_position_idx').on(table.lessonId, table.position),
+  ],
+);
+
+export const draftSigns = app.table(
+  'draft_signs',
+  {
+    id: text('id').primaryKey(),
+    label: text('label').notNull(),
+    imagePaths: text('image_paths').array().notNull(),
+    alt: text('alt').notNull(),
+    description: text('description'),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('draft_signs_label_check', sql`char_length(${table.label}) between 1 and 40`),
+    check('draft_signs_image_paths_check', sql`cardinality(${table.imagePaths}) between 1 and 8`),
+    check('draft_signs_alt_check', sql`char_length(${table.alt}) between 1 and 200`),
+    check(
+      'draft_signs_description_check',
+      sql`${table.description} is null or char_length(${table.description}) between 1 and 500`,
+    ),
+  ],
+);
+
+export const draftExerciseSigns = app.table(
+  'draft_exercise_signs',
+  {
+    exerciseId: text('exercise_id')
+      .notNull()
+      .references(() => draftExercises.id, { onDelete: 'cascade' }),
+    signId: text('sign_id')
+      .notNull()
+      .references(() => draftSigns.id, { onDelete: 'restrict' }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.exerciseId, table.signId] }),
+    index('draft_exercise_signs_sign_id_idx').on(table.signId),
+  ],
+);
+
 // User
 
 export const profiles = app.table(

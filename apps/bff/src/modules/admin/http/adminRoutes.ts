@@ -26,8 +26,12 @@ export function currentAdmin(request: FastifyRequest): Admin {
 
 // Registered under /v1 with the /admin prefix, behind authPlugin: the token is already
 // checked, so this scope only decides whether its user is an operator. Not wrapped in fp(),
-// so the hook stays inside /v1/admin and never runs for the learners' routes.
-export function adminRoutes({ authorizeAdmin }: AdminUseCases): FastifyPluginAsyncZod {
+// so the hook stays inside /v1/admin and never runs for the learners' routes. The CMS routes
+// of other modules come in `cmsRoutes` and are registered inside this scope, behind the hook.
+export function adminRoutes(
+  { authorizeAdmin }: AdminUseCases,
+  cmsRoutes: readonly FastifyPluginAsyncZod[] = [],
+): FastifyPluginAsyncZod {
   return async (app) => {
     app.decorateRequest('admin', null);
 
@@ -46,5 +50,7 @@ export function adminRoutes({ authorizeAdmin }: AdminUseCases): FastifyPluginAsy
         return { name, email };
       },
     );
+
+    for (const routes of cmsRoutes) await app.register(routes);
   };
 }

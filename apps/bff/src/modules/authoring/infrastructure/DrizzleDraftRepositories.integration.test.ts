@@ -1,0 +1,188 @@
+import { sql } from 'drizzle-orm';
+import { describe, expect, it } from 'vitest';
+
+import type { DbExecutor } from '../../../shared/infrastructure/db/client';
+import {
+  draftCourses,
+  draftExercises,
+  draftExerciseSigns,
+  draftLessons,
+  draftSigns,
+  draftUnits,
+} from '../../../shared/infrastructure/db/schema';
+import { signToWordExercise } from '../../../shared/infrastructure/db/testing/fixtures';
+import { useTestDatabase } from '../../../shared/infrastructure/db/testing/testDatabase';
+import { DrizzleDraftOutlineRepository } from './DrizzleDraftOutlineRepository';
+import { DrizzleDraftSignRepository } from './DrizzleDraftSignRepository';
+
+const inRollback = useTestDatabase();
+
+// The shared database has the seed's draft; inside the rolled-back transaction it moves
+// far behind, so the fixtures below come first.
+async function moveDraftTrailsBack(tx: DbExecutor) {
+  await tx.update(draftCourses).set({ position: sql`${draftCourses.position} + 1000000` });
+}
+
+async function insertDraftOutline(tx: DbExecutor) {
+  await moveDraftTrailsBack(tx);
+  await tx.insert(draftCourses).values({ id: 'it-trail', title: 'Trilha IT', position: 1 });
+  await tx.insert(draftUnits).values([
+    { id: 'it-unit-1', courseId: 'it-trail', title: 'Módulo 1', position: 1 },
+    { id: 'it-unit-2', courseId: 'it-trail', title: 'Módulo 2', position: 2 },
+  ]);
+  await tx.insert(draftLessons).values([
+    { id: 'it-lesson-2', unitId: 'it-unit-1', title: 'Lição 2', position: 2 },
+    { id: 'it-lesson-1', unitId: 'it-unit-1', title: 'Lição 1', position: 1 },
+  ]);
+}
+
+async function insertDraftSign(tx: DbExecutor, id: string, label: string) {
+  await tx.insert(draftSigns).values({
+    id,
+    label,
+    imagePaths: [`https://x.test/${id}.webp`],
+    alt: 'Mão de teste',
+  });
+}
+
+async function insertExerciseShowing(tx: DbExecutor, signId: string) {
+  const payload = signToWordExercise('it-exercise');
+  await tx
+    .insert(draftExercises)
+    .values({ id: payload.id, lessonId: 'it-lesson-1', type: payload.type, position: 1, payload });
+  await tx.insert(draftExerciseSigns).values({ exerciseId: 'it-exercise', signId });
+}
+
+describe('DrizzleDraftOutlineRepository', () => {
+  it(
+    'lists trails, units and lessons in order, with exercise counts',
+    inRollback(async (tx) => {
+      await insertDraftOutline(tx);
+      await insertDraftSign(tx, 'it-sign', 'Z IT');
+      await insertExerciseShowing(tx, 'it-sign');
+
+      const [trail] = await new DrizzleDraftOutlineRepository(tx).listTrails();
+
+      expect(trail).toEqual({
+        id: 'it-trail',
+        title: 'Trilha IT',
+        units: [
+          {
+            id: 'it-unit-1',
+            title: 'Módulo 1',
+            lessons: [
+              { id: 'it-lesson-1', title: 'Lição 1', exerciseCount: 1 },
+              { id: 'it-lesson-2', title: 'Lição 2', exerciseCount: 0 },
+            ],
+          },
+          { id: 'it-unit-2', title: 'Módulo 2', lessons: [] },
+        ],
+      });
+    }),
+  );
+
+  it(
+    'creates at the end of the list and refuses a missing parent',
+    inRollback(async (tx) => {
+      await insertDraftOutline(tx);
+      const outline = new DrizzleDraftOutlineRepository(tx);
+
+      const created = await outline.create('lesson', {
+        id: 'it-lesson-3',
+        parentId: 'it-unit-1',
+        title: 'Lição 3',
+      });
+      const orphan = await outline.create('lesson', {
+        id: 'it-orphan',
+        parentId: 'it-missing',
+        title: 'Órfã',
+      });
+
+      expect([created, orphan]).toEqual([true, false]);
+      expect(await outline.listIds('lesson', 'it-unit-1')).toEqual([
+        'it-lesson-1',
+        'it-lesson-2',
+        'it-lesson-3',
+      ]);
+      expect(await outline.listIds('lesson', 'it-missing')).toBeNull();
+    }),
+  );
+
+  it(
+    'reorders one list without touching the others',
+    inRollback(async (tx) => {
+      await insertDraftOutline(tx);
+      const outline = new DrizzleDraftOutlineRepository(tx);
+
+      await outline.reorder('unit', 'it-trail', ['it-unit-2', 'it-unit-1']);
+
+      expect(await outline.listIds('unit', 'it-trail')).toEqual(['it-unit-2', 'it-unit-1']);
+      expect(await outline.listIds('lesson', 'it-unit-1')).toEqual(['it-lesson-1', 'it-lesson-2']);
+    }),
+  );
+
+  it(
+    'renames and deletes with everything below',
+    inRollback(async (tx) => {
+      await insertDraftOutline(tx);
+      const outline = new DrizzleDraftOutlineRepository(tx);
+
+      expect(await outline.rename('unit', 'it-unit-2', 'Renomeado')).toBe(true);
+      expect(await outline.delete('trail', 'it-trail')).toBe(true);
+      expect(await outline.delete('trail', 'it-trail')).toBe(false);
+
+      expect(await outline.listIds('lesson', 'it-unit-1')).toBeNull();
+    }),
+  );
+});
+
+describe('DrizzleDraftSignRepository', () => {
+  it(
+    'creates, updates and lists signs with how many exercises show them',
+    inRollback(async (tx) => {
+      await insertDraftOutline(tx);
+      const signs = new DrizzleDraftSignRepository(tx);
+      await signs.create({
+        id: 'it-sign',
+        label: 'IT sinal',
+        imageUrls: ['https://x.test/1.webp'],
+        alt: 'Mão',
+        description: null,
+      });
+      await insertExerciseShowing(tx, 'it-sign');
+
+      const updated = await signs.update({
+        id: 'it-sign',
+        label: 'IT sinal',
+        imageUrls: ['https://x.test/1.webp', 'https://x.test/2.webp'],
+        alt: 'Mão aberta',
+        description: 'Abre a mão.',
+      });
+
+      expect(updated).toBe(true);
+      expect((await signs.list()).find((sign) => sign.id === 'it-sign')).toEqual({
+        id: 'it-sign',
+        label: 'IT sinal',
+        imageUrls: ['https://x.test/1.webp', 'https://x.test/2.webp'],
+        alt: 'Mão aberta',
+        description: 'Abre a mão.',
+        exerciseCount: 1,
+      });
+    }),
+  );
+
+  it(
+    'deletes only a sign no exercise shows',
+    inRollback(async (tx) => {
+      await insertDraftOutline(tx);
+      await insertDraftSign(tx, 'it-used', 'IT usado');
+      await insertDraftSign(tx, 'it-free', 'IT livre');
+      await insertExerciseShowing(tx, 'it-used');
+      const signs = new DrizzleDraftSignRepository(tx);
+
+      expect(await signs.delete('it-used')).toBe('inUse');
+      expect(await signs.delete('it-free')).toBe('deleted');
+      expect(await signs.delete('it-free')).toBe('notFound');
+    }),
+  );
+});

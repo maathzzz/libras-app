@@ -1,0 +1,18 @@
+import { ApiError } from './client';
+
+const byCode: Record<string, string> = {
+  INVALID_ORDER: 'A lista mudou enquanto você editava. Carregamos a versão atual; tente de novo.',
+  SIGN_IN_USE: 'Este sinal aparece em exercícios e não pode ser excluído.',
+  VALIDATION_ERROR: 'Algum campo está inválido. Confira os dados e tente de novo.',
+};
+
+// The message an operator sees for a failed request.
+export function errorMessage(error: unknown): string {
+  if (!(error instanceof ApiError)) return 'Algo deu errado. Tente de novo.';
+  if (error.kind === 'network') return 'Sem resposta do servidor. Verifique a conexão.';
+  if (error.code && byCode[error.code]) return byCode[error.code] ?? '';
+  if (error.code?.endsWith('_NOT_FOUND')) {
+    return 'Este item não existe mais; outra pessoa pode tê-lo excluído. Carregamos a versão atual.';
+  }
+  return 'Algo deu errado. Tente de novo.';
+}

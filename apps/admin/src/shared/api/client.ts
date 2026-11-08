@@ -1,5 +1,5 @@
 import { ErrorResponse } from '@libras/contracts';
-import type { z } from 'zod';
+import { z } from 'zod';
 
 import { getSupabase } from './supabase';
 
@@ -21,6 +21,9 @@ export class ApiError extends Error {
     this.name = 'ApiError';
   }
 }
+
+// Schema for routes that answer 204 without a body.
+export const NoContent = z.undefined();
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';

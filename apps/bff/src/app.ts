@@ -7,6 +7,7 @@ import {
 
 import type { Container } from './container';
 import { adminRoutes } from './modules/admin/http/adminRoutes';
+import { authoringRoutes } from './modules/authoring/http/authoringRoutes';
 import { studyRoutes } from './modules/curriculum/http/studyRoutes';
 import { profileRoutes } from './modules/profile/http/profileRoutes';
 import { progressRoutes } from './modules/progress/http/progressRoutes';
@@ -39,7 +40,7 @@ export function buildApp(container: Container, { logger }: AppOptions) {
         await learner.register(progressRoutes(container));
         await learner.register(studyRoutes(container));
       });
-      await v1.register(adminRoutes(container), { prefix: '/admin' });
+      await v1.register(adminRoutes(container, [authoringRoutes(container)]), { prefix: '/admin' });
     },
     { prefix: '/v1' },
   );

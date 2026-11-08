@@ -9,3 +9,4 @@ export * from './lesson';
 export * from './study';
 export * from './error';
 export * from './admin';
+export * from './adminContent';

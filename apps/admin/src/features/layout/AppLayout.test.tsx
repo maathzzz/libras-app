@@ -27,8 +27,9 @@ describe('AppLayout', () => {
   it('lists the sections of later phases without links', () => {
     render(<AppLayout>Conteúdo</AppLayout>);
 
-    expect(screen.queryByRole('link', { name: /Sinais/ })).toBeNull();
-    expect(screen.getByText('Sinais').getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByRole('link', { name: 'Sinais' }).getAttribute('href')).toBe('/sinais');
+    expect(screen.queryByRole('link', { name: /Estudos/ })).toBeNull();
+    expect(screen.getByText('Estudos').getAttribute('aria-disabled')).toBe('true');
   });
 
   it('shows the operator and signs out', async () => {
