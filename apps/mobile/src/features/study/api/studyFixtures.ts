@@ -1,6 +1,7 @@
 import {
   StudiesResponse,
   StudyGuide,
+  type SignImage,
   type StudyBlock,
   type StudyPage,
 } from '@libras/contracts';
@@ -10,14 +11,29 @@ import { ApiError } from '@/shared/api/client';
 import { mockLatency } from '@/shared/api/mockServer';
 
 // Development fixtures for the study routes, used when EXPO_PUBLIC_USE_MOCKS=true. The same
-// "Alfabeto manual" the BFF seed creates. The letter pictures come from the alphabet feature,
-// so both screens show the same placeholders. Like in the seed, the letters have no
-// description yet: it waits for a Libras specialist.
+// "Alfabeto manual" the BFF seed creates, with the letters and alt texts of the alphabet feature.
+// The pictures are placeholders: a study carries image URLs (Supabase Storage in the real one),
+// and the alphabet pictures are bundled with the app. `.invalid` never resolves (RFC 2606), so
+// SignImage shows its placeholder. Like in the seed, the letters have no description yet: it
+// waits for a Libras specialist.
+
+// As in the seed, these letters are shown as two frames side by side.
+const lettersWithMovement = new Set(['H', 'J', 'K', 'X', 'Y', 'Z']);
+
+function letterFrames(letter: (typeof letters)[number]): SignImage[] {
+  const slug = `letter-${letter.label.toLowerCase()}`;
+  const frame = (suffix: string): SignImage => ({
+    url: `https://placeholder.invalid/hand-signs/${slug}${suffix}.png`,
+    alt: letter.image.alt,
+  });
+  if (!lettersWithMovement.has(letter.label)) return [frame('')];
+  return [frame(''), frame('-2')];
+}
 
 function letterBlocks(first: string, last: string): StudyBlock[] {
   return letters
     .filter((letter) => letter.label >= first && letter.label <= last)
-    .map((letter) => ({ type: 'sign', label: letter.label, images: [letter.image] }));
+    .map((letter) => ({ type: 'sign', label: letter.label, images: letterFrames(letter) }));
 }
 
 function letterPage(first: string, last: string): StudyPage {
@@ -36,7 +52,7 @@ function letterPage(first: string, last: string): StudyPage {
 
 const alphabetGuide: StudyGuide = {
   id: 'alfabeto-manual',
-  trailId: 'primeiros-contatos',
+  groupId: 'libras-iniciante',
   title: 'Alfabeto manual',
   description: 'As 26 letras em Libras, para soletrar nomes e palavras.',
   pages: [
@@ -86,10 +102,10 @@ const guides: readonly StudyGuide[] = [alphabetGuide];
 export async function mockGetStudies(): Promise<StudiesResponse> {
   await mockLatency();
   return StudiesResponse.parse({
-    trails: [
+    groups: [
       {
-        id: 'primeiros-contatos',
-        title: 'Primeiros contatos',
+        id: 'libras-iniciante',
+        title: 'Libras para iniciantes',
         studies: guides.map((guide) => ({
           id: guide.id,
           title: guide.title,

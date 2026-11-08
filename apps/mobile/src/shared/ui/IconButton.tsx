@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { colors, radius, sizes } from '@/shared/theme';
@@ -9,10 +10,17 @@ type IconButtonProps = {
   accessibilityLabel: string;
   onPress: () => void;
   filled?: boolean;
+  size?: ComponentProps<typeof Icon>['size'];
 };
 
 // The design draws these at 30–34 pt; the pressable area is kept at the 44 pt minimum.
-export function IconButton({ icon, accessibilityLabel, onPress, filled = false }: IconButtonProps) {
+export function IconButton({
+  icon,
+  accessibilityLabel,
+  onPress,
+  filled = false,
+  size = 'md',
+}: IconButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -20,7 +28,7 @@ export function IconButton({ icon, accessibilityLabel, onPress, filled = false }
       onPress={onPress}
       style={({ pressed }) => [styles.button, filled && styles.filled, pressed && styles.pressed]}
     >
-      <Icon name={icon} size="md" color="textSubtle" />
+      <Icon name={icon} size={size} color="textSubtle" />
     </Pressable>
   );
 }

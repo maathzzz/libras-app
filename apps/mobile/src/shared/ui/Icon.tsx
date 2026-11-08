@@ -1,12 +1,12 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { StyleSheet, Text } from 'react-native';
 
-import { colors, sizes, type ColorToken } from '@/shared/theme';
+import { colors, fontFamily, sizes, type ColorToken } from '@/shared/theme';
 
 // SF Symbols on iOS, Material Symbols on Android. Add names here as screens need them.
 const icons = {
   close: { ios: 'xmark', android: 'close', web: 'close' },
-  streak: { ios: 'flame.fill', android: 'local_fire_department', web: 'local_fire_department' },
-  xp: { ios: 'bolt.fill', android: 'bolt', web: 'bolt' },
+  streak: { ios: 'flame.fill', android: 'mode_heat', web: 'mode_heat' },
   goal: { ios: 'clock', android: 'schedule', web: 'schedule' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
   locked: { ios: 'lock.fill', android: 'lock', web: 'lock' },
@@ -31,7 +31,14 @@ const icons = {
   review: { ios: 'arrow.counterclockwise', android: 'replay', web: 'replay' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
-export type IconName = keyof typeof icons;
+// Drawn as text instead of a symbol: no symbol set has one that reads as "XP".
+const textIcons = {
+  xp: 'XP',
+} as const;
+
+export type IconName = keyof typeof icons | keyof typeof textIcons;
+
+const isTextIcon = (name: IconName): name is keyof typeof textIcons => name in textIcons;
 
 type IconProps = {
   name: IconName;
@@ -48,6 +55,23 @@ const iconSizes = {
 
 // Icons are decorative: the surrounding control carries the accessible label.
 export function Icon({ name, size = 'md', color = 'text' }: IconProps) {
+  if (isTextIcon(name)) {
+    const box = iconSizes[size];
+    return (
+      <Text
+        style={[
+          styles.text,
+          // The letters fill about the same height as a symbol drawn in this box.
+          { fontSize: box * 0.75, lineHeight: box, color: colors[color] },
+        ]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        {textIcons[name]}
+      </Text>
+    );
+  }
+
   return (
     <SymbolView
       name={icons[name]}
@@ -58,3 +82,10 @@ export function Icon({ name, size = 'md', color = 'text' }: IconProps) {
     />
   );
 }
+
+const styles = StyleSheet.create({
+  text: {
+    fontFamily: fontFamily.bold,
+    includeFontPadding: false,
+  },
+});

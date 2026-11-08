@@ -19,7 +19,7 @@ const page = (id: string) => ({
 
 const guide = {
   id: 'alfabeto-manual',
-  trailId: 'primeiros-contatos',
+  groupId: 'primeiros-passos',
   title: 'Alfabeto manual',
   description: 'Aprenda as letras antes de praticar.',
   pages: [page('p1'), page('p2')],
@@ -42,6 +42,41 @@ describe('StudyGuide', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('accepts a sign block with frames side by side', () => {
+    const sign = {
+      type: 'sign',
+      label: 'H',
+      images: [
+        { url: 'https://cdn.example/h-1.png', alt: 'Início do sinal da letra H' },
+        { url: 'https://cdn.example/h-2.png', alt: 'Fim do sinal da letra H' },
+      ],
+    };
+    const result = StudyGuide.safeParse({
+      ...guide,
+      pages: [{ id: 'p1', title: 'H', blocks: [sign] }],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts a heading block', () => {
+    const result = StudyGuide.safeParse({
+      ...guide,
+      pages: [{ id: 'p1', title: 'Seções', blocks: [{ type: 'heading', text: 'Vogais' }] }],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects an empty heading', () => {
+    const result = StudyGuide.safeParse({
+      ...guide,
+      pages: [{ id: 'p1', title: 'Seções', blocks: [{ type: 'heading', text: '' }] }],
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it('rejects a study without pages', () => {
@@ -82,10 +117,10 @@ describe('StudyGuide', () => {
 
 describe('StudiesResponse', () => {
   const response = {
-    trails: [
+    groups: [
       {
-        id: 'primeiros-contatos',
-        title: 'Primeiros contatos',
+        id: 'primeiros-passos',
+        title: 'Primeiros passos',
         studies: [
           { id: 'alfabeto-manual', title: 'Alfabeto manual', description: 'Letras', pageCount: 6 },
         ],
@@ -97,14 +132,14 @@ describe('StudiesResponse', () => {
     expect(StudiesResponse.parse(response)).toEqual(response);
   });
 
-  it('accepts no trails', () => {
-    expect(StudiesResponse.parse({ trails: [] })).toEqual({ trails: [] });
+  it('accepts no groups', () => {
+    expect(StudiesResponse.parse({ groups: [] })).toEqual({ groups: [] });
   });
 
   it('rejects a study without pages', () => {
-    const [trail] = response.trails;
+    const [group] = response.groups;
     const result = StudiesResponse.safeParse({
-      trails: [{ ...trail, studies: [{ ...trail?.studies[0], pageCount: 0 }] }],
+      groups: [{ ...group, studies: [{ ...group?.studies[0], pageCount: 0 }] }],
     });
 
     expect(result.success).toBe(false);

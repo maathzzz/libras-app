@@ -35,12 +35,19 @@ export interface SeedContent {
   lessons: { id: string; unitId: string; title: string; position: number }[];
   signs: SeedSign[];
   exercises: SeedExercise[];
+  studyGroups: SeedStudyGroup[];
   studies: SeedStudy[];
+}
+
+export interface SeedStudyGroup {
+  id: string;
+  title: string;
+  position: number;
 }
 
 export interface SeedStudy {
   id: string;
-  trailId: string;
+  groupId: string;
   position: number;
   title: string;
   description: string;
@@ -49,10 +56,33 @@ export interface SeedStudy {
 
 const OPTIONS_PER_EXERCISE = 4;
 
-// There are no sign pictures yet. `.invalid` never resolves (RFC 2606), so the app shows its
+// Signs whose picture is already in the public `signs` bucket of the development project, as
+// `<sign id>.webp`. The same files ship with the app (apps/mobile/assets/images/hand-signs).
+// Only single-frame signs so far, so the file has no frame number.
+const UPLOADED_SIGNS = new Set([
+  'letter-a',
+  'letter-b',
+  'letter-c',
+  'letter-d',
+  'letter-e',
+  'letter-f',
+  'number-1',
+  'number-2',
+  'number-3',
+  'number-4',
+]);
+const SIGNS_BUCKET_URL =
+  'https://smbrmnevkdqpxkparxon.supabase.co/storage/v1/object/public/signs';
+
+// The others have no picture yet. `.invalid` never resolves (RFC 2606), so the app shows its
 // placeholder with the alt text, as it does with its own mocks.
 const placeholderPath = (signId: string, frame: number) =>
   `https://placeholder.invalid/signs/${signId}-${frame}.png`;
+
+function imagePathsOf(signId: string, frames: number): string[] {
+  if (UPLOADED_SIGNS.has(signId) && frames === 1) return [`${SIGNS_BUCKET_URL}/${signId}.webp`];
+  return Array.from({ length: frames }, (_, index) => placeholderPath(signId, index + 1));
+}
 
 // Provisional: needs review by a Libras specialist, like the rest of this text. The alt text
 // describes the hand, not the answer, so it does not give the exercise away.
@@ -95,7 +125,7 @@ function letterSign(letter: string): SeedSign {
   return {
     id,
     label: letter,
-    imagePaths: Array.from({ length: frames }, (_, index) => placeholderPath(id, index + 1)),
+    imagePaths: imagePathsOf(id, frames),
     alt: LETTER_ALT,
     description: null,
   };
@@ -106,7 +136,7 @@ function numberSign(value: number, alt: string): SeedSign {
   return {
     id,
     label: String(value),
-    imagePaths: [placeholderPath(id, 1)],
+    imagePaths: imagePathsOf(id, 1),
     alt,
     description: NUMBER_DESCRIPTIONS[value] ?? null,
   };
@@ -235,7 +265,15 @@ export function buildSeedContent(): SeedContent {
     }));
   });
 
-  return { course: COURSE, units, lessons, signs, exercises, studies: buildStudies() };
+  return {
+    course: COURSE,
+    units,
+    lessons,
+    signs,
+    exercises,
+    studyGroups: STUDY_GROUPS,
+    studies: buildStudies(),
+  };
 }
 
 // Studies
@@ -265,10 +303,22 @@ function letterPage(first: string, last: string): StudyPage {
   };
 }
 
+// Sections of the "Estudar" tab. They are named freely and have no link to the trails: to
+// move a study, change its groupId. The id is what studies point to, so a group is renamed by
+// changing its title, never its id. This one kept the id and title of the trail the studies
+// belonged to before groups existed.
+const BEGINNERS_GROUP: SeedStudyGroup = {
+  id: 'libras-iniciante',
+  title: 'Libras para iniciantes',
+  position: 1,
+};
+
+const STUDY_GROUPS: SeedStudyGroup[] = [BEGINNERS_GROUP];
+
 // Provisional text, to be reviewed by a Libras specialist.
 const ALPHABET_STUDY: SeedStudy = {
   id: 'alfabeto-manual',
-  trailId: COURSE.id,
+  groupId: BEGINNERS_GROUP.id,
   position: 1,
   title: 'Alfabeto manual',
   description: 'As 26 letras em Libras, para soletrar nomes e palavras.',
@@ -310,7 +360,14 @@ const ALPHABET_STUDY: SeedStudy = {
 // Validated with the schema the BFF serves, so the seed can never hold a page the app
 // cannot render.
 function buildStudies(): SeedStudy[] {
-  return [ALPHABET_STUDY].map((study) => ({ ...study, pages: StudyGuide.parse(study).pages }));
+  const groupIds = new Set(STUDY_GROUPS.map((group) => group.id));
+  return [ALPHABET_STUDY].map((study) => {
+    // Caught here rather than by the foreign key halfway through applying the seed.
+    if (!groupIds.has(study.groupId)) {
+      throw new Error(`Study ${study.id} is in an unknown group: ${study.groupId}`);
+    }
+    return { ...study, pages: StudyGuide.parse(study).pages };
+  });
 }
 
 // Option ids are sign ids, so the options list every sign the exercise shows.

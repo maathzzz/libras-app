@@ -8,6 +8,6 @@ export class GetStudies {
   constructor(private readonly studies: StudyRepository) {}
 
   async execute(): Promise<StudiesResponse> {
-    return { trails: await this.studies.listByTrail() };
+    return { groups: await this.studies.listByGroup() };
   }
 }

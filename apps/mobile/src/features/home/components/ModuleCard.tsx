@@ -25,7 +25,6 @@ type ModuleCardProps = {
 type ModuleLook = {
   background: string;
   edge?: string;
-  ring?: string;
   icon: IconName;
   iconBackground: string;
   iconColor: ColorToken;
@@ -33,7 +32,7 @@ type ModuleLook = {
   titleColor: ColorToken;
 };
 
-// Same states as the trail nodes; the module in progress gets a ring so it stands out.
+// Same states as the trail nodes.
 const looks: Record<UnitStatus, ModuleLook> = {
   completed: {
     background: colors.successSoft,
@@ -47,7 +46,6 @@ const looks: Record<UnitStatus, ModuleLook> = {
   current: {
     background: colors.surface,
     edge: colors.accentSoftEdge,
-    ring: colors.accent,
     icon: 'play',
     iconBackground: colors.accent,
     iconColor: 'onColor',
@@ -124,8 +122,8 @@ export function ModuleCard({ unit, index, onPress }: ModuleCardProps) {
         styles.card,
         { backgroundColor: look.background },
         pressed
-          ? [raised(edge, depth.pressed, look.ring), pressedOffset(depth.md)]
-          : raised(edge, depth.md, look.ring),
+          ? [raised(edge, depth.pressed), pressedOffset(depth.md)]
+          : raised(edge, depth.md),
       ]}
     >
       {content}

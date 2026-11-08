@@ -42,14 +42,14 @@ describe('seed content', () => {
     );
   });
 
-  it('teaches the whole alphabet in the alphabet study, under the course', () => {
+  it('teaches the whole alphabet in the alphabet study, in a known group', () => {
     const [study] = content.studies;
     const labels = study?.pages
       .flatMap((page) => page.blocks)
       .flatMap((block) => (block.type === 'sign' ? [block.label] : []));
 
     expect(content.studies).toHaveLength(1);
-    expect(study?.trailId).toBe(content.course.id);
+    expect(content.studyGroups.map((group) => group.id)).toContain(study?.groupId);
     expect(labels?.join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   });
 

@@ -1,8 +1,8 @@
-import { StudyGuide, type StudyTrail } from '@libras/contracts';
+import { StudyGuide, type StudyGroup } from '@libras/contracts';
 import { asc, eq, sql } from 'drizzle-orm';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
-import { courses, studies } from '../../../shared/infrastructure/db/schema';
+import { studies, studyGroups } from '../../../shared/infrastructure/db/schema';
 import type { StudyRepository } from '../domain/StudyRepository';
 
 export class DrizzleStudyRepository implements StudyRepository {
@@ -10,10 +10,10 @@ export class DrizzleStudyRepository implements StudyRepository {
 
   // The list only needs each study's page count, so the pages themselves are not read.
   // Ids break ties in position, so the order is always the same.
-  async listByTrail(): Promise<StudyTrail[]> {
+  async listByGroup(): Promise<StudyGroup[]> {
     const rows = await this.db
       .select({
-        trail: { id: courses.id, title: courses.title },
+        group: { id: studyGroups.id, title: studyGroups.title },
         study: {
           id: studies.id,
           title: studies.title,
@@ -22,24 +22,29 @@ export class DrizzleStudyRepository implements StudyRepository {
         },
       })
       .from(studies)
-      .innerJoin(courses, eq(courses.id, studies.trailId))
-      .orderBy(asc(courses.position), asc(courses.id), asc(studies.position), asc(studies.id));
+      .innerJoin(studyGroups, eq(studyGroups.id, studies.groupId))
+      .orderBy(
+        asc(studyGroups.position),
+        asc(studyGroups.id),
+        asc(studies.position),
+        asc(studies.id),
+      );
 
-    // Rows arrive sorted by trail, so the Map keeps the trails in that order.
-    const trails = new Map<string, StudyTrail>();
-    for (const { trail, study } of rows) {
-      const entry = trails.get(trail.id) ?? { ...trail, studies: [] };
+    // Rows arrive sorted by group, so the Map keeps the groups in that order.
+    const groups = new Map<string, StudyGroup>();
+    for (const { group, study } of rows) {
+      const entry = groups.get(group.id) ?? { ...group, studies: [] };
       entry.studies.push(study);
-      trails.set(trail.id, entry);
+      groups.set(group.id, entry);
     }
-    return [...trails.values()];
+    return [...groups.values()];
   }
 
   async findById(studyId: string): Promise<StudyGuide | null> {
     const [row] = await this.db
       .select({
         id: studies.id,
-        trailId: studies.trailId,
+        groupId: studies.groupId,
         title: studies.title,
         description: studies.description,
         pages: studies.pages,

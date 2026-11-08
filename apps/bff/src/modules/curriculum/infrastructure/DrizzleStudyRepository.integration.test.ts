@@ -1,12 +1,13 @@
 import type { StudyPage } from '@libras/contracts';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
-import { studies } from '../../../shared/infrastructure/db/schema';
+import { studies, studyGroups } from '../../../shared/infrastructure/db/schema';
 import {
-  insertCourse,
-  moveExistingTrailsBack,
+  insertStudyGroup,
+  moveExistingStudyGroupsBack,
 } from '../../../shared/infrastructure/db/testing/fixtures';
 import { useTestDatabase } from '../../../shared/infrastructure/db/testing/testDatabase';
 import { DrizzleStudyRepository } from './DrizzleStudyRepository';
@@ -29,11 +30,11 @@ const page = (id: string): StudyPage => ({
 
 async function insertStudy(
   tx: DbExecutor,
-  { id, trailId, position, pages }: { id: string; trailId: string; position: number; pages: unknown },
+  { id, groupId, position, pages }: { id: string; groupId: string; position: number; pages: unknown },
 ) {
   await tx.insert(studies).values({
     id,
-    trailId,
+    groupId,
     position,
     title: `Estudo ${id}`,
     description: 'Descrição do estudo.',
@@ -42,39 +43,39 @@ async function insertStudy(
   });
 }
 
-describe('DrizzleStudyRepository.listByTrail', () => {
+describe('DrizzleStudyRepository.listByGroup', () => {
   it(
-    'lists the studies by trail position and study position, with their page counts',
+    'lists the studies by group position and study position, with their page counts',
     inRollback(async (tx) => {
-      await moveExistingTrailsBack(tx);
-      await insertCourse(tx, 'it-study-trail-2', 2);
-      await insertCourse(tx, 'it-study-trail-1', 1);
-      await insertCourse(tx, 'it-study-trail-empty', 3);
+      await moveExistingStudyGroupsBack(tx);
+      await insertStudyGroup(tx, 'it-study-group-2', 2);
+      await insertStudyGroup(tx, 'it-study-group-1', 1);
+      await insertStudyGroup(tx, 'it-study-group-empty', 3);
       await insertStudy(tx, {
         id: 'it-study-b',
-        trailId: 'it-study-trail-1',
+        groupId: 'it-study-group-1',
         position: 2,
         pages: [page('p1')],
       });
       await insertStudy(tx, {
         id: 'it-study-a',
-        trailId: 'it-study-trail-1',
+        groupId: 'it-study-group-1',
         position: 1,
         pages: [page('p1'), page('p2'), page('p3')],
       });
       await insertStudy(tx, {
         id: 'it-study-c',
-        trailId: 'it-study-trail-2',
+        groupId: 'it-study-group-2',
         position: 1,
         pages: [page('p1')],
       });
 
-      const trails = await new DrizzleStudyRepository(tx).listByTrail();
+      const groups = await new DrizzleStudyRepository(tx).listByGroup();
 
-      expect(trails.slice(0, 2)).toEqual([
+      expect(groups.slice(0, 2)).toEqual([
         {
-          id: 'it-study-trail-1',
-          title: 'Trilha it-study-trail-1',
+          id: 'it-study-group-1',
+          title: 'Grupo it-study-group-1',
           studies: [
             {
               id: 'it-study-a',
@@ -91,11 +92,11 @@ describe('DrizzleStudyRepository.listByTrail', () => {
           ],
         },
         expect.objectContaining({
-          id: 'it-study-trail-2',
+          id: 'it-study-group-2',
           studies: [expect.objectContaining({ id: 'it-study-c' })],
         }),
       ]);
-      expect(trails.map(({ id }) => id)).not.toContain('it-study-trail-empty');
+      expect(groups.map(({ id }) => id)).not.toContain('it-study-group-empty');
     }),
   );
 });
@@ -104,13 +105,13 @@ describe('DrizzleStudyRepository.findById', () => {
   it(
     'returns the study with its pages and sign descriptions',
     inRollback(async (tx) => {
-      await insertCourse(tx, 'it-study-trail');
+      await insertStudyGroup(tx, 'it-study-group');
       const pages = [page('p1'), page('p2')];
-      await insertStudy(tx, { id: 'it-study', trailId: 'it-study-trail', position: 1, pages });
+      await insertStudy(tx, { id: 'it-study', groupId: 'it-study-group', position: 1, pages });
 
       expect(await new DrizzleStudyRepository(tx).findById('it-study')).toEqual({
         id: 'it-study',
-        trailId: 'it-study-trail',
+        groupId: 'it-study-group',
         title: 'Estudo it-study',
         description: 'Descrição do estudo.',
         pages,
@@ -128,10 +129,10 @@ describe('DrizzleStudyRepository.findById', () => {
   it(
     'throws when the stored pages do not match the contract',
     inRollback(async (tx) => {
-      await insertCourse(tx, 'it-study-trail');
+      await insertStudyGroup(tx, 'it-study-group');
       await insertStudy(tx, {
         id: 'it-study-broken',
-        trailId: 'it-study-trail',
+        groupId: 'it-study-group',
         position: 1,
         pages: [{ id: 'p1', title: 'Sem blocos', blocks: [] }],
       });
@@ -139,6 +140,28 @@ describe('DrizzleStudyRepository.findById', () => {
       await expect(new DrizzleStudyRepository(tx).findById('it-study-broken')).rejects.toThrow(
         ZodError,
       );
+    }),
+  );
+});
+
+describe('app.study_groups', () => {
+  it(
+    'refuses to delete a group that still has studies',
+    inRollback(async (tx) => {
+      await insertStudyGroup(tx, 'it-study-group');
+      await insertStudy(tx, {
+        id: 'it-study',
+        groupId: 'it-study-group',
+        position: 1,
+        pages: [page('p1')],
+      });
+
+      // In a savepoint, so the failed statement does not abort the test transaction.
+      const deleting = tx.transaction((inner) =>
+        inner.delete(studyGroups).where(eq(studyGroups.id, 'it-study-group')),
+      );
+
+      await expect(deleting).rejects.toThrow();
     }),
   );
 });

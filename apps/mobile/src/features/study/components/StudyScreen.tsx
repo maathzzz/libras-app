@@ -9,7 +9,7 @@ import { AppText, Button, Header } from '@/shared/ui';
 
 import { useStudyStore } from '../store/studyStore';
 import { StudyBlockView } from './StudyBlockView';
-import { studySteps } from './studyView';
+import { studyRows, studySteps } from './studyView';
 
 const gutter = spacing['2xl'];
 const signGap = spacing.md;
@@ -53,10 +53,13 @@ function StudyReader({ guide }: { guide: StudyGuide }) {
   const nextPage = useStudyStore((state) => state.nextPage);
   const previousPage = useStudyStore((state) => state.previousPage);
   const { width } = useWindowDimensions();
-  const signWidth = (width - gutter * 2 - signGap) / 2;
+  const fullWidth = width - gutter * 2;
+  const columnWidth = (fullWidth - signGap) / 2;
 
   const page = guide.pages[pageIndex];
   if (!page) return null;
+
+  const rows = studyRows(page.blocks);
 
   const total = guide.pages.length;
   const isLast = pageIndex === total - 1;
@@ -83,9 +86,28 @@ function StudyReader({ guide }: { guide: StudyGuide }) {
           </AppText>
         </View>
         <View style={styles.blocks}>
-          {page.blocks.map((block, index) => (
-            <StudyBlockView key={index} block={block} signWidth={signWidth} />
-          ))}
+          {rows.map((row, index) =>
+            row.kind === 'full' ? (
+              <StudyBlockView
+                key={index}
+                block={row.block}
+                columnWidth={columnWidth}
+                fullWidth={fullWidth}
+              />
+            ) : (
+              // A sign left alone in its row is centered, so it does not look like a gap.
+              <View key={index} style={styles.signRow}>
+                {row.signs.map((sign, signIndex) => (
+                  <StudyBlockView
+                    key={signIndex}
+                    block={sign}
+                    columnWidth={columnWidth}
+                    fullWidth={fullWidth}
+                  />
+                ))}
+              </View>
+            ),
+          )}
         </View>
       </ScrollView>
       <View style={styles.footer}>
@@ -125,8 +147,11 @@ const styles = StyleSheet.create({
     gap: spacing['2xs'],
   },
   blocks: {
+    gap: signGap,
+  },
+  signRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: signGap,
   },
   footer: {

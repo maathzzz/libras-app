@@ -1,4 +1,4 @@
-import type { StudyGuide, StudyTrail } from '@libras/contracts';
+import type { StudyGroup, StudyGuide } from '@libras/contracts';
 import { create } from 'zustand';
 
 import { prefetchImages } from '@/shared/lib/prefetchImages';
@@ -13,7 +13,7 @@ const prefetchTimeoutMs = 5000;
 
 type StudyState = {
   listStatus: LoadStatus;
-  trails: StudyTrail[];
+  groups: StudyGroup[];
   guideStatus: LoadStatus;
   guide: StudyGuide | null;
   pageIndex: number;
@@ -35,7 +35,7 @@ function guideImageUrls(guide: StudyGuide): string[] {
 
 export const useStudyStore = create<StudyState>()((set, get) => ({
   listStatus: 'idle',
-  trails: [],
+  groups: [],
   guideStatus: 'idle',
   guide: null,
   pageIndex: 0,
@@ -46,8 +46,8 @@ export const useStudyStore = create<StudyState>()((set, get) => ({
     if (!hasList) set({ listStatus: 'loading' });
 
     try {
-      const { trails } = await getStudies();
-      set({ listStatus: 'ready', trails });
+      const { groups } = await getStudies();
+      set({ listStatus: 'ready', groups });
     } catch {
       // A failed reload keeps the last list on screen; the error state is only for a first load.
       if (!hasList) set({ listStatus: 'error' });

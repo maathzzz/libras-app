@@ -22,7 +22,7 @@ src/
       index.ts           # API pública da feature
     study/               # Aba "Estudar" e leitor de páginas de estudo
     onboarding/          # Boas-vindas, nível e meta diária
-    settings/            # Ajustes
+    settings/            # Ajustes (rota `settings`, aberta pela engrenagem do Perfil)
     reminder/            # Lembrete de streak (notificação local)
     streak/
     achievements/        # Conquistas: seção do perfil e card da lição concluída
@@ -65,11 +65,12 @@ src/
 
 ## Estudos
 
-* A feature `features/study/` tem a aba "Estudar" (`StudiesScreen`, lista por trilha) e o leitor (`StudyScreen`, rota `study/\[studyId]`, uma página por vez com "Continuar"/"Voltar" e os segmentos do `Header`).
+* A feature `features/study/` tem a aba "Estudar" (`StudiesScreen`, lista por grupo de estudo) e o leitor (`StudyScreen`, rota `study/\[studyId]`, uma página por vez com "Continuar"/"Voltar" e os segmentos do `Header`).
 * Ao abrir um estudo, buscar o `StudyGuide` e fazer `Image.prefetch()` das imagens antes de mostrar a primeira página.
 * Cada tipo de bloco é um `case` em `features/study/components/StudyBlockView.tsx`. Para adicionar um tipo: criar o schema em `contracts` e o `case` correspondente; o `switch` não tem `default`, então o typecheck aponta o caso que falta.
 * Nada é enviado ao BFF ao concluir: "Concluir" só fecha o leitor.
 * Os estudos vêm do BFF (`GET /v1/studies` e `GET /v1/studies/:studyId`). Com `EXPO\_PUBLIC\_USE\_MOCKS=true`, `api/studyFixtures.ts` traz o mesmo "Alfabeto manual" do seed, reaproveitando as letras de `features/alphabet`. O texto é provisório e precisa de revisão por especialista em Libras.
+* Layout da página (`studyRows` e `signFrameSize` em `components/studyView.ts`): sinais de uma imagem ficam dois por linha; um sinal com várias imagens ocupa a linha inteira, com as imagens lado a lado no mesmo tamanho das imagens dos sinais vizinhos (só encolhem se não couberem). Um sinal que fica sozinho na linha é centralizado. A ordem dos blocos nunca muda. Os demais blocos (`heading`, `text`, `tip`) ocupam a linha inteira.
 * A `description` de um bloco de sinal aparece uma vez, abaixo de todas as imagens do sinal. O modal do alfabeto (`HandSignSheet`) mostra a `description` do sinal tocado; o conteúdo do alfabeto continua embarcado no app.
 
 ## Lembrete de streak
@@ -91,7 +92,7 @@ src/
 
 * Sempre use `expo-image` com `cachePolicy="memory-disk"`. Nunca use o `Image` do React Native.
 * Toda imagem de sinal tem `accessibilityLabel` a partir do campo `alt`.
-* Imagens do alfabeto manual e dos números são embarcadas no app. As demais vêm do Supabase Storage.
+* Imagens do alfabeto manual e dos números são embarcadas no app, em `assets/images/hand-signs/` (`letter-a.webp`, `number-1.webp`), importadas em `features/alphabet/content/handSigns.ts` e passadas ao `SignImage` como `BundledSignImage` (`source` + `alt`). Um sinal ainda sem imagem mostra o placeholder. As demais vêm do Supabase Storage.
 
 ## Acessibilidade
 

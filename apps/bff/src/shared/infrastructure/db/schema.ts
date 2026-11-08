@@ -131,13 +131,29 @@ export const exerciseSigns = app.table(
   ],
 );
 
+// A section of the "Estudar" tab. Unrelated to the trails.
+export const studyGroups = app.table(
+  'study_groups',
+  {
+    id: text('id').primaryKey(),
+    title: text('title').notNull(),
+    position: integer('position').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('study_groups_title_check', sql`char_length(${table.title}) between 1 and 80`),
+    check('study_groups_position_check', sql`${table.position} > 0`),
+  ],
+);
+
 export const studies = app.table(
   'studies',
   {
     id: text('id').primaryKey(),
-    trailId: text('trail_id')
+    // No cascade: a group with studies cannot be deleted.
+    groupId: text('group_id')
       .notNull()
-      .references(() => courses.id, { onDelete: 'cascade' }),
+      .references(() => studyGroups.id),
     position: integer('position').notNull(),
     title: text('title').notNull(),
     description: text('description').notNull(),
@@ -151,7 +167,7 @@ export const studies = app.table(
       'studies_pages_check',
       sql`jsonb_typeof(${table.pages}) = 'array' and jsonb_array_length(${table.pages}) > 0`,
     ),
-    index('studies_trail_id_position_idx').on(table.trailId, table.position),
+    index('studies_group_id_position_idx').on(table.groupId, table.position),
   ],
 );
 

@@ -17,10 +17,10 @@ afterEach(() => {
 
 describe('mockGetStudies', () => {
   it('lists the alphabet study with its page count', async () => {
-    const { trails } = await resolve(mockGetStudies());
+    const { groups } = await resolve(mockGetStudies());
 
-    expect(trails).toHaveLength(1);
-    expect(trails[0]?.studies).toEqual([
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.studies).toEqual([
       expect.objectContaining({ id: 'alfabeto-manual', pageCount: 6 }),
     ]);
   });
@@ -34,6 +34,17 @@ describe('mockGetStudy', () => {
       .flatMap((block) => (block.type === 'sign' ? [block.label] : []));
 
     expect(labels.join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  });
+
+  it('shows the letters with movement as two frames, like the seed', async () => {
+    const guide = await resolve(mockGetStudy('alfabeto-manual'));
+    const twoFrames = guide.pages
+      .flatMap((page) => page.blocks)
+      .flatMap((block) =>
+        block.type === 'sign' && block.images.length === 2 ? [block.label] : [],
+      );
+
+    expect(twoFrames.join('')).toBe('HJKXYZ');
   });
 
   it('rejects an unknown study like the BFF', async () => {

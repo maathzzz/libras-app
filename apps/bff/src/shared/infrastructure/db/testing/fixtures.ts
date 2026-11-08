@@ -4,7 +4,7 @@ import type { Exercise } from '@libras/contracts';
 import { sql } from 'drizzle-orm';
 
 import type { DbExecutor } from '../client';
-import { courses, exercises, lessons, profiles, units } from '../schema';
+import { courses, exercises, lessons, profiles, studyGroups, units } from '../schema';
 
 // Rows for integration tests. They are written inside withRollback, and ids start with
 // `it-` so a leftover would be easy to spot next to the seed content.
@@ -31,6 +31,15 @@ export async function insertCourse(tx: DbExecutor, id: string, position = 1000):
 // move far behind, so a fixture at position 1 becomes the first trail.
 export async function moveExistingTrailsBack(tx: DbExecutor): Promise<void> {
   await tx.update(courses).set({ position: sql`${courses.position} + 1000000` });
+}
+
+export async function insertStudyGroup(tx: DbExecutor, id: string, position = 1000): Promise<void> {
+  await tx.insert(studyGroups).values({ id, title: `Grupo ${id}`, position });
+}
+
+// Like moveExistingTrailsBack, for the seed's study groups.
+export async function moveExistingStudyGroupsBack(tx: DbExecutor): Promise<void> {
+  await tx.update(studyGroups).set({ position: sql`${studyGroups.position} + 1000000` });
 }
 
 export async function insertUnit(

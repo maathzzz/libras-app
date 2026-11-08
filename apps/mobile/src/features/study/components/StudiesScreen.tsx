@@ -1,4 +1,4 @@
-import type { StudySummary, StudyTrail } from '@libras/contracts';
+import type { StudyGroup, StudySummary } from '@libras/contracts';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
@@ -12,7 +12,7 @@ import { pagesLabel } from './studyView';
 
 export function StudiesScreen() {
   const status = useStudyStore((state) => state.listStatus);
-  const trails = useStudyStore((state) => state.trails);
+  const groups = useStudyStore((state) => state.groups);
   const loadStudies = useStudyStore((state) => state.loadStudies);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export function StudiesScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       {status === 'ready' ? (
-        <StudyList trails={trails} />
+        <StudyList groups={groups} />
       ) : status === 'error' ? (
         <LoadError onRetry={loadStudies} />
       ) : (
@@ -38,23 +38,22 @@ function openStudy(studyId: string) {
   router.push({ pathname: '/study/[studyId]', params: { studyId } });
 }
 
-function StudyList({ trails }: { trails: readonly StudyTrail[] }) {
+function StudyList({ groups }: { groups: readonly StudyGroup[] }) {
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <ScreenTitle title="Estudar" description="Leia o conteúdo antes de praticar na trilha." />
-      {trails.length === 0 && (
+      <ScreenTitle title="Estudar" description="Leia o conteúdo no seu ritmo, antes ou depois de praticar." />
+      {groups.length === 0 && (
         <AppText variant="body" color="textMuted" align="center">
           Ainda não há conteúdo para estudar.
         </AppText>
       )}
-      {trails.map((trail) => (
-        <View key={trail.id} style={styles.section}>
-          <AppText variant="kicker">Trilha</AppText>
+      {groups.map((group) => (
+        <View key={group.id} style={styles.section}>
           <AppText variant="heading" accessibilityRole="header">
-            {trail.title}
+            {group.title}
           </AppText>
           <View style={styles.cards}>
-            {trail.studies.map((study) => (
+            {group.studies.map((study) => (
               <StudyCard key={study.id} study={study} onPress={() => openStudy(study.id)} />
             ))}
           </View>
