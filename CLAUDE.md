@@ -32,7 +32,7 @@ O BFF deve ser escalável (stateless), mas sem over engineering. Na dúvida entr
 pnpm install
 pnpm --filter bff dev          # BFF com recarga automática (tsx watch)
 pnpm --filter mobile start     # Expo dev server
-pnpm --filter admin dev        # CMS web (http://localhost:5173), encaminha /v1 para o BFF local
+pnpm --filter admin dev        # CMS web em Next (http://localhost:5173), encaminha /v1 para o BFF local
 pnpm --filter <pacote> test
 pnpm lint
 pnpm typecheck

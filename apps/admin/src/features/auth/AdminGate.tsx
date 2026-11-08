@@ -1,7 +1,10 @@
+'use client';
+
 import type { AdminMeResponse } from '@libras/contracts';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { ApiError } from '@/shared/api/client';
+import { Button, cardClassName } from '@/shared/ui';
 
 import { getAdminMe } from './adminApi';
 import { LoginPage } from './LoginPage';
@@ -22,12 +25,16 @@ type GateState =
   | { kind: 'notAdmin' }
   | { kind: 'error' };
 
+function Loading() {
+  return <p className="grid min-h-screen place-items-center p-4 text-text-muted">Carregando…</p>;
+}
+
 function Notice({ title, body, action }: { title: string; body: string; action: ReactNode }) {
   return (
-    <main className="centered-page">
-      <div className="card" role="alert">
-        <h1>{title}</h1>
-        <p className="muted">{body}</p>
+    <main className="grid min-h-screen place-items-center p-4">
+      <div className={`${cardClassName} grid w-full max-w-100 gap-4`} role="alert">
+        <h1 className="text-2xl font-bold">{title}</h1>
+        <p className="text-text-muted">{body}</p>
         {action}
       </div>
     </main>
@@ -35,9 +42,9 @@ function Notice({ title, body, action }: { title: string; body: string; action: 
 }
 
 const signOutButton = (
-  <button className="button button--secondary" type="button" onClick={() => void signOut()}>
+  <Button variant="secondary" onClick={() => void signOut()}>
     Sair
-  </button>
+  </Button>
 );
 
 // Asks the BFF whether the signed-in account is an operator. Keyed by user, so switching
@@ -65,7 +72,7 @@ function OperatorCheck({ children }: { children: ReactNode }) {
 
   switch (state.kind) {
     case 'loading':
-      return <p className="centered-page muted">Carregando…</p>;
+      return <Loading />;
     case 'notAdmin':
       return (
         <Notice
@@ -80,16 +87,15 @@ function OperatorCheck({ children }: { children: ReactNode }) {
           title="Não foi possível carregar o CMS"
           body="O servidor não respondeu. Verifique a conexão e tente de novo."
           action={
-            <button
-              className="button button--primary"
-              type="button"
+            <Button
+              variant="primary"
               onClick={() => {
                 setState({ kind: 'loading' });
                 setAttempt((value) => value + 1);
               }}
             >
               Tentar de novo
-            </button>
+            </Button>
           }
         />
       );
@@ -99,11 +105,12 @@ function OperatorCheck({ children }: { children: ReactNode }) {
 }
 
 // Everything in the CMS sits behind this gate: signed out shows the login, and a signed-in
-// account only gets through when the BFF confirms it is an active operator.
+// account only gets through when the BFF confirms it is an active operator. The session only
+// exists in the browser, so the server render always stops at "Carregando…".
 export function AdminGate({ children }: { children: ReactNode }) {
   const session = useSession();
 
-  if (session.status === 'loading') return <p className="centered-page muted">Carregando…</p>;
+  if (session.status === 'loading') return <Loading />;
   if (session.status === 'signedOut') return <LoginPage />;
   return <OperatorCheck key={session.userId}>{children}</OperatorCheck>;
 }

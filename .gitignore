@@ -5,3 +5,6 @@ node_modules
 dist
 ios
 android
+.next
+next-env.d.ts
+*.tsbuildinfo

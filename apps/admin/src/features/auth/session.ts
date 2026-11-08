@@ -38,8 +38,16 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
+// The session lives in browser storage, so the server render (and hydration) always sees
+// "loading"; the real state arrives once Supabase reports it.
+const serverState: SessionState = { status: 'loading' };
+
 export function useSession(): SessionState {
-  return useSyncExternalStore(subscribe, () => state);
+  return useSyncExternalStore(
+    subscribe,
+    () => state,
+    () => serverState,
+  );
 }
 
 export async function signIn(email: string, password: string): Promise<'ok' | 'invalid' | 'error'> {

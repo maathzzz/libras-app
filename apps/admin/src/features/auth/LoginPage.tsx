@@ -1,4 +1,8 @@
+'use client';
+
 import { useState, type FormEvent } from 'react';
+
+import { Button, cardClassName } from '@/shared/ui';
 
 import { signIn } from './session';
 
@@ -6,6 +10,9 @@ const messages = {
   invalid: 'E-mail ou senha incorretos.',
   error: 'Não foi possível entrar agora. Tente de novo em instantes.',
 } as const;
+
+const inputClassName =
+  'min-h-10 rounded-sm border border-border bg-surface px-3 font-normal focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -26,15 +33,22 @@ export function LoginPage() {
   }
 
   return (
-    <main className="centered-page">
-      <form className="card" onSubmit={submit} aria-labelledby="login-title">
+    <main className="grid min-h-screen place-items-center p-4">
+      <form
+        className={`${cardClassName} grid w-full max-w-100 gap-4`}
+        onSubmit={submit}
+        aria-labelledby="login-title"
+      >
         <div>
-          <h1 id="login-title">Libras CMS</h1>
-          <p className="muted">Entre com sua conta de operador.</p>
+          <h1 id="login-title" className="text-2xl font-bold">
+            Libras CMS
+          </h1>
+          <p className="text-text-muted">Entre com sua conta de operador.</p>
         </div>
-        <label className="field">
+        <label className="grid gap-1.5 font-semibold">
           E-mail
           <input
+            className={inputClassName}
             type="email"
             autoComplete="username"
             required
@@ -42,9 +56,10 @@ export function LoginPage() {
             onChange={(event) => setEmail(event.target.value)}
           />
         </label>
-        <label className="field">
+        <label className="grid gap-1.5 font-semibold">
           Senha
           <input
+            className={inputClassName}
             type="password"
             autoComplete="current-password"
             required
@@ -53,13 +68,13 @@ export function LoginPage() {
           />
         </label>
         {error && (
-          <p className="error-text" role="alert">
+          <p className="text-danger-dark" role="alert">
             {messages[error]}
           </p>
         )}
-        <button className="button button--primary" type="submit" disabled={submitting}>
+        <Button variant="primary" type="submit" disabled={submitting}>
           {submitting ? 'Entrando…' : 'Entrar'}
-        </button>
+        </Button>
       </form>
     </main>
   );
