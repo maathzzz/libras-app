@@ -3,14 +3,14 @@ import { describe, expect, it } from 'vitest';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import {
-  draftCourses,
-  draftExercises,
-  draftExerciseSigns,
-  draftLessons,
-  draftSigns,
-  draftStudies,
-  draftStudyGroups,
-  draftUnits,
+  courses,
+  exercises,
+  exerciseSigns,
+  lessons,
+  signs,
+  studies,
+  studyGroups,
+  units,
 } from '../../../shared/infrastructure/db/schema';
 import { signToWordExercise } from '../../../shared/infrastructure/db/testing/fixtures';
 import { useTestDatabase } from '../../../shared/infrastructure/db/testing/testDatabase';
@@ -26,24 +26,24 @@ const inRollback = useTestDatabase();
 // The shared database has the seed's draft; inside the rolled-back transaction it moves
 // far behind, so the fixtures below come first.
 async function moveDraftTrailsBack(tx: DbExecutor) {
-  await tx.update(draftCourses).set({ position: sql`${draftCourses.position} + 1000000` });
+  await tx.update(courses).set({ position: sql`${courses.position} + 1000000` });
 }
 
 async function insertDraftOutline(tx: DbExecutor) {
   await moveDraftTrailsBack(tx);
-  await tx.insert(draftCourses).values({ id: 'it-trail', title: 'Trilha IT', position: 1 });
-  await tx.insert(draftUnits).values([
+  await tx.insert(courses).values({ id: 'it-trail', title: 'Trilha IT', position: 1 });
+  await tx.insert(units).values([
     { id: 'it-unit-1', courseId: 'it-trail', title: 'Módulo 1', position: 1 },
     { id: 'it-unit-2', courseId: 'it-trail', title: 'Módulo 2', position: 2 },
   ]);
-  await tx.insert(draftLessons).values([
+  await tx.insert(lessons).values([
     { id: 'it-lesson-2', unitId: 'it-unit-1', title: 'Lição 2', position: 2 },
     { id: 'it-lesson-1', unitId: 'it-unit-1', title: 'Lição 1', position: 1 },
   ]);
 }
 
 async function insertDraftSign(tx: DbExecutor, id: string, label: string) {
-  await tx.insert(draftSigns).values({
+  await tx.insert(signs).values({
     id,
     label,
     imagePaths: [`https://x.test/${id}.webp`],
@@ -54,9 +54,9 @@ async function insertDraftSign(tx: DbExecutor, id: string, label: string) {
 async function insertExerciseShowing(tx: DbExecutor, signId: string) {
   const payload = signToWordExercise('it-exercise');
   await tx
-    .insert(draftExercises)
+    .insert(exercises)
     .values({ id: payload.id, lessonId: 'it-lesson-1', type: payload.type, position: 1, payload });
-  await tx.insert(draftExerciseSigns).values({ exerciseId: 'it-exercise', signId });
+  await tx.insert(exerciseSigns).values({ exerciseId: 'it-exercise', signId });
 }
 
 describe('DrizzleDraftOutlineRepository', () => {
@@ -204,8 +204,8 @@ describe('DrizzleDraftSignRepository with studies', () => {
   };
 
   async function insertStudyShowing(tx: DbExecutor) {
-    await tx.insert(draftStudyGroups).values({ id: 'it-group', title: 'Grupo IT', position: 1 });
-    await tx.insert(draftStudies).values({
+    await tx.insert(studyGroups).values({ id: 'it-group', title: 'Grupo IT', position: 1 });
+    await tx.insert(studies).values({
       id: 'it-study',
       groupId: 'it-group',
       position: 1,
@@ -245,7 +245,7 @@ describe('DrizzleDraftSignRepository with studies', () => {
 
       const [study] = await tx
         .select()
-        .from(draftStudies)
+        .from(studies)
         .where(sql`id = 'it-study'`);
       expect(study?.pages[0]?.blocks).toEqual([
         { type: 'text', body: 'Oi.' },
@@ -300,9 +300,9 @@ describe('DrizzleDraftExerciseRepository', () => {
       expect(await exercises.listByLesson('it-missing')).toBeNull();
 
       const shown = await tx
-        .select({ signId: draftExerciseSigns.signId })
-        .from(draftExerciseSigns)
-        .where(sql`${draftExerciseSigns.exerciseId} = 'it-ex-1'`);
+        .select({ signId: exerciseSigns.signId })
+        .from(exerciseSigns)
+        .where(sql`${exerciseSigns.exerciseId} = 'it-ex-1'`);
       expect(shown.map(({ signId }) => signId).sort()).toEqual(['it-a', 'it-b']);
     }),
   );

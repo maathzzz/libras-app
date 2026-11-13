@@ -32,6 +32,8 @@ export const courses = app.table(
     id: text('id').primaryKey(),
     title: text('title').notNull(),
     position: integer('position').notNull(),
+    // Shown to learners. Content created in the CMS starts hidden.
+    visible: boolean('visible').notNull().default(false),
     createdAt: createdAt(),
   },
   (table) => [check('courses_position_check', sql`${table.position} > 0`)],
@@ -46,6 +48,8 @@ export const units = app.table(
       .references(() => courses.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     position: integer('position').notNull(),
+    // Shown to learners. Content created in the CMS starts hidden.
+    visible: boolean('visible').notNull().default(false),
     createdAt: createdAt(),
   },
   (table) => [
@@ -63,6 +67,8 @@ export const lessons = app.table(
       .references(() => units.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     position: integer('position').notNull(),
+    // Shown to learners. Content created in the CMS starts hidden.
+    visible: boolean('visible').notNull().default(false),
     createdAt: createdAt(),
   },
   (table) => [
@@ -155,6 +161,8 @@ export const studies = app.table(
       .notNull()
       .references(() => studyGroups.id),
     position: integer('position').notNull(),
+    // Shown to learners. Content created in the CMS starts hidden.
+    visible: boolean('visible').notNull().default(false),
     title: text('title').notNull(),
     description: text('description').notNull(),
     // Validate with the StudyPage schema from @libras/contracts before writing.
@@ -171,122 +179,7 @@ export const studies = app.table(
   ],
 );
 
-// CMS draft: the working copy operators edit. Same ids and columns as the published tables
-// above, which stay what the app reads until a publish. The hierarchy cascades.
-
-export const draftCourses = app.table(
-  'draft_courses',
-  {
-    id: text('id').primaryKey(),
-    title: text('title').notNull(),
-    position: integer('position').notNull(),
-    createdAt: createdAt(),
-  },
-  (table) => [
-    check('draft_courses_title_check', sql`char_length(${table.title}) between 1 and 80`),
-    check('draft_courses_position_check', sql`${table.position} > 0`),
-  ],
-);
-
-export const draftUnits = app.table(
-  'draft_units',
-  {
-    id: text('id').primaryKey(),
-    courseId: text('course_id')
-      .notNull()
-      .references(() => draftCourses.id, { onDelete: 'cascade' }),
-    title: text('title').notNull(),
-    position: integer('position').notNull(),
-    createdAt: createdAt(),
-  },
-  (table) => [
-    check('draft_units_title_check', sql`char_length(${table.title}) between 1 and 80`),
-    check('draft_units_position_check', sql`${table.position} > 0`),
-    index('draft_units_course_id_position_idx').on(table.courseId, table.position),
-  ],
-);
-
-export const draftLessons = app.table(
-  'draft_lessons',
-  {
-    id: text('id').primaryKey(),
-    unitId: text('unit_id')
-      .notNull()
-      .references(() => draftUnits.id, { onDelete: 'cascade' }),
-    title: text('title').notNull(),
-    position: integer('position').notNull(),
-    createdAt: createdAt(),
-  },
-  (table) => [
-    check('draft_lessons_title_check', sql`char_length(${table.title}) between 1 and 80`),
-    check('draft_lessons_position_check', sql`${table.position} > 0`),
-    index('draft_lessons_unit_id_position_idx').on(table.unitId, table.position),
-  ],
-);
-
-export const draftExercises = app.table(
-  'draft_exercises',
-  {
-    id: text('id').primaryKey(),
-    lessonId: text('lesson_id')
-      .notNull()
-      .references(() => draftLessons.id, { onDelete: 'cascade' }),
-    type: text('type').$type<Exercise['type']>().notNull(),
-    position: integer('position').notNull(),
-    // Validate with the Exercise schema from @libras/contracts before writing.
-    payload: jsonb('payload').$type<Exercise>().notNull(),
-    createdAt: createdAt(),
-  },
-  (table) => [
-    check('draft_exercises_position_check', sql`${table.position} > 0`),
-    check(
-      'draft_exercises_payload_matches_columns',
-      sql`${table.payload} ->> 'id' = ${table.id} and ${table.payload} ->> 'type' = ${table.type}`,
-    ),
-    index('draft_exercises_lesson_id_position_idx').on(table.lessonId, table.position),
-  ],
-);
-
-export const draftSigns = app.table(
-  'draft_signs',
-  {
-    id: text('id').primaryKey(),
-    label: text('label').notNull(),
-    imagePaths: text('image_paths').array().notNull(),
-    alt: text('alt').notNull(),
-    description: text('description'),
-    createdAt: createdAt(),
-  },
-  (table) => [
-    check('draft_signs_label_check', sql`char_length(${table.label}) between 1 and 40`),
-    check('draft_signs_image_paths_check', sql`cardinality(${table.imagePaths}) between 1 and 8`),
-    check('draft_signs_alt_check', sql`char_length(${table.alt}) between 1 and 200`),
-    check(
-      'draft_signs_description_check',
-      sql`${table.description} is null or char_length(${table.description}) between 1 and 500`,
-    ),
-  ],
-);
-
-export const draftExerciseSigns = app.table(
-  'draft_exercise_signs',
-  {
-    exerciseId: text('exercise_id')
-      .notNull()
-      .references(() => draftExercises.id, { onDelete: 'cascade' }),
-    signId: text('sign_id')
-      .notNull()
-      .references(() => draftSigns.id, { onDelete: 'restrict' }),
-    createdAt: createdAt(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.exerciseId, table.signId] }),
-    index('draft_exercise_signs_sign_id_idx').on(table.signId),
-  ],
-);
-
 // User
-
 export const profiles = app.table(
   'profiles',
   {
@@ -416,44 +309,5 @@ export const userAchievements = app.table(
       'user_achievements_achievement_id_check',
       sql`char_length(${table.achievementId}) between 1 and 60`,
     ),
-  ],
-);
-
-// No cascade, as in the published tables: a draft group with studies cannot be deleted.
-export const draftStudyGroups = app.table(
-  'draft_study_groups',
-  {
-    id: text('id').primaryKey(),
-    title: text('title').notNull(),
-    position: integer('position').notNull(),
-    createdAt: createdAt(),
-  },
-  (table) => [
-    check('draft_study_groups_title_check', sql`char_length(${table.title}) between 1 and 80`),
-    check('draft_study_groups_position_check', sql`${table.position} > 0`),
-  ],
-);
-
-export const draftStudies = app.table(
-  'draft_studies',
-  {
-    id: text('id').primaryKey(),
-    groupId: text('group_id')
-      .notNull()
-      .references(() => draftStudyGroups.id),
-    position: integer('position').notNull(),
-    title: text('title').notNull(),
-    description: text('description').notNull(),
-    // Validate with the StudyPage schema from @libras/contracts before writing.
-    pages: jsonb('pages').$type<StudyPage[]>().notNull(),
-    createdAt: createdAt(),
-  },
-  (table) => [
-    check('draft_studies_position_check', sql`${table.position} > 0`),
-    check(
-      'draft_studies_pages_check',
-      sql`jsonb_typeof(${table.pages}) = 'array' and jsonb_array_length(${table.pages}) > 0`,
-    ),
-    index('draft_studies_group_id_position_idx').on(table.groupId, table.position),
   ],
 );

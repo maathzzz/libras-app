@@ -4,9 +4,9 @@ import { z } from 'zod';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import {
-  draftExercises,
-  draftExerciseSigns,
-  draftLessons,
+  exercises,
+  exerciseSigns,
+  lessons,
 } from '../../../shared/infrastructure/db/schema';
 import {
   exerciseFields,
@@ -31,16 +31,16 @@ export class DrizzleDraftExerciseRepository implements DraftExerciseRepository {
 
   async listByLesson(lessonId: string): Promise<DraftLessonExercises | null> {
     const [lesson] = await this.db
-      .select({ id: draftLessons.id, title: draftLessons.title })
-      .from(draftLessons)
-      .where(eq(draftLessons.id, lessonId));
+      .select({ id: lessons.id, title: lessons.title })
+      .from(lessons)
+      .where(eq(lessons.id, lessonId));
     if (!lesson) return null;
 
     const rows = await this.db
-      .select({ payload: draftExercises.payload })
-      .from(draftExercises)
-      .where(eq(draftExercises.lessonId, lessonId))
-      .orderBy(asc(draftExercises.position), asc(draftExercises.id));
+      .select({ payload: exercises.payload })
+      .from(exercises)
+      .where(eq(exercises.lessonId, lessonId))
+      .orderBy(asc(exercises.position), asc(exercises.id));
     // Content outside the contract is a content error, as in the curriculum module.
     return { lesson, exercises: rows.map(({ payload }) => Exercise.parse(payload)) };
   }
@@ -49,19 +49,19 @@ export class DrizzleDraftExerciseRepository implements DraftExerciseRepository {
     return this.db.transaction(async (tx) => {
       // The position is computed in the same statement, after the last exercise.
       const inserted = await tx.execute(sql`
-        insert into app.draft_exercises (id, lesson_id, type, position, payload)
+        insert into app.exercises (id, lesson_id, type, position, payload)
         select ${exercise.id}, ${lessonId}, ${exercise.type}, next.position,
           ${JSON.stringify(exercise)}::jsonb
         from (
           select coalesce(max(position), 0) + 1 as position
-          from app.draft_exercises where lesson_id = ${lessonId}
+          from app.exercises where lesson_id = ${lessonId}
         ) as next
-        where exists (select 1 from app.draft_lessons where id = ${lessonId})
+        where exists (select 1 from app.lessons where id = ${lessonId})
         returning id
       `);
       if (IdRows.parse(inserted).length === 0) return false;
 
-      await tx.insert(draftExerciseSigns).values(signRows(exercise));
+      await tx.insert(exerciseSigns).values(signRows(exercise));
       return true;
     });
   }
@@ -69,29 +69,29 @@ export class DrizzleDraftExerciseRepository implements DraftExerciseRepository {
   async update(exercise: Exercise): Promise<boolean> {
     return this.db.transaction(async (tx) => {
       const updated = await tx
-        .update(draftExercises)
+        .update(exercises)
         .set({ type: exercise.type, payload: exercise })
-        .where(eq(draftExercises.id, exercise.id))
-        .returning({ id: draftExercises.id });
+        .where(eq(exercises.id, exercise.id))
+        .returning({ id: exercises.id });
       if (updated.length === 0) return false;
 
-      await tx.delete(draftExerciseSigns).where(eq(draftExerciseSigns.exerciseId, exercise.id));
-      await tx.insert(draftExerciseSigns).values(signRows(exercise));
+      await tx.delete(exerciseSigns).where(eq(exerciseSigns.exerciseId, exercise.id));
+      await tx.insert(exerciseSigns).values(signRows(exercise));
       return true;
     });
   }
 
   async delete(id: string): Promise<boolean> {
     const deleted = await this.db
-      .delete(draftExercises)
-      .where(eq(draftExercises.id, id))
-      .returning({ id: draftExercises.id });
+      .delete(exercises)
+      .where(eq(exercises.id, id))
+      .returning({ id: exercises.id });
     return deleted.length > 0;
   }
 
   async reorder(lessonId: string, ids: readonly string[]): Promise<void> {
     await this.db.execute(sql`
-      update app.draft_exercises as item
+      update app.exercises as item
       set position = ordered.position::integer
       from unnest(${textArray(ids)}) with ordinality as ordered (id, position)
       where item.id = ordered.id and item.lesson_id = ${lessonId}

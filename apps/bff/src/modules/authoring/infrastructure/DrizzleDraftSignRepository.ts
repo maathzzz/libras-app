@@ -4,10 +4,10 @@ import { and, asc, count, eq, inArray, notExists, sql, type SQL } from 'drizzle-
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import {
-  draftExercises,
-  draftExerciseSigns,
-  draftSigns,
-  draftStudies,
+  exercises,
+  exerciseSigns,
+  signs,
+  studies,
 } from '../../../shared/infrastructure/db/schema';
 import { withSign } from '../domain/DraftExercise';
 import { withSignInPages } from '../domain/DraftStudy';
@@ -24,7 +24,7 @@ const pagesShowing = (pages: SQL, signId: SQL | string) => sql`${pages} @> jsonb
 )`;
 
 const studiesShowing = (signId: SQL | string) =>
-  sql`select 1 from app.draft_studies as study where ${pagesShowing(sql`study.pages`, signId)}`;
+  sql`select 1 from app.studies as study where ${pagesShowing(sql`study.pages`, signId)}`;
 
 export class DrizzleDraftSignRepository implements DraftSignRepository {
   constructor(private readonly db: DbExecutor) {}
@@ -32,18 +32,18 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
   async list(): Promise<AdminSign[]> {
     const rows = await this.db
       .select({
-        id: draftSigns.id,
-        label: draftSigns.label,
-        imageUrls: draftSigns.imagePaths,
-        alt: draftSigns.alt,
-        description: draftSigns.description,
-        exerciseCount: count(draftExerciseSigns.exerciseId),
-        studyCount: sql<number>`(select count(*) from (${studiesShowing(sql`${draftSigns.id}`)}) as showing)::integer`,
+        id: signs.id,
+        label: signs.label,
+        imageUrls: signs.imagePaths,
+        alt: signs.alt,
+        description: signs.description,
+        exerciseCount: count(exerciseSigns.exerciseId),
+        studyCount: sql<number>`(select count(*) from (${studiesShowing(sql`${signs.id}`)}) as showing)::integer`,
       })
-      .from(draftSigns)
-      .leftJoin(draftExerciseSigns, eq(draftExerciseSigns.signId, draftSigns.id))
-      .groupBy(draftSigns.id)
-      .orderBy(asc(draftSigns.label), asc(draftSigns.id));
+      .from(signs)
+      .leftJoin(exerciseSigns, eq(exerciseSigns.signId, signs.id))
+      .groupBy(signs.id)
+      .orderBy(asc(signs.label), asc(signs.id));
     return rows;
   }
 
@@ -51,51 +51,51 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
     if (ids.length === 0) return [];
     return this.db
       .select({
-        id: draftSigns.id,
-        label: draftSigns.label,
-        imageUrls: draftSigns.imagePaths,
-        alt: draftSigns.alt,
-        description: draftSigns.description,
+        id: signs.id,
+        label: signs.label,
+        imageUrls: signs.imagePaths,
+        alt: signs.alt,
+        description: signs.description,
       })
-      .from(draftSigns)
-      .where(inArray(draftSigns.id, [...ids]));
+      .from(signs)
+      .where(inArray(signs.id, [...ids]));
   }
 
   async create({ id, label, imageUrls, alt, description }: DraftSign): Promise<void> {
-    await this.db.insert(draftSigns).values({ id, label, imagePaths: imageUrls, alt, description });
+    await this.db.insert(signs).values({ id, label, imagePaths: imageUrls, alt, description });
   }
 
   async update(sign: DraftSign): Promise<boolean> {
     const { id, label, imageUrls, alt, description } = sign;
     return this.db.transaction(async (tx) => {
       const rows = await tx
-        .update(draftSigns)
+        .update(signs)
         .set({ label, imagePaths: imageUrls, alt, description })
-        .where(eq(draftSigns.id, id))
-        .returning({ id: draftSigns.id });
+        .where(eq(signs.id, id))
+        .returning({ id: signs.id });
       if (rows.length === 0) return false;
 
       // Exercises carry their own copy of the sign, as the app receives it.
       const showing = await tx
-        .select({ id: draftExercises.id, payload: draftExercises.payload })
-        .from(draftExercises)
-        .innerJoin(draftExerciseSigns, eq(draftExerciseSigns.exerciseId, draftExercises.id))
-        .where(eq(draftExerciseSigns.signId, id));
+        .select({ id: exercises.id, payload: exercises.payload })
+        .from(exercises)
+        .innerJoin(exerciseSigns, eq(exerciseSigns.exerciseId, exercises.id))
+        .where(eq(exerciseSigns.signId, id));
       for (const exercise of showing) {
         await tx
-          .update(draftExercises)
+          .update(exercises)
           .set({ payload: withSign(Exercise.parse(exercise.payload), sign) })
-          .where(eq(draftExercises.id, exercise.id));
+          .where(eq(exercises.id, exercise.id));
       }
 
       // So do the sign blocks of studies.
-      const studies = await tx
-        .select({ id: draftStudies.id, pages: draftStudies.pages })
-        .from(draftStudies)
-        .where(pagesShowing(sql`${draftStudies.pages}`, id));
-      for (const study of studies) {
+      const showingStudies = await tx
+        .select({ id: studies.id, pages: studies.pages })
+        .from(studies)
+        .where(pagesShowing(sql`${studies.pages}`, id));
+      for (const study of showingStudies) {
         const pages = withSignInPages(z.array(StudyPage).parse(study.pages), sign);
-        await tx.update(draftStudies).set({ pages }).where(eq(draftStudies.id, study.id));
+        await tx.update(studies).set({ pages }).where(eq(studies.id, study.id));
       }
       return true;
     });
@@ -107,18 +107,18 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
   async delete(id: string): Promise<DeleteSignOutcome> {
     const usage = this.db
       .select({ one: sql`1` })
-      .from(draftExerciseSigns)
-      .where(eq(draftExerciseSigns.signId, id));
+      .from(exerciseSigns)
+      .where(eq(exerciseSigns.signId, id));
     const deleted = await this.db
-      .delete(draftSigns)
-      .where(and(eq(draftSigns.id, id), notExists(usage), sql`not exists (${studiesShowing(id)})`))
-      .returning({ id: draftSigns.id });
+      .delete(signs)
+      .where(and(eq(signs.id, id), notExists(usage), sql`not exists (${studiesShowing(id)})`))
+      .returning({ id: signs.id });
     if (deleted.length > 0) return 'deleted';
 
     const [existing] = await this.db
-      .select({ id: draftSigns.id })
-      .from(draftSigns)
-      .where(eq(draftSigns.id, id));
+      .select({ id: signs.id })
+      .from(signs)
+      .where(eq(signs.id, id));
     return existing ? 'inUse' : 'notFound';
   }
 }

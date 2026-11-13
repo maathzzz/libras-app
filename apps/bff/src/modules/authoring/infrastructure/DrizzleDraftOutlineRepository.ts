@@ -4,10 +4,10 @@ import { z } from 'zod';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import {
-  draftCourses,
-  draftExercises,
-  draftLessons,
-  draftUnits,
+  courses,
+  exercises,
+  lessons,
+  units,
 } from '../../../shared/infrastructure/db/schema';
 import type { DraftOutlineRepository, NewOutlineItem, OutlineLevel } from '../domain/DraftOutline';
 
@@ -19,14 +19,14 @@ interface LevelTables {
 }
 
 const levels: Record<OutlineLevel, LevelTables> = {
-  trail: { table: sql`app.draft_courses`, parent: null },
+  trail: { table: sql`app.courses`, parent: null },
   unit: {
-    table: sql`app.draft_units`,
-    parent: { table: sql`app.draft_courses`, column: sql`course_id` },
+    table: sql`app.units`,
+    parent: { table: sql`app.courses`, column: sql`course_id` },
   },
   lesson: {
-    table: sql`app.draft_lessons`,
-    parent: { table: sql`app.draft_units`, column: sql`unit_id` },
+    table: sql`app.lessons`,
+    parent: { table: sql`app.units`, column: sql`unit_id` },
   },
 };
 
@@ -50,39 +50,39 @@ export class DrizzleDraftOutlineRepository implements DraftOutlineRepository {
   constructor(private readonly db: DbExecutor) {}
 
   async listTrails(): Promise<AdminTrail[]> {
-    const trails = await this.db
-      .select({ id: draftCourses.id, title: draftCourses.title })
-      .from(draftCourses)
-      .orderBy(asc(draftCourses.position), asc(draftCourses.id));
-    const units = await this.db
-      .select({ id: draftUnits.id, trailId: draftUnits.courseId, title: draftUnits.title })
-      .from(draftUnits)
-      .orderBy(asc(draftUnits.position), asc(draftUnits.id));
-    const lessons = await this.db
+    const trailRows = await this.db
+      .select({ id: courses.id, title: courses.title })
+      .from(courses)
+      .orderBy(asc(courses.position), asc(courses.id));
+    const unitRows = await this.db
+      .select({ id: units.id, trailId: units.courseId, title: units.title })
+      .from(units)
+      .orderBy(asc(units.position), asc(units.id));
+    const lessonRows = await this.db
       .select({
-        id: draftLessons.id,
-        unitId: draftLessons.unitId,
-        title: draftLessons.title,
-        exerciseCount: count(draftExercises.id),
+        id: lessons.id,
+        unitId: lessons.unitId,
+        title: lessons.title,
+        exerciseCount: count(exercises.id),
       })
-      .from(draftLessons)
-      .leftJoin(draftExercises, eq(draftExercises.lessonId, draftLessons.id))
-      .groupBy(draftLessons.id)
-      .orderBy(asc(draftLessons.position), asc(draftLessons.id));
+      .from(lessons)
+      .leftJoin(exercises, eq(exercises.lessonId, lessons.id))
+      .groupBy(lessons.id)
+      .orderBy(asc(lessons.position), asc(lessons.id));
 
     // Each query is already in order, so pushing keeps every list in order.
     const unitsById = new Map<string, AdminUnit>();
     const unitsOfTrail = new Map<string, AdminUnit[]>();
-    for (const { id, trailId, title } of units) {
+    for (const { id, trailId, title } of unitRows) {
       const unit: AdminUnit = { id, title, lessons: [] };
       unitsById.set(id, unit);
       unitsOfTrail.set(trailId, [...(unitsOfTrail.get(trailId) ?? []), unit]);
     }
-    for (const { id, unitId, title, exerciseCount } of lessons) {
+    for (const { id, unitId, title, exerciseCount } of lessonRows) {
       unitsById.get(unitId)?.lessons.push({ id, title, exerciseCount });
     }
 
-    return trails.map(({ id, title }) => ({ id, title, units: unitsOfTrail.get(id) ?? [] }));
+    return trailRows.map(({ id, title }) => ({ id, title, units: unitsOfTrail.get(id) ?? [] }));
   }
 
   async listIds(level: OutlineLevel, parentId: string | null): Promise<string[] | null> {
