@@ -12,6 +12,8 @@ interface OutlineRowProps {
   title: string;
   heading?: 'h2' | 'h3' | 'p';
   meta?: ReactNode;
+  // Shown before the other actions (e.g. the link to the exercises of a lesson).
+  extraAction?: ReactNode;
   isFirst: boolean;
   isLast: boolean;
   // What else disappears from the draft with this item, for the confirmation.
@@ -29,6 +31,7 @@ export function OutlineRow({
   title,
   heading = 'p',
   meta,
+  extraAction,
   isFirst,
   isLast,
   deleteWarning,
@@ -68,6 +71,7 @@ export function OutlineRow({
         {meta && <span className="text-[13px] text-text-muted">{meta}</span>}
       </div>
       <div className="flex items-center gap-1">
+        {extraAction}
         <Button
           variant="ghost"
           size="sm"

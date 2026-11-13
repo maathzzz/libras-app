@@ -13,6 +13,7 @@ src/
     layout/            # Menu lateral e área de conteúdo
     home/
     curriculum/        # Trilhas, módulos e lições do rascunho (/trilhas)
+    exercises/         # Exercícios de uma lição (/trilhas/licoes/[lessonId])
     signs/             # Sinais com upload de imagens (/sinais, /sinais/novo, /sinais/[signId])
   shared/
     api/client.ts      # Cliente HTTP do BFF, valida as respostas com contracts
@@ -38,6 +39,7 @@ src/
 - Depois de qualquer alteração a tela recarrega os dados do BFF (também quando falha: o erro costuma significar que a tela estava desatualizada). Sem cache nem atualização otimista.
 - Reordenar envia a lista inteira na nova ordem; `INVALID_ORDER` (outra pessoa mudou a lista) vira aviso e recarga.
 - Imagens de sinais vão direto do navegador para o Storage (`uploadSignImage`): o BFF só cria a URL assinada. Tipos e tamanho são checados antes do envio (`imageProblem`), mas quem garante é o bucket.
+- Um exercício é montado escolhendo sinais já cadastrados (busca pelo nome), marcando a resposta certa e a ordem das opções. O CMS não guarda imagens no exercício: o BFF copia as do sinal. Opções com o mesmo nome bloqueiam o salvamento.
 - Exclusões pedem confirmação dizendo o que sai junto e lembrando que os alunos só deixam de ver depois de publicar.
 
 ## Decisões do produto

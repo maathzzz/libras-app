@@ -1,12 +1,13 @@
 'use client';
 
 import type { AdminTrail, AdminUnit } from '@libras/contracts';
+import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
 import { plural } from '@/shared/plural';
-import { Button, Card, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
+import { Button, buttonClassName, Card, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
 
 import {
   createItem,
@@ -97,6 +98,15 @@ function UnitBlock({
                 noun="a lição"
                 title={lesson.title}
                 meta={plural(lesson.exerciseCount, 'exercício', 'exercícios')}
+                extraAction={
+                  <Link
+                    href={`/trilhas/licoes/${encodeURIComponent(lesson.id)}`}
+                    aria-label={`Exercícios de “${lesson.title}”`}
+                    className={buttonClassName('secondary', 'sm')}
+                  >
+                    Exercícios
+                  </Link>
+                }
                 isFirst={lessonIds[0] === lesson.id}
                 isLast={lessonIds.at(-1) === lesson.id}
                 deleteWarning={
