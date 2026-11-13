@@ -185,5 +185,5 @@ Nocturne: `sm` 4, `md` 8, `lg` 14. O protótipo usa cantos mais arredondados:
 
 ## Fora do alcance do `StyleSheet` (pendente)
 
-* **Gradientes** (card de destaque `accent → #14bfba`, avatar, ilustrações, barra de meta `#58cc02 → #8ad83f`): por enquanto viram cor sólida. Decidir depois se vale adicionar `expo-linear-gradient`.
+* **Gradientes**: o card de destaque (`accent → #14bfba`, "Continuar onde parou" da home) usa `experimental_backgroundImage` do React Native, sem dependência nova, com os valores em `gradients` (`tokens.ts`). Avatar, ilustrações e barra de meta (`#58cc02 → #8ad83f`) continuam em cor sólida.
 * **Ícones**: o design usa SVG inline. O app usa `expo-symbols` (SF Symbols no iOS, Material Symbols no Android) pelo componente `Icon`.

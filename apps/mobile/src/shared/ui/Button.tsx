@@ -15,7 +15,9 @@ import {
 import { AppText } from './AppText';
 
 // `danger` is the outlined "sign out" button; `dangerSolid` is the filled one of a wrong-answer verdict.
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'dangerSolid' | 'ghost';
+// `inverse` is the white button over a colored or gradient card.
+export type ButtonVariant =
+  'primary' | 'secondary' | 'inverse' | 'danger' | 'dangerSolid' | 'ghost';
 
 type ButtonProps = {
   label: string;
@@ -49,6 +51,13 @@ const appearances: Record<ButtonVariant | 'disabled', Appearance> = {
       ...pressedOffset(depth.md),
     },
     text: 'buttonSmall',
+    textColor: 'accent',
+  },
+  inverse: {
+    container: { height: sizes.buttonLg, backgroundColor: colors.surface },
+    rest: raised(colors.accentSoftEdge, depth.lg),
+    pressed: { ...raised(colors.accentSoftEdge, depth.pressed), ...pressedOffset(depth.lg) },
+    text: 'button',
     textColor: 'accent',
   },
   danger: {

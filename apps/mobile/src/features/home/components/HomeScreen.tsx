@@ -1,6 +1,6 @@
 import type { HomeResponse } from '@libras/contracts';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,13 +9,17 @@ import { AppText, GameHeader, LoadError } from '@/shared/ui';
 
 import { useHomeStore } from '../store/homeStore';
 import { HomeStats } from './HomeStats';
-import { findNextLesson, hasStartedTrail, unitsLegend } from './homeView';
+import { findNextLesson, hasStartedTrail } from './homeView';
 import { ModuleRoad } from './ModuleRoad';
 import { NextLessonCard } from './NextLessonCard';
 import { StreakCard } from './StreakCard';
-import { TrailSegments } from './TrailSegments';
 
-export function HomeScreen() {
+type HomeScreenProps = {
+  /** "Olá, nome", at the left of the streak and XP. */
+  greeting: ReactNode;
+};
+
+export function HomeScreen({ greeting }: HomeScreenProps) {
   const status = useHomeStore((state) => state.status);
   const home = useHomeStore((state) => state.home);
   const errorReason = useHomeStore((state) => state.errorReason);
@@ -31,7 +35,7 @@ export function HomeScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       {home ? (
-        <HomeContent home={home} refreshing={refreshing} onRefresh={refresh} />
+        <HomeContent home={home} greeting={greeting} refreshing={refreshing} onRefresh={refresh} />
       ) : status === 'error' && errorReason ? (
         <View style={styles.centered}>
           <LoadError
@@ -51,6 +55,7 @@ export function HomeScreen() {
 
 type HomeContentProps = {
   home: HomeResponse;
+  greeting: ReactNode;
   refreshing: boolean;
   onRefresh: () => void;
 };
@@ -64,30 +69,18 @@ function openModule(unitId: string) {
   router.push({ pathname: '/module/[unitId]', params: { unitId } });
 }
 
-// Same header as the module map, with the trail's progress, over the plain app background.
-function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
+// The greeting with the streak and XP stay fixed at the top; the trail's title and the
+// lesson to do now open the content below.
+function HomeContent({ home, greeting, refreshing, onRefresh }: HomeContentProps) {
   const { trail } = home;
   const next = findNextLesson(trail);
 
   return (
     <>
       <GameHeader>
-        <View style={styles.titleRow}>
-          <View style={styles.title}>
-            <AppText variant="kicker" color="textMuted">
-              {`Trilha ${trail.position} de ${trail.totalTrails}`}
-            </AppText>
-            <AppText variant="headingStrong" accessibilityRole="header" numberOfLines={2}>
-              {trail.title}
-            </AppText>
-          </View>
+        <View style={styles.headerRow}>
+          <View style={styles.greeting}>{greeting}</View>
           <HomeStats streak={home.streak} totalXp={home.totalXp} />
-        </View>
-        <View style={styles.segments}>
-          <TrailSegments trail={trail} />
-        </View>
-        <View style={styles.legend}>
-          <AppText variant="caption">{unitsLegend(trail)}</AppText>
         </View>
       </GameHeader>
       <View style={styles.world}>
@@ -101,13 +94,23 @@ function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
             />
           }
         >
-          {next && (
-            <NextLessonCard
-              next={next}
-              isFirstLesson={!hasStartedTrail(trail)}
-              onStart={() => openLesson(next.lesson.id)}
-            />
-          )}
+          <View style={styles.intro}>
+            <View style={styles.title}>
+              <AppText variant="kicker" color="textSubtle">
+                {`Trilha ${trail.position} de ${trail.totalTrails}`}
+              </AppText>
+              <AppText variant="title" accessibilityRole="header" numberOfLines={2}>
+                {trail.title}
+              </AppText>
+            </View>
+            {next && (
+              <NextLessonCard
+                next={next}
+                isFirstLesson={!hasStartedTrail(trail)}
+                onStart={() => openLesson(next.lesson.id)}
+              />
+            )}
+          </View>
           <StreakCard streak={home.streak} />
           <ModuleRoad trail={trail} onOpenModule={openModule} />
         </ScrollView>
@@ -121,20 +124,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
   },
-  titleRow: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
   },
-  title: {
+  greeting: {
     flex: 1,
-    gap: spacing['3xs'],
   },
-  segments: {
-    marginTop: spacing.lg,
+  intro: {
+    gap: spacing['2xl'],
   },
-  legend: {
-    marginTop: spacing.xs,
+  title: {
+    gap: spacing['2xs'],
   },
   world: {
     flex: 1,

@@ -5,6 +5,7 @@ import { useProfileStore } from './store/profileStore';
 export { DailyGoalOptions } from './components/DailyGoalOptions';
 export { DailyGoalScreen } from './components/DailyGoalScreen';
 export { DeleteAccountLink } from './components/DeleteAccountLink';
+export { ProfileGreeting } from './components/ProfileGreeting';
 export { ProfileScreen } from './components/ProfileScreen';
 export { dailyGoalLabel } from './content/dailyGoals';
 export { useProfileSession } from './hooks/useProfileSession';

@@ -59,6 +59,9 @@ export const colors = {
   textMuted: palette.slate600,
   textSubtle: palette.slate500,
   onColor: palette.white,
+  // Secondary text and decoration over a colored or gradient background.
+  onColorMuted: 'rgba(255, 255, 255, 0.85)',
+  onColorFaint: 'rgba(255, 255, 255, 0.14)',
 
   // Brand accent: links, selected states, XP.
   accent: palette.blue,
@@ -107,6 +110,13 @@ export const colors = {
 } as const;
 
 export type ColorToken = keyof typeof colors;
+
+// The design's highlight gradient (accent → teal), drawn with `experimental_backgroundImage`.
+// `highlightEdge` is the same gradient, darker, for the raised edge under it.
+export const gradients = {
+  highlight: `linear-gradient(135deg, ${palette.blue}, ${palette.teal})`,
+  highlightEdge: `linear-gradient(135deg, ${palette.blueDark}, ${palette.tealDark})`,
+} as const;
 
 // The module map ("trilha de aventura", docs/design/trilha-modulo-spec.md): the road, the
 // lesson nodes and the countryside drawn around them. Only that screen uses these.
