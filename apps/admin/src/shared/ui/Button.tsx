@@ -17,6 +17,14 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: keyof typeof sizes;
 }
 
+// Also for links that look like buttons.
+export function buttonClassName(
+  variant: keyof typeof variants,
+  size: keyof typeof sizes = 'md',
+): string {
+  return `inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md font-bold no-underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-default disabled:opacity-50 ${sizes[size]} ${variants[variant]}`;
+}
+
 export function Button({
   variant,
   size = 'md',
@@ -25,10 +33,6 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
-      type={type}
-      className={`inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md font-bold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-default disabled:opacity-50 ${sizes[size]} ${variants[variant]} ${className}`}
-      {...props}
-    />
+    <button type={type} className={`${buttonClassName(variant, size)} ${className}`} {...props} />
   );
 }

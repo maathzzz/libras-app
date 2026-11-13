@@ -7,17 +7,11 @@ import { useState } from 'react';
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
 import { plural } from '@/shared/plural';
+import { normalized } from '@/shared/search';
 import { Button, DraftNotice, ErrorBanner, inputClassName, LoadingText } from '@/shared/ui';
 
 import { getSigns } from './signsApi';
 import { SignThumb } from './SignThumb';
-
-// Accents and case do not matter when searching: "cao" finds "Cão".
-const normalized = (text: string) =>
-  text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase();
 
 function SignCard({ sign }: { sign: AdminSign }) {
   const [first] = sign.imageUrls;
