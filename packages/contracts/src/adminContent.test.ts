@@ -4,6 +4,7 @@ import {
   ReorderRequest,
   SaveExerciseRequest,
   SaveSignRequest,
+  SaveStudyRequest,
   SaveTitleRequest,
 } from './adminContent';
 
@@ -48,5 +49,35 @@ describe('exercise contracts', () => {
 
   it('refuses a type the CMS does not edit', () => {
     expect(SaveExerciseRequest.safeParse({ ...exercise, type: 'handshape' }).success).toBe(false);
+  });
+});
+
+describe('study contracts', () => {
+  const study = {
+    groupId: 'iniciante',
+    title: 'Cores',
+    description: 'As cores mais usadas.',
+    pages: [
+      {
+        title: 'Primárias',
+        blocks: [
+          { type: 'heading', text: 'Vermelho' },
+          { type: 'sign', signId: 'sign-vermelho' },
+        ],
+      },
+    ],
+  };
+
+  it('accepts new pages without an id and sign blocks that name a sign', () => {
+    expect(SaveStudyRequest.safeParse(study).success).toBe(true);
+  });
+
+  it('refuses an empty study or page and a repeated page id', () => {
+    expect(SaveStudyRequest.safeParse({ ...study, pages: [] }).success).toBe(false);
+    expect(
+      SaveStudyRequest.safeParse({ ...study, pages: [{ title: 'Vazia', blocks: [] }] }).success,
+    ).toBe(false);
+    const page = { id: 'p1', title: 'P', blocks: [{ type: 'text', body: 'Oi' }] };
+    expect(SaveStudyRequest.safeParse({ ...study, pages: [page, page] }).success).toBe(false);
   });
 });
