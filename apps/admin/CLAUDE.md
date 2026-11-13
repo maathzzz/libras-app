@@ -15,6 +15,7 @@ src/
     curriculum/        # Trilhas, módulos e lições do rascunho (/trilhas)
     exercises/         # Exercícios de uma lição (/trilhas/licoes/[lessonId])
     signs/             # Sinais com upload de imagens (/sinais, /sinais/novo, /sinais/[signId])
+    studies/           # Grupos de estudo e estudos (/estudos, /estudos/[studyId], /estudos/grupos/[groupId]/novo)
   shared/
     api/client.ts      # Cliente HTTP do BFF, valida as respostas com contracts
     api/supabase.ts    # Supabase só para login
@@ -40,6 +41,7 @@ src/
 - Reordenar envia a lista inteira na nova ordem; `INVALID_ORDER` (outra pessoa mudou a lista) vira aviso e recarga.
 - Imagens de sinais vão direto do navegador para o Storage (`uploadSignImage`): o BFF só cria a URL assinada. Tipos e tamanho são checados antes do envio (`imageProblem`), mas quem garante é o bucket.
 - Um exercício é montado escolhendo sinais já cadastrados (busca pelo nome), marcando a resposta certa e a ordem das opções. O CMS não guarda imagens no exercício: o BFF copia as do sinal. Opções com o mesmo nome bloqueiam o salvamento.
+- Um estudo é editado inteiro e salvo de uma vez: dados, páginas e blocos (subtítulo, texto, sinal e dica). O bloco de sinal só escolhe um sinal cadastrado; o BFF copia nome, imagens e descrição. Bloco de sinal sem `signId` (de antes do CMS) mostra o nome antigo e pede para escolher o sinal de novo.
 - Exclusões pedem confirmação dizendo o que sai junto e lembrando que os alunos só deixam de ver depois de publicar.
 
 ## Decisões do produto

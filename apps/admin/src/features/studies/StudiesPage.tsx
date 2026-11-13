@@ -1,6 +1,7 @@
 'use client';
 
 import type { AdminStudyGroup, AdminStudySummary } from '@libras/contracts';
+import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
 import { AddItem } from '@/features/curriculum/AddItem';
@@ -9,7 +10,7 @@ import { OutlineRow } from '@/features/curriculum/OutlineRow';
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
 import { plural } from '@/shared/plural';
-import { Button, Card, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
+import { Button, buttonClassName, Card, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
 
 import {
   createStudyGroup,
@@ -44,7 +45,12 @@ function StudyRow({
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-surface-subtle px-3 py-2">
       <div className="grid min-w-0 gap-0.5">
-        <span className="truncate font-semibold">{study.title}</span>
+        <Link
+          href={`/estudos/${encodeURIComponent(study.id)}`}
+          className="truncate font-semibold text-accent-dark underline-offset-2 hover:underline"
+        >
+          {study.title}
+        </Link>
         <span className="text-[13px] text-text-muted">
           {plural(study.pageCount, 'página', 'páginas')} · {study.description}
         </span>
@@ -117,6 +123,12 @@ function GroupCard({
           ))}
         </ol>
       )}
+      <Link
+        href={`/estudos/grupos/${encodeURIComponent(group.id)}/novo`}
+        className={`${buttonClassName('ghost', 'sm')} justify-self-start`}
+      >
+        + Novo estudo
+      </Link>
     </Card>
   );
 }
