@@ -84,7 +84,7 @@ src/
 ## Conquistas
 
 * Tudo fica em `features/achievements/`. O app não conhece as regras: só mostra o que o BFF manda.
-* O perfil mostra `AchievementsSection` (todas as conquistas, desbloqueadas coloridas com a data e bloqueadas em cinza com a barra de progresso). Ícone e cor saem da `category` (`categoryLooks`).
+* O perfil mostra `AchievementsSection` (todas as conquistas, desbloqueadas coloridas com a data e bloqueadas em cinza com a barra de progresso). Cada conquista é uma `Medal` (`shared/ui`); ícone e tom saem da `category` (`categoryLooks`), e a bloqueada usa o tom `locked`, como uma lição bloqueada.
 * A tela de lição concluída mostra `UnlockedAchievementsCard` quando `achievementsUnlocked` não está vazio. As conquistas entram no anúncio do resultado para leitores de tela, e o háptico toca uma vez para streak e conquistas juntos.
 * Quando o BFF confirma uma conclusão (na hora ou pela fila), as conquistas são recarregadas junto com a home. Conquistas de uma lição enviada pela fila aparecem só no perfil. Ao sair da conta, a lista é apagada.
 
@@ -93,6 +93,17 @@ src/
 * Segue `docs/design/trilha-modulo-spec.md` (protótipo em `trilha-modulo-referencia.html`): as lições ficam ligadas por uma estrada sobre um cenário de campo (`ModuleScreen` → `TrailMap`, em `features/home`).
 * A geometria é toda calculada em `components/trailMapLayout.ts` (posição dos nós, path da estrada, altura, rolagem inicial), com testes. O cenário é dado em `trailSceneryLayout.ts` e se repete a cada 4 lições, então qualquer quantidade de lições funciona. Estrada e cenário são desenhados com `react-native-svg`; as cores ficam em `trailColors` (`shared/theme`).
 * O balão "Começar" mostra o título da lição atual. Lições concluídas podem ser refeitas; bloqueadas são anunciadas como desabilitadas. O pulso do nó e a flutuação do balão desligam com "reduzir movimento" (`useReducedMotion`).
+
+## Telas no estilo da trilha
+
+Trilhas (home), Perfil e Lição concluída seguem a linguagem visual da tela de módulo. As peças ficam em `shared/ui`:
+
+* `GameHeader` / `GameFooter`: barra branca fixa com a sombra do cabeçalho do módulo (no topo; embaixo, com o botão principal).
+* `Countryside`: fundo fixo de céu e campo (nuvens, colinas, árvores), atrás do conteúdo rolável. Decorativo, oculto para leitores de tela. As formas avulsas (`Tree`, `Cloud`, `Hill`, `Lake`, `Flower`, `SkyGradient`) ficam em `SceneryShapes.tsx` e também desenham o cenário do mapa e a faixa do perfil.
+* `Medal`: o nó redondo com borda sólida (tons `success`, `accent`, `warning`, `info`, `locked`), usado em cartões, estatísticas e conquistas. `PulseRing` é o anel pulsante do que fazer agora.
+* `MapLabel` (etiqueta branca de seção, como "LIÇÃO 3") e `SegmentBar` (barra com uma parte por lição ou módulo).
+
+Na home, os módulos ficam numa estrada vertical (`ModuleRoad` → `ModuleStation`), verde até o módulo em andamento. As alturas das linhas variam com o texto, então os centros dos nós são medidos na tela e a estrada sai de `moduleRoadLayout.ts` (com testes).
 
 ## Imagens
 

@@ -6,15 +6,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AchievementsSection } from '@/features/achievements';
 import {
-  completedUnits,
   daysLabel,
   formatXp,
   reloadHome,
   trailLessonCounts,
+  TrailSegments,
+  unitsLegend,
   useHome,
 } from '@/features/home';
 import { colors, spacing } from '@/shared/theme';
-import { AppText, Card, IconButton, ProgressBar, ScreenTitle } from '@/shared/ui';
+import { AppText, Card, GameHeader, IconButton, MapLabel, Pill } from '@/shared/ui';
 
 import { startLevelLabels } from '../content/startLevels';
 import { useProfileStore } from '../store/profileStore';
@@ -62,27 +63,30 @@ function Stats({ home }: { home: HomeResponse | null }) {
   );
 }
 
+// The trail's bar of the home, one part per module.
 function TrailProgress({ home }: { home: HomeResponse }) {
   const { trail } = home;
   const lessons = trailLessonCounts(trail);
+  const percent = `${Math.round((lessons.completed / lessons.total) * 100)}%`;
 
   return (
     <Card>
       <View style={styles.progressHeader}>
-        <AppText variant="bodyStrong">Progresso na trilha</AppText>
-        <AppText variant="caption">
-          {`${completedUnits(trail)} de ${trail.units.length} módulos`}
-        </AppText>
+        <View style={styles.progressTitle}>
+          <AppText variant="statLabel" color="textMuted">
+            {`Trilha atual · ${unitsLegend(trail)}`}
+          </AppText>
+          <AppText variant="subtitle" numberOfLines={2}>
+            {trail.title}
+          </AppText>
+        </View>
+        <Pill label={percent} accessibilityLabel={`${percent} da trilha concluído`} />
       </View>
-      <ProgressBar
-        value={lessons.completed / lessons.total}
-        size="sm"
-        accessibilityLabel={`Progresso na trilha ${trail.title}`}
-      />
+      <TrailSegments trail={trail} />
       <AppText variant="caption">
         {lessons.completed === 0
           ? 'Nenhuma lição concluída ainda.'
-          : `${lessons.completed} de ${lessons.total} lições de ${trail.title} concluídas.`}
+          : `${lessons.completed} de ${lessons.total} lições concluídas.`}
       </AppText>
     </Card>
   );
@@ -105,24 +109,27 @@ export function ProfileScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <GameHeader>
         <View style={styles.titleRow}>
-          <ScreenTitle title="Perfil" />
+          <AppText variant="headingStrong" accessibilityRole="header">
+            Perfil
+          </AppText>
           <IconButton
             icon="settings"
             accessibilityLabel="Ajustes"
             size="lg"
+            look="raised"
             onPress={() => router.push('/settings')}
           />
         </View>
+      </GameHeader>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {profile && (
           <IdentityCard name={profile.name} level={startLevelLabels[profile.startLevel]} />
         )}
 
         <View style={styles.section}>
-          <AppText variant="kicker" accessibilityRole="header">
-            Estatísticas
-          </AppText>
+          <MapLabel text="Estatísticas" header />
           <Stats home={home} />
           {home && <TrailProgress home={home} />}
         </View>
@@ -136,13 +143,16 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: colors.surface,
+  },
+  scroll: {
     backgroundColor: colors.background,
   },
   content: {
-    gap: spacing['4xl'],
-    paddingTop: spacing['3xs'],
+    gap: spacing['5xl'],
+    paddingTop: spacing['4xl'],
     paddingHorizontal: spacing['2xl'],
-    paddingBottom: spacing['5xl'],
+    paddingBottom: spacing['6xl'],
   },
   titleRow: {
     flexDirection: 'row',
@@ -153,7 +163,7 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   stats: {
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   statsRow: {
     flexDirection: 'row',
@@ -161,7 +171,11 @@ const styles = StyleSheet.create({
   },
   progressHeader: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  progressTitle: {
+    flex: 1,
+    gap: spacing['3xs'],
   },
 });

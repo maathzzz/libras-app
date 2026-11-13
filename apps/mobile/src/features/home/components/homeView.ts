@@ -50,6 +50,13 @@ export function completedUnits(trail: Trail): number {
   return trail.units.filter((unit) => unitStatus(unit) === 'completed').length;
 }
 
+// "1 de 3 módulos concluídos", under the trail's progress bar.
+export function unitsLegend(trail: Trail): string {
+  const total = trail.units.length;
+  const done = total === 1 ? 'módulo concluído' : 'módulos concluídos';
+  return `${completedUnits(trail)} de ${total} ${done}`;
+}
+
 export function trailLessonCounts(trail: Trail): { completed: number; total: number } {
   return trail.units.reduce(
     (counts, unit) => ({

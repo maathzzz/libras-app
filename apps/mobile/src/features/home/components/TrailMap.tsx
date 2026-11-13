@@ -1,13 +1,15 @@
 import type { TrailLesson } from '@libras/contracts';
 import { Fragment, useRef } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg from 'react-native-svg';
 
 import { trailColors } from '@/shared/theme';
+import { SkyGradient } from '@/shared/ui';
 
 import { TrailBalloon } from './TrailBalloon';
-import { initialScrollY, mapLayout, trailMap, type TrailMapLayout } from './trailMapLayout';
+import { initialScrollY, mapLayout } from './trailMapLayout';
 import { TrailNode, TrailNodeLabel } from './TrailNode';
+import { TrailRoad } from './TrailRoad';
 import { TrailScenery } from './TrailScenery';
 
 type TrailMapProps = {
@@ -64,9 +66,9 @@ export function TrailMap({ lessons, onOpenLesson }: TrailMapProps) {
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
-          <MapBackground layout={layout} />
+          <SkyGradient id="trail-sky" width={width} height={layout.height} skyHeight={skyHeight} />
           <TrailScenery width={width} tiles={layout.sceneryTiles} />
-          <Road layout={layout} />
+          <TrailRoad road={layout.road} done={layout.roadDone} />
         </Svg>
         {lessons.map((lesson, index) => {
           const center = layout.points[index];
@@ -92,69 +94,6 @@ export function TrailMap({ lessons, onOpenLesson }: TrailMapProps) {
         )}
       </View>
     </ScrollView>
-  );
-}
-
-function MapBackground({ layout }: { layout: TrailMapLayout }) {
-  return (
-    <>
-      <Defs>
-        <LinearGradient
-          id="trail-sky"
-          x1="0"
-          y1="0"
-          x2="0"
-          y2={layout.height}
-          gradientUnits="userSpaceOnUse"
-        >
-          <Stop offset={0} stopColor={trailColors.skyTop} />
-          <Stop offset={Math.min(1, skyHeight / layout.height)} stopColor={trailColors.meadow} />
-          <Stop offset={1} stopColor={trailColors.meadowEnd} />
-        </LinearGradient>
-      </Defs>
-      <Rect x={0} y={0} width={layout.width} height={layout.height} fill="url(#trail-sky)" />
-    </>
-  );
-}
-
-// Edge, bed and dotted middle line along the whole road, then the green stretch already
-// walked on top.
-function Road({ layout }: { layout: TrailMapLayout }) {
-  const { road } = trailMap;
-  return (
-    <>
-      <RoadLayer d={layout.road} color={trailColors.roadEdge} width={road.edge} />
-      <RoadLayer d={layout.road} color={trailColors.roadBed} width={road.bed} />
-      <RoadLayer
-        d={layout.road}
-        color={trailColors.roadDots}
-        width={road.dots}
-        dash={road.dotsDash}
-      />
-      {layout.roadDone !== '' && (
-        <RoadLayer d={layout.roadDone} color={trailColors.roadDone} width={road.done} />
-      )}
-    </>
-  );
-}
-
-type RoadLayerProps = {
-  d: string;
-  color: string;
-  width: number;
-  dash?: readonly number[];
-};
-
-function RoadLayer({ d, color, width, dash }: RoadLayerProps) {
-  return (
-    <Path
-      d={d}
-      stroke={color}
-      strokeWidth={width}
-      strokeLinecap="round"
-      {...(dash && { strokeDasharray: dash })}
-      fill="none"
-    />
   );
 }
 

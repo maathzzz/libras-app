@@ -1,39 +1,18 @@
 import type { AchievementCategory } from '@libras/contracts';
-import { StyleSheet, View } from 'react-native';
 
-import { colors, sizes } from '@/shared/theme';
-import { Icon } from '@/shared/ui';
+import { Medal, type MedalSize } from '@/shared/ui';
 
 import { categoryLooks } from './achievementView';
 
 type AchievementIconProps = {
   category: AchievementCategory;
   locked?: boolean;
+  size?: MedalSize;
 };
 
-// Round badge with the category's icon, gray while locked. Decorative: the row around it
-// carries the accessible label.
-export function AchievementIcon({ category, locked = false }: AchievementIconProps) {
+// The category's medal, in the style of the module map's nodes: colored once unlocked, gray
+// like a locked lesson until then. Decorative: the row around it carries the accessible label.
+export function AchievementIcon({ category, locked = false, size = 'md' }: AchievementIconProps) {
   const look = categoryLooks[category];
-
-  return (
-    <View
-      style={[
-        styles.circle,
-        { backgroundColor: locked ? colors.lockedSurface : colors[look.background] },
-      ]}
-    >
-      <Icon name={look.icon} size="lg" color={locked ? 'locked' : look.color} />
-    </View>
-  );
+  return <Medal icon={look.icon} tone={locked ? 'locked' : look.tone} size={size} />;
 }
-
-const styles = StyleSheet.create({
-  circle: {
-    width: sizes.achievementBadge,
-    height: sizes.achievementBadge,
-    borderRadius: sizes.achievementBadge / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

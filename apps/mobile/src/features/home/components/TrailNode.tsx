@@ -1,19 +1,9 @@
 import type { LessonStatus, TrailLesson } from '@libras/contracts';
-import { useEffect } from 'react';
 import { Pressable, StyleSheet, View, type BoxShadowValue, type ViewStyle } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
 
 import {
   colors,
   depth,
-  duration,
   pressedOffset,
   radius,
   raised,
@@ -22,7 +12,7 @@ import {
   trailColors,
   type ColorToken,
 } from '@/shared/theme';
-import { AppText, Icon, type IconName } from '@/shared/ui';
+import { AppText, Icon, PulseRing, type IconName } from '@/shared/ui';
 
 import { lessonAccessibilityLabel } from './homeView';
 import { trailMap, type Point } from './trailMapLayout';
@@ -118,29 +108,6 @@ export function TrailNode({ lesson, number, center, onPress }: TrailNodeProps) {
   );
 }
 
-// A ring that grows out of the node and fades, over and over. Off when the system asks
-// for reduced motion.
-function PulseRing() {
-  const reduceMotion = useReducedMotion();
-  const progress = useSharedValue(0);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    progress.value = withRepeat(
-      withTiming(1, { duration: duration.trailRing, easing: Easing.out(Easing.ease) }),
-      -1,
-    );
-  }, [progress, reduceMotion]);
-
-  const ringStyle = useAnimatedStyle(() => ({
-    opacity: 1 - progress.value,
-    transform: [{ scale: 0.9 + 0.4 * progress.value }],
-  }));
-
-  if (reduceMotion) return null;
-  return <Animated.View pointerEvents="none" style={[styles.ring, ringStyle]} />;
-}
-
 type TrailNodeLabelProps = {
   lesson: TrailLesson;
   number: number;
@@ -189,16 +156,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.pill,
-  },
-  ring: {
-    position: 'absolute',
-    top: -sizes.trailNodeRingGap,
-    right: -sizes.trailNodeRingGap,
-    bottom: -sizes.trailNodeRingGap,
-    left: -sizes.trailNodeRingGap,
-    borderRadius: radius.pill,
-    borderWidth: sizes.trailNodeRing,
-    borderColor: trailColors.currentRing,
   },
   labelSlot: {
     position: 'absolute',

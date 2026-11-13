@@ -5,14 +5,15 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/shared/theme';
-import { LoadError, ScreenTitle } from '@/shared/ui';
+import { AppText, Countryside, GameHeader, LoadError } from '@/shared/ui';
 
 import { useHomeStore } from '../store/homeStore';
 import { HomeStats } from './HomeStats';
-import { findNextLesson, hasStartedTrail } from './homeView';
-import { ModuleList } from './ModuleList';
+import { findNextLesson, hasStartedTrail, unitsLegend } from './homeView';
+import { ModuleRoad } from './ModuleRoad';
 import { NextLessonCard } from './NextLessonCard';
 import { StreakCard } from './StreakCard';
+import { TrailSegments } from './TrailSegments';
 
 export function HomeScreen() {
   const status = useHomeStore((state) => state.status);
@@ -63,49 +64,93 @@ function openModule(unitId: string) {
   router.push({ pathname: '/module/[unitId]', params: { unitId } });
 }
 
+// Same frame as the module map: a white header with the trail's progress, and the
+// countryside under the cards.
 function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
   const { trail } = home;
   const next = findNextLesson(trail);
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
-      }
-    >
-      <HomeStats streak={home.streak} totalXp={home.totalXp} />
-      <ScreenTitle
-        kicker={`Trilha ${trail.position} de ${trail.totalTrails}`}
-        title={trail.title}
-      />
-      {next && (
-        <NextLessonCard
-          next={next}
-          isFirstLesson={!hasStartedTrail(trail)}
-          onStart={() => openLesson(next.lesson.id)}
-        />
-      )}
-      <StreakCard streak={home.streak} />
-      <ModuleList trail={trail} onOpenModule={openModule} />
-    </ScrollView>
+    <>
+      <GameHeader>
+        <View style={styles.titleRow}>
+          <View style={styles.title}>
+            <AppText variant="kicker" color="textMuted">
+              {`Trilha ${trail.position} de ${trail.totalTrails}`}
+            </AppText>
+            <AppText variant="headingStrong" accessibilityRole="header" numberOfLines={2}>
+              {trail.title}
+            </AppText>
+          </View>
+          <HomeStats streak={home.streak} totalXp={home.totalXp} />
+        </View>
+        <View style={styles.segments}>
+          <TrailSegments trail={trail} />
+        </View>
+        <View style={styles.legend}>
+          <AppText variant="caption">{unitsLegend(trail)}</AppText>
+        </View>
+      </GameHeader>
+      <View style={styles.world}>
+        <Countryside id="home-sky" />
+        <ScrollView
+          contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.accent}
+            />
+          }
+        >
+          {next && (
+            <NextLessonCard
+              next={next}
+              isFirstLesson={!hasStartedTrail(trail)}
+              onStart={() => openLesson(next.lesson.id)}
+            />
+          )}
+          <StreakCard streak={home.streak} />
+          <ModuleRoad trail={trail} onOpenModule={openModule} />
+        </ScrollView>
+      </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+  title: {
+    flex: 1,
+    gap: spacing['3xs'],
+  },
+  segments: {
+    marginTop: spacing.lg,
+  },
+  legend: {
+    marginTop: spacing.xs,
+  },
+  world: {
+    flex: 1,
   },
   content: {
-    gap: spacing['3xl'],
-    paddingTop: spacing['3xs'],
+    gap: spacing['4xl'],
+    paddingTop: spacing['5xl'],
     paddingHorizontal: spacing['2xl'],
-    paddingBottom: spacing['5xl'],
+    paddingBottom: spacing['6xl'],
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.background,
   },
 });

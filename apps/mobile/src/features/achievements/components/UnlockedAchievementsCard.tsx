@@ -11,14 +11,15 @@ type UnlockedAchievementsCardProps = {
   achievements: readonly Achievement[];
 };
 
-// Shown on the lesson result when the BFF reports new achievements. Screen readers hear
-// them in the result announcement, so the card itself is not announced again.
+// Shown on the lesson result when the BFF reports new achievements, each with its medal.
+// Screen readers hear them in the result announcement, so the card itself is not announced
+// again.
 export function UnlockedAchievementsCard({ achievements }: UnlockedAchievementsCardProps) {
   if (achievements.length === 0) return null;
 
   return (
     <Card tone="accent">
-      <AppText variant="bodyStrong" color="accentDark" accessibilityRole="header">
+      <AppText variant="callout" color="accentDark" accessibilityRole="header">
         {unlockedTitle(achievements)}
       </AppText>
       {achievements.map(({ id, title, description, category }) => (
@@ -30,7 +31,7 @@ export function UnlockedAchievementsCard({ achievements }: UnlockedAchievementsC
         >
           <AchievementIcon category={category} />
           <View style={styles.text}>
-            <AppText variant="bodyStrong">{title}</AppText>
+            <AppText variant="subtitle">{title}</AppText>
             <AppText variant="caption">{description}</AppText>
           </View>
         </View>
@@ -44,7 +45,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
-    paddingTop: spacing['2xs'],
+    paddingVertical: spacing['2xs'],
   },
   text: {
     flex: 1,

@@ -5,19 +5,18 @@ import type {
   AchievementStatus,
 } from '@libras/contracts';
 
-import type { ColorToken } from '@/shared/theme';
-import type { IconName } from '@/shared/ui';
+import type { IconName, MedalTone } from '@/shared/ui';
 
-type CategoryLook = { icon: IconName; background: ColorToken; color: ColorToken };
+type CategoryLook = { icon: IconName; tone: Exclude<MedalTone, 'locked'> };
 
-// The badge of an unlocked achievement; a locked one is drawn gray with the same icon.
+// The medal of an unlocked achievement; a locked one is drawn gray with the same icon.
 export const categoryLooks: Record<AchievementCategory, CategoryLook> = {
-  lessons: { icon: 'hand', background: 'successSoft', color: 'successDark' },
-  perfect: { icon: 'star', background: 'infoSoft', color: 'infoDark' },
-  review: { icon: 'review', background: 'accentSoft', color: 'accent' },
-  xp: { icon: 'xp', background: 'accentSoft', color: 'accent' },
-  streak: { icon: 'streak', background: 'warningSoft', color: 'warning' },
-  modules: { icon: 'trail', background: 'successSoft', color: 'successDark' },
+  lessons: { icon: 'hand', tone: 'success' },
+  perfect: { icon: 'star', tone: 'info' },
+  review: { icon: 'review', tone: 'accent' },
+  xp: { icon: 'xp', tone: 'accent' },
+  streak: { icon: 'streak', tone: 'warning' },
+  modules: { icon: 'trail', tone: 'success' },
 };
 
 const numberFormat = new Intl.NumberFormat('pt-BR');

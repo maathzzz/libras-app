@@ -1,8 +1,9 @@
 import { useHomeStore } from './store/homeStore';
 
 export { HomeScreen } from './components/HomeScreen';
-export { completedUnits, daysLabel, formatXp, trailLessonCounts } from './components/homeView';
+export { daysLabel, formatXp, trailLessonCounts, unitsLegend } from './components/homeView';
 export { ModuleScreen } from './components/ModuleScreen';
+export { TrailSegments } from './components/TrailSegments';
 
 // For other features: a finished lesson changes the streak and XP shown on the home.
 export const reloadHome = () => useHomeStore.getState().load();

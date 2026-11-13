@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing, trailColors } from '@/shared/theme';
-import { AppText, Button, IconButton, LoadError, Pill } from '@/shared/ui';
+import { colors, spacing } from '@/shared/theme';
+import { AppText, Button, GameHeader, IconButton, LoadError, Pill } from '@/shared/ui';
 
 import { useHomeStore } from '../store/homeStore';
 import { completedLessons, lessonsLabel, percentLabel, unitProgress } from './homeView';
@@ -79,7 +79,7 @@ function ModuleContent({ home, unitId }: ModuleContentProps) {
 
   return (
     <>
-      <View style={styles.header}>
+      <GameHeader>
         <View style={styles.titleRow}>
           <IconButton
             icon="back"
@@ -108,7 +108,7 @@ function ModuleContent({ home, unitId }: ModuleContentProps) {
             {`${completedLessons(unit)} de ${lessonsLabel(unit.lessons.length)} concluídas`}
           </AppText>
         </View>
-      </View>
+      </GameHeader>
       <TrailMap lessons={unit.lessons} onOpenLesson={openLesson} />
     </>
   );
@@ -118,18 +118,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.surface,
-  },
-  // Drawn over the top of the map, so its shadow falls on the scenery.
-  header: {
-    zIndex: 1,
-    paddingTop: spacing['3xs'],
-    paddingHorizontal: spacing['2xl'],
-    paddingBottom: spacing.lg,
-    backgroundColor: colors.surface,
-    boxShadow: [
-      { offsetX: 0, offsetY: 1, blurRadius: 0, color: colors.border },
-      { offsetX: 0, offsetY: spacing.xs, blurRadius: spacing.xl, color: trailColors.headerShadow },
-    ],
   },
   titleRow: {
     flexDirection: 'row',

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { colors, spacing } from '@/shared/theme';
-import { AppText, Card } from '@/shared/ui';
+import { AppText, Card, MapLabel, Pill } from '@/shared/ui';
 
 import { useAchievementsStore } from '../store/achievementsStore';
 import { AchievementRow } from './AchievementRow';
@@ -20,16 +20,19 @@ export function AchievementsSection() {
     void load();
   }, [load]);
 
+  const unlocked = achievements ? unlockedCount(achievements) : 0;
+
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <AppText variant="kicker" accessibilityRole="header">
-          Conquistas
-        </AppText>
+        <MapLabel text="Conquistas" header />
         {achievements && (
-          <AppText variant="caption">
-            {`${unlockedCount(achievements)} de ${achievements.length}`}
-          </AppText>
+          <Pill
+            label={`${unlocked} de ${achievements.length}`}
+            icon="trophy"
+            tone="warning"
+            accessibilityLabel={`${unlocked} de ${achievements.length} conquistas desbloqueadas`}
+          />
         )}
       </View>
       {achievements ? (
@@ -55,13 +58,13 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
   divided: {
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
     paddingTop: spacing.lg,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.borderSubtle,
+    borderTopColor: colors.border,
   },
 });

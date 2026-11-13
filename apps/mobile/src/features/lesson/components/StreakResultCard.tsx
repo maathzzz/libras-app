@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { WeekStreak } from '@/features/streak';
 import { spacing } from '@/shared/theme';
-import { AppText, Card, Pill } from '@/shared/ui';
+import { AppText, Card, Medal, Pill } from '@/shared/ui';
 
 import { streakResultCopy } from './completionView';
 
@@ -19,14 +19,17 @@ export function StreakResultCard({ result }: StreakResultCardProps) {
   return (
     <Card tone={result.streakIncreased ? 'warning' : 'default'}>
       <View style={styles.header}>
-        <AppText variant="bodyStrong" color={result.streakIncreased ? 'warningDark' : 'text'}>
-          {copy.title}
-        </AppText>
+        <Medal icon="streak" tone="warning" size="md" />
+        <View style={styles.text}>
+          <AppText variant="subtitle" color={result.streakIncreased ? 'warningDark' : 'text'}>
+            {copy.title}
+          </AppText>
+          {copy.hint && <AppText variant="caption">{copy.hint}</AppText>}
+        </View>
         {result.streakIncreased && (
           <Pill label="+1 hoje" icon="streak" tone="warning" accessibilityLabel="Mais 1 dia hoje" />
         )}
       </View>
-      {copy.hint && <AppText variant="caption">{copy.hint}</AppText>}
       <View style={styles.week}>
         <WeekStreak days={result.streak.current} />
       </View>
@@ -38,10 +41,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
+    gap: spacing.lg,
+  },
+  text: {
+    flex: 1,
+    gap: spacing['3xs'],
   },
   week: {
-    paddingTop: spacing['2xs'],
+    paddingTop: spacing.xs,
   },
 });

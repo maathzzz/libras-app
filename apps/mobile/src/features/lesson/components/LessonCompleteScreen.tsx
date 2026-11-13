@@ -10,9 +10,12 @@ import {
   View,
 } from 'react-native';
 import Animated, {
+  Easing,
   FadeInDown,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
+  withRepeat,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
@@ -21,8 +24,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { UnlockedAchievementsCard } from '@/features/achievements';
 import { ReminderOffer } from '@/features/reminder';
 import { haptics } from '@/shared/lib/haptics';
-import { colors, duration, spacing } from '@/shared/theme';
-import { AppText, Button, Card, StatTile } from '@/shared/ui';
+import { colors, depth, duration, radius, spacing, trailColors } from '@/shared/theme';
+import { AppText, Button, Card, Countryside, GameFooter, MapLabel, StatTile } from '@/shared/ui';
 
 import { useCompletionStore, type LessonSummary } from '../store/completionStore';
 import {
@@ -70,49 +73,52 @@ export function LessonCompleteScreen() {
   }, [status]);
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <RewardBurst />
-        <View style={styles.headline}>
-          <AppText variant="kicker" color="successDark" align="center" accessibilityRole="header">
-            Lição concluída
-          </AppText>
-          {status === 'submitting' && <Saving />}
-          {status === 'completed' && result && <EarnedXp xp={result.xpEarned} />}
-        </View>
-        {summary && (
-          <Animated.View entering={enter(1)} style={styles.stats}>
-            <SummaryTiles summary={summary} result={status === 'completed' ? result : null} />
-          </Animated.View>
-        )}
-        {status === 'completed' && result && (
-          <Animated.View entering={enter(2)}>
-            <StreakResultCard result={result} />
-          </Animated.View>
-        )}
-        {status === 'completed' && result && result.achievementsUnlocked.length > 0 && (
-          <Animated.View entering={enter(3)}>
-            <UnlockedAchievementsCard achievements={result.achievementsUnlocked} />
-          </Animated.View>
-        )}
-        {status === 'pending' && <Notice tone="warning" message={pendingMessage} />}
-        {status === 'failed' && <Notice tone="danger" message={failedMessage} />}
-        {status !== 'failed' && (
-          <Animated.View entering={enter(4)}>
-            <ReminderOffer />
-          </Animated.View>
-        )}
-      </ScrollView>
-      <View style={styles.footer}>
-        <Button label="Voltar à trilha" onPress={leave} />
+    <SafeAreaView edges={['top']} style={styles.root}>
+      <View style={styles.world}>
+        <Countryside id="lesson-complete-sky" />
+        <ScrollView contentContainerStyle={styles.content}>
+          <RewardBurst />
+          <View style={styles.headline}>
+            <MapLabel text="Lição concluída" color="successText" header centered />
+            {status === 'submitting' && <Saving />}
+            {status === 'completed' && result && <EarnedXp xp={result.xpEarned} />}
+          </View>
+          {summary && (
+            <Animated.View entering={enter(1)} style={styles.stats}>
+              <SummaryTiles summary={summary} result={status === 'completed' ? result : null} />
+            </Animated.View>
+          )}
+          {status === 'completed' && result && (
+            <Animated.View entering={enter(2)}>
+              <StreakResultCard result={result} />
+            </Animated.View>
+          )}
+          {status === 'completed' && result && result.achievementsUnlocked.length > 0 && (
+            <Animated.View entering={enter(3)}>
+              <UnlockedAchievementsCard achievements={result.achievementsUnlocked} />
+            </Animated.View>
+          )}
+          {status === 'pending' && <Notice tone="warning" message={pendingMessage} />}
+          {status === 'failed' && <Notice tone="danger" message={failedMessage} />}
+          {status !== 'failed' && (
+            <Animated.View entering={enter(4)}>
+              <ReminderOffer />
+            </Animated.View>
+          )}
+        </ScrollView>
       </View>
+      <SafeAreaView edges={['bottom']} style={styles.footerArea}>
+        <GameFooter>
+          <Button label="Voltar à trilha" onPress={leave} />
+        </GameFooter>
+      </SafeAreaView>
     </SafeAreaView>
   );
 }
 
 function Saving() {
   return (
-    <View style={styles.saving}>
+    <View style={[styles.balloon, styles.saving]}>
       <ActivityIndicator color={colors.accent} accessibilityLabel="Salvando sua lição" />
       <AppText variant="caption" align="center">
         Salvando sua lição…
@@ -121,14 +127,39 @@ function Saving() {
   );
 }
 
+// The XP floats in a white balloon, like the module map's "Começar". The float stops when
+// the system asks for reduced motion.
 function EarnedXp({ xp }: { xp: number }) {
+  const reduceMotion = useReducedMotion();
+  const lift = useSharedValue(0);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    lift.set(
+      withRepeat(
+        withTiming(-depth.lg, {
+          duration: duration.balloonFloat,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        -1,
+        true,
+      ),
+    );
+  }, [lift, reduceMotion]);
+
+  const floatStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lift.get() }] }));
+
   return (
-    <View accessible accessibilityLabel={`Mais ${xp} pontos de experiência`}>
-      <AppText variant="display" align="center">{`+${xp}`}</AppText>
-      <AppText variant="bodyStrong" color="textMuted" align="center">
+    <Animated.View
+      accessible
+      accessibilityLabel={`Mais ${xp} pontos de experiência`}
+      style={[styles.balloon, floatStyle]}
+    >
+      <AppText variant="display" color="accent" align="center">{`+${xp}`}</AppText>
+      <AppText variant="callout" color="accentDark" align="center">
         pontos de experiência
       </AppText>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -143,12 +174,14 @@ function SummaryTiles({ summary, result }: SummaryTilesProps) {
     <>
       <StatTile
         tone="success"
+        icon="check"
         label="Acertos"
         value={`${summary.correct}/${summary.total}`}
         accessibilityLabel={`${summary.correct} acertos de ${summary.total}`}
       />
       <StatTile
         tone="accent"
+        icon="goal"
         label="Tempo"
         value={formatDuration(summary.durationMs)}
         accessibilityLabel={`Tempo: ${durationAccessibilityLabel(summary.durationMs)}`}
@@ -182,6 +215,7 @@ function StreakDaysTile({ result }: { result: CompleteLessonResponse }) {
     <Animated.View style={[styles.tile, pulse]}>
       <StatTile
         tone="warning"
+        icon="streak"
         label={days === 1 ? 'Dia' : 'Dias'}
         value={String(days)}
         accessibilityLabel={`Sequência de ${days} ${days === 1 ? 'dia' : 'dias'}`}
@@ -209,23 +243,45 @@ function Notice({ tone, message }: NoticeProps) {
 }
 
 const styles = StyleSheet.create({
+  // The top inset shows the sky of the countryside below it.
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: trailColors.skyTop,
+  },
+  world: {
+    flex: 1,
   },
   content: {
-    gap: spacing.xl,
+    gap: spacing['2xl'],
     paddingTop: spacing['5xl'],
     paddingHorizontal: spacing['3xl'],
     paddingBottom: spacing['5xl'],
   },
   headline: {
-    gap: spacing.xs,
+    alignItems: 'center',
+    gap: spacing.xl,
+  },
+  balloon: {
+    alignSelf: 'center',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing['6xl'],
+    borderRadius: radius['3xl'],
+    backgroundColor: colors.surface,
+    boxShadow: [
+      { offsetX: 0, offsetY: depth.sm, blurRadius: 0, color: colors.accentSoftEdge },
+      {
+        offsetX: 0,
+        offsetY: spacing.sm,
+        blurRadius: spacing['3xl'],
+        color: trailColors.balloonShadow,
+      },
+    ],
   },
   saving: {
     alignItems: 'center',
     gap: spacing.sm,
-    paddingVertical: spacing.xl,
+    paddingTop: spacing.lg,
   },
   stats: {
     flexDirection: 'row',
@@ -234,9 +290,7 @@ const styles = StyleSheet.create({
   tile: {
     flex: 1,
   },
-  footer: {
-    paddingHorizontal: spacing['3xl'],
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
+  footerArea: {
+    backgroundColor: colors.surface,
   },
 });

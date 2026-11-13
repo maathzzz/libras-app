@@ -16,6 +16,7 @@ import {
   unitKicker,
   unitProgress,
   unitStatus,
+  unitsLegend,
 } from './homeView';
 
 const newUserTrail: Trail = {
@@ -126,5 +127,13 @@ describe('homeView', () => {
     expect(completedUnits(mockTrail)).toBe(1);
     expect(trailLessonCounts(mockTrail)).toEqual({ completed: 4, total: 11 });
     expect(percentLabel(unitProgress(greetings))).toBe('25%');
+  });
+
+  it('counts the finished modules under the trail bar', () => {
+    const [first] = mockTrail.units;
+    if (!first) throw new Error('expected a unit');
+
+    expect(unitsLegend(mockTrail)).toBe(`1 de ${mockTrail.units.length} módulos concluídos`);
+    expect(unitsLegend({ ...mockTrail, units: [first] })).toBe('1 de 1 módulo concluído');
   });
 });

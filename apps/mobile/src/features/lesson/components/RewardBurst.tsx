@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 
 import { colors, duration, radius, sizes, type ColorToken } from '@/shared/theme';
-import { Icon } from '@/shared/ui';
+import { Medal } from '@/shared/ui';
 
 type Piece = {
   /** Center of the piece as a fraction of the confetti area, read off the design's SVG. */
@@ -40,11 +40,16 @@ function pieceStyle({ x, y, color, angle }: Piece) {
   };
 }
 
-// The design's "Explosão" reward: a check on a soft green circle with confetti around it.
+// The design's "Explosão" reward: a completed node of the module map, big, with confetti
+// around it.
 // Purely decorative; the screen's text says the lesson is done.
 export function RewardBurst() {
   return (
-    <View style={styles.area} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View
+      style={styles.area}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       {pieces.map((piece, index) => (
         <Animated.View
           key={index}
@@ -52,8 +57,8 @@ export function RewardBurst() {
           style={[styles.piece, pieceStyle(piece)]}
         />
       ))}
-      <Animated.View entering={ZoomIn.springify()} style={styles.circle}>
-        <Icon name="check" size="xl" color="success" />
+      <Animated.View entering={ZoomIn.springify()}>
+        <Medal icon="check" tone="success" size="xl" />
       </Animated.View>
     </View>
   );
@@ -70,13 +75,5 @@ const styles = StyleSheet.create({
   piece: {
     position: 'absolute',
     borderRadius: radius.pill,
-  },
-  circle: {
-    width: sizes.rewardBurst,
-    height: sizes.rewardBurst,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.pill,
-    backgroundColor: colors.successSoft,
   },
 });

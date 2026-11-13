@@ -235,6 +235,11 @@ export const sizes = {
   trailBalloonTail: 14,
   // Lesson name under a node: it may be wider than the node, never wider than this.
   trailLabelMaxWidth: 150,
+  // Round "medals" in the style of the trail nodes: stat tiles, achievements, home cards.
+  medalSm: 40,
+  medalMd: 48,
+  // Rail of the home's module road: the module nodes sit on it, centered.
+  moduleRail: 72,
   verdictIcon: 34,
   // Lesson reward: the soft circle behind the check and the area the confetti spreads over.
   rewardBurst: 92,
@@ -249,16 +254,12 @@ export const sizes = {
   signFrameMax: 200,
   // A letter or number opened from the alphabet grid.
   handSignFrame: 140,
-  // Round icon of an achievement in the profile and on the lesson result.
-  achievementBadge: 44,
   // Initials of the learner on the settings profile card.
   avatar: 46,
-  // Picture of the learner on the profile screen and the band behind it.
+  // Picture of the learner on the profile screen and the countryside band behind it.
   profileAvatar: 104,
   profileAvatarRing: 4,
-  profileBanner: 64,
-  // Icon box at the left of a module card on the home.
-  moduleIcon: 48,
+  profileBanner: 104,
   switchWidth: 46,
   switchHeight: 27,
   switchThumb: 21,

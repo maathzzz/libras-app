@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { colors, depth, radius, raised, spacing, type ColorToken } from '@/shared/theme';
-import { AppText, Icon, type IconName } from '@/shared/ui';
+import { AppText, Medal, type IconName } from '@/shared/ui';
 
 export type ProfileStatTone = 'accent' | 'warning' | 'success';
 
@@ -12,31 +12,14 @@ type ProfileStatProps = {
   tone: ProfileStatTone;
 };
 
-const tones: Record<
-  ProfileStatTone,
-  { background: string; edge: string; icon: ColorToken; text: ColorToken }
-> = {
-  accent: {
-    background: colors.accentSoft,
-    edge: colors.accentSoftEdge,
-    icon: 'accent',
-    text: 'accent',
-  },
-  warning: {
-    background: colors.warningSoft,
-    edge: colors.warningSoftEdge,
-    icon: 'warning',
-    text: 'warningDark',
-  },
-  success: {
-    background: colors.successSoft,
-    edge: colors.successSoftEdge,
-    icon: 'successDark',
-    text: 'successDark',
-  },
+const tones: Record<ProfileStatTone, { edge: string; text: ColorToken }> = {
+  accent: { edge: colors.accentSoftEdge, text: 'accentDark' },
+  warning: { edge: colors.warningSoftEdge, text: 'warningDark' },
+  success: { edge: colors.successSoftEdge, text: 'successText' },
 };
 
-// Unlike the centered StatTile, the label with its icon sits above the number.
+// A round medal beside the number and its label, on a white tile with the tone's chunky
+// edge. Unlike the centered StatTile, it fits two per row with long labels.
 export function ProfileStat({ label, value, icon, tone }: ProfileStatProps) {
   const look = tones[tone];
 
@@ -44,17 +27,17 @@ export function ProfileStat({ label, value, icon, tone }: ProfileStatProps) {
     <View
       accessible
       accessibilityLabel={`${label}: ${value}`}
-      style={[styles.tile, { backgroundColor: look.background }, raised(look.edge, depth.sm)]}
+      style={[styles.tile, raised(look.edge, depth.md, look.edge)]}
     >
-      <View style={styles.label}>
-        <Icon name={icon} size="sm" color={look.icon} />
+      <Medal icon={icon} tone={tone} size="sm" />
+      <View style={styles.text}>
+        <AppText variant="subtitle" numberOfLines={1}>
+          {value}
+        </AppText>
         <AppText variant="statLabel" color={look.text} numberOfLines={1}>
           {label}
         </AppText>
       </View>
-      <AppText variant="heading" color={look.text} numberOfLines={1}>
-        {value}
-      </AppText>
     </View>
   );
 }
@@ -62,14 +45,15 @@ export function ProfileStat({ label, value, icon, tone }: ProfileStatProps) {
 const styles = StyleSheet.create({
   tile: {
     flex: 1,
-    gap: spacing.xs,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radius.xl,
-  },
-  label: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+  },
+  text: {
+    flex: 1,
+    gap: spacing['3xs'],
   },
 });
