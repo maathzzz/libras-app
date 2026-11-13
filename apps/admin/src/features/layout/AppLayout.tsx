@@ -18,7 +18,7 @@ const navItems: readonly NavItem[] = [
   { label: 'Início', href: '/' },
   { label: 'Trilhas e lições', href: '/trilhas' },
   { label: 'Sinais', href: '/sinais' },
-  { label: 'Estudos' },
+  { label: 'Estudos', href: '/estudos' },
   { label: 'Publicar' },
   { label: 'Operadores' },
 ];

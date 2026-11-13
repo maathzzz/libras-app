@@ -18,40 +18,12 @@ import {
   reorderItems,
   type OutlineList,
 } from './curriculumApi';
+import { AddItem } from './AddItem';
 import { OutlineRow } from './OutlineRow';
-import { TitleForm } from './TitleForm';
 
 // Runs one change against the BFF. The outline is always reloaded afterwards, also on
 // failure: an error usually means the screen is out of date.
 type Run = (change: () => Promise<unknown>) => Promise<void>;
-
-function AddItem({ label, onAdd }: { label: string; onAdd: (title: string) => Promise<void> }) {
-  const [adding, setAdding] = useState(false);
-
-  if (!adding) {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="justify-self-start"
-        onClick={() => setAdding(true)}
-      >
-        + {label}
-      </Button>
-    );
-  }
-  return (
-    <TitleForm
-      label={label}
-      submitLabel="Adicionar"
-      onSubmit={async (title) => {
-        await onAdd(title);
-        setAdding(false);
-      }}
-      onCancel={() => setAdding(false)}
-    />
-  );
-}
 
 function UnitBlock({
   unit,

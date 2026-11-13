@@ -4,6 +4,9 @@ const byCode: Record<string, string> = {
   AMBIGUOUS_OPTIONS: 'Duas opções têm o mesmo nome. Escolha sinais com nomes diferentes.',
   UNKNOWN_SIGN: 'Um dos sinais escolhidos não existe mais. Carregamos a versão atual.',
   INVALID_ORDER: 'A lista mudou enquanto você editava. Carregamos a versão atual; tente de novo.',
+  STUDY_GROUP_NOT_EMPTY:
+    'Este grupo ainda tem estudos. Mova ou exclua os estudos antes de excluí-lo.',
+  UNKNOWN_STUDY_GROUP: 'O grupo escolhido não existe mais. Carregamos a versão atual.',
   SIGN_IN_USE: 'Este sinal aparece em exercícios ou estudos e não pode ser excluído.',
   VALIDATION_ERROR: 'Algum campo está inválido. Confira os dados e tente de novo.',
 };
