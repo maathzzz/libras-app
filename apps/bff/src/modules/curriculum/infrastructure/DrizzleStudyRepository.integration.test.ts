@@ -30,12 +30,19 @@ const page = (id: string): StudyPage => ({
 
 async function insertStudy(
   tx: DbExecutor,
-  { id, groupId, position, pages }: { id: string; groupId: string; position: number; pages: unknown },
+  {
+    id,
+    groupId,
+    position,
+    pages,
+    visible = true,
+  }: { id: string; groupId: string; position: number; pages: unknown; visible?: boolean },
 ) {
   await tx.insert(studies).values({
     id,
     groupId,
     position,
+    visible,
     title: `Estudo ${id}`,
     description: 'Descrição do estudo.',
     // Typed as StudyPage[], but a test may store a malformed value on purpose.
@@ -162,6 +169,34 @@ describe('app.study_groups', () => {
       );
 
       await expect(deleting).rejects.toThrow();
+    }),
+  );
+});
+
+describe('DrizzleStudyRepository visibility', () => {
+  it(
+    'leaves hidden studies out of the list and of the reads',
+    inRollback(async (tx) => {
+      await moveExistingStudyGroupsBack(tx);
+      await insertStudyGroup(tx, 'it-visibility-group', 1);
+      await insertStudy(tx, {
+        id: 'it-shown-study',
+        groupId: 'it-visibility-group',
+        position: 1,
+        pages: [page('p1')],
+      });
+      await insertStudy(tx, {
+        id: 'it-hidden-study',
+        groupId: 'it-visibility-group',
+        position: 2,
+        pages: [page('p1')],
+        visible: false,
+      });
+      const repository = new DrizzleStudyRepository(tx);
+
+      const [group] = await repository.listByGroup();
+      expect(group?.studies.map((study) => study.id)).toEqual(['it-shown-study']);
+      expect(await repository.findById('it-hidden-study')).toBeNull();
     }),
   );
 });

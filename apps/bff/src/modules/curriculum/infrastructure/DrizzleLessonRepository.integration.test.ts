@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 
 import {
+  insertCourse,
   insertExercise,
+  insertLesson,
   insertLessonFixture,
+  insertUnit,
   signToWordExercise,
 } from '../../../shared/infrastructure/db/testing/fixtures';
 import { useTestDatabase } from '../../../shared/infrastructure/db/testing/testDatabase';
@@ -60,6 +63,51 @@ describe('DrizzleLessonRepository.findById', () => {
       await insertExercise(tx, { lessonId, position: 1, payload });
 
       await expect(new DrizzleLessonRepository(tx).findById(lessonId)).rejects.toThrow(ZodError);
+    }),
+  );
+
+  it(
+    'returns null for a lesson without exercises',
+    inRollback(async (tx) => {
+      const lessonId = await insertLessonFixture(tx, 'empty');
+
+      expect(await new DrizzleLessonRepository(tx).findById(lessonId)).toBeNull();
+    }),
+  );
+
+  it(
+    'returns null for a hidden lesson and for a lesson inside a hidden unit or trail',
+    inRollback(async (tx) => {
+      await insertCourse(tx, 'it-hidden-course', 1000, false);
+      await insertUnit(tx, {
+        id: 'it-in-hidden-course',
+        courseId: 'it-hidden-course',
+        position: 1,
+      });
+      await insertCourse(tx, 'it-shown-course');
+      await insertUnit(tx, { id: 'it-shown-unit', courseId: 'it-shown-course', position: 1 });
+      await insertUnit(tx, {
+        id: 'it-hidden-unit',
+        courseId: 'it-shown-course',
+        position: 2,
+        visible: false,
+      });
+      const lessons = [
+        { id: 'it-hidden-lesson', unitId: 'it-shown-unit', visible: false },
+        { id: 'it-lesson-in-hidden-unit', unitId: 'it-hidden-unit', visible: true },
+        { id: 'it-lesson-in-hidden-course', unitId: 'it-in-hidden-course', visible: true },
+      ];
+      for (const lesson of lessons) {
+        await insertLesson(tx, { ...lesson, position: 1 });
+        await insertExercise(tx, {
+          lessonId: lesson.id,
+          position: 1,
+          payload: signToWordExercise(`${lesson.id}-ex`),
+        });
+      }
+
+      const repository = new DrizzleLessonRepository(tx);
+      for (const lesson of lessons) expect(await repository.findById(lesson.id)).toBeNull();
     }),
   );
 });

@@ -5,6 +5,7 @@ import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import {
   insertCourse,
   insertLesson,
+  insertPlayableLesson,
   insertUnit,
   moveExistingTrailsBack,
 } from '../../../shared/infrastructure/db/testing/fixtures';
@@ -19,8 +20,8 @@ async function insertTwoTrails(tx: DbExecutor): Promise<void> {
   await insertCourse(tx, 'it-second-course', 2);
   await insertUnit(tx, { id: 'it-first-unit', courseId: 'it-first-course', position: 1 });
   await insertUnit(tx, { id: 'it-second-unit', courseId: 'it-second-course', position: 1 });
-  await insertLesson(tx, { id: 'it-first-lesson', unitId: 'it-first-unit', position: 1 });
-  await insertLesson(tx, { id: 'it-second-lesson', unitId: 'it-second-unit', position: 1 });
+  await insertPlayableLesson(tx, { id: 'it-first-lesson', unitId: 'it-first-unit', position: 1 });
+  await insertPlayableLesson(tx, { id: 'it-second-lesson', unitId: 'it-second-unit', position: 1 });
 }
 
 describe('DrizzleTrailRepository.findById', () => {
@@ -33,9 +34,21 @@ describe('DrizzleTrailRepository.findById', () => {
       await insertUnit(tx, { id: 'it-trail-unit-b', courseId, position: 2 });
       await insertUnit(tx, { id: 'it-trail-unit-c', courseId, position: 3 });
       await insertUnit(tx, { id: 'it-trail-unit-a', courseId, position: 1 });
-      await insertLesson(tx, { id: 'it-trail-a-2', unitId: 'it-trail-unit-a', position: 2 });
-      await insertLesson(tx, { id: 'it-trail-b-1', unitId: 'it-trail-unit-b', position: 1 });
-      await insertLesson(tx, { id: 'it-trail-a-1', unitId: 'it-trail-unit-a', position: 1 });
+      await insertPlayableLesson(tx, {
+        id: 'it-trail-a-2',
+        unitId: 'it-trail-unit-a',
+        position: 2,
+      });
+      await insertPlayableLesson(tx, {
+        id: 'it-trail-b-1',
+        unitId: 'it-trail-unit-b',
+        position: 1,
+      });
+      await insertPlayableLesson(tx, {
+        id: 'it-trail-a-1',
+        unitId: 'it-trail-unit-a',
+        position: 1,
+      });
 
       const trail = await new DrizzleTrailRepository(tx).findById(courseId);
 
@@ -140,6 +153,50 @@ describe('DrizzleTrailRepository.count', () => {
       await insertTwoTrails(tx);
 
       expect(await repository.count()).toBe(before + 2);
+    }),
+  );
+});
+
+describe('DrizzleTrailRepository visibility', () => {
+  it(
+    'leaves out hidden units and lessons, and lessons without exercises',
+    inRollback(async (tx) => {
+      const courseId = 'it-visibility-course';
+      await insertCourse(tx, courseId, 1001);
+      await insertUnit(tx, { id: 'it-visible-unit', courseId, position: 1 });
+      await insertUnit(tx, { id: 'it-hidden-unit', courseId, position: 2, visible: false });
+      await insertPlayableLesson(tx, { id: 'it-shown', unitId: 'it-visible-unit', position: 1 });
+      await insertPlayableLesson(tx, {
+        id: 'it-hidden',
+        unitId: 'it-visible-unit',
+        position: 2,
+        visible: false,
+      });
+      await insertLesson(tx, { id: 'it-empty', unitId: 'it-visible-unit', position: 3 });
+      await insertPlayableLesson(tx, { id: 'it-in-hidden', unitId: 'it-hidden-unit', position: 1 });
+
+      const trail = await new DrizzleTrailRepository(tx).findById(courseId);
+
+      expect(trail?.units).toEqual([
+        {
+          id: 'it-visible-unit',
+          title: 'Módulo it-visible-unit',
+          lessons: [{ id: 'it-shown', title: 'Lição it-shown' }],
+        },
+      ]);
+    }),
+  );
+
+  it(
+    'skips a hidden trail when finding the first one',
+    inRollback(async (tx) => {
+      await moveExistingTrailsBack(tx);
+      await insertCourse(tx, 'it-hidden-trail', 1, false);
+      await insertCourse(tx, 'it-visible-trail', 2);
+      const trails = new DrizzleTrailRepository(tx);
+
+      expect((await trails.findFirst())?.id).toBe('it-visible-trail');
+      expect(await trails.findById('it-hidden-trail')).toBeNull();
     }),
   );
 });
