@@ -137,8 +137,8 @@ describe('DrizzleCmsOutlineRepository', () => {
       const outline = new DrizzleCmsOutlineRepository(tx);
 
       expect(await outline.rename('unit', 'it-unit-2', 'Renomeado')).toBe(true);
-      expect(await outline.delete('trail', 'it-trail')).toBe(true);
-      expect(await outline.delete('trail', 'it-trail')).toBe(false);
+      expect(await outline.delete('trail', 'it-trail')).toBe('deleted');
+      expect(await outline.delete('trail', 'it-trail')).toBe('notFound');
 
       expect(await outline.listIds('lesson', 'it-unit-1')).toBeNull();
     }),

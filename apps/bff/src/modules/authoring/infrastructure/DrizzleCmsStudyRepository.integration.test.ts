@@ -50,12 +50,14 @@ describe('DrizzleCmsStudyRepository', () => {
             {
               id: 'it-study-1',
               title: 'Estudo it-study-1',
+              visible: false,
               description: 'Descrição de teste.',
               pageCount: 1,
             },
             {
               id: 'it-study-2',
               title: 'Estudo it-study-2',
+              visible: false,
               description: 'Descrição de teste.',
               pageCount: 1,
             },
@@ -72,7 +74,11 @@ describe('DrizzleCmsStudyRepository', () => {
       const studies = await prepare(tx);
 
       expect(await studies.create(study('it-orphan', 'it-missing'))).toBe(false);
-      expect(await studies.find('it-study-1')).toEqual(study('it-study-1', 'it-group-1'));
+      // Created hidden.
+      expect(await studies.find('it-study-1')).toEqual({
+        ...study('it-study-1', 'it-group-1'),
+        visible: false,
+      });
       expect(await studies.find('it-missing')).toBeNull();
       expect(await studies.listStudyIds('it-missing')).toBeNull();
     }),
