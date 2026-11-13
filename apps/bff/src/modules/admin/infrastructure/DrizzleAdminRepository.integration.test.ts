@@ -53,4 +53,31 @@ describe('DrizzleAdminRepository', () => {
       expect(await new DrizzleAdminRepository(tx).findByUserId(userId)).toBeNull();
     }),
   );
+
+  it(
+    'lists every operator, active or not, by name',
+    inRollback(async (tx) => {
+      const repository = new DrizzleAdminRepository(tx);
+      const zoe = await insertAuthUser(tx);
+      const bia = await insertAuthUser(tx);
+      await repository.save({
+        userId: zoe,
+        email: 'it-zoe@example.com',
+        name: 'IT Zoe',
+        active: true,
+      });
+      await repository.save({
+        userId: bia,
+        email: 'it-bia@example.com',
+        name: 'IT Bia',
+        active: false,
+      });
+
+      const own = (await repository.list()).filter((admin) => admin.email.startsWith('it-'));
+      expect(own.map(({ name, active }) => [name, active])).toEqual([
+        ['IT Bia', false],
+        ['IT Zoe', true],
+      ]);
+    }),
+  );
 });
