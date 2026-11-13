@@ -97,3 +97,59 @@ export const SignImageUploadResponse = z.object({
   imageUrl: z.url(),
 });
 export type SignImageUploadResponse = z.infer<typeof SignImageUploadResponse>;
+
+// Exercises
+
+// The exercise types the CMS edits. Both show signs from the draft as options: sign_to_word
+// shows the correct sign and asks for its label; word_to_sign shows the label and asks for
+// the sign.
+export const AdminExerciseType = z.enum(['sign_to_word', 'word_to_sign']);
+export type AdminExerciseType = z.infer<typeof AdminExerciseType>;
+
+// The app lays the options out in a 2 × 2 grid.
+export const EXERCISE_MIN_OPTIONS = 2;
+export const EXERCISE_MAX_OPTIONS = 4;
+
+const ExerciseFields = {
+  type: AdminExerciseType,
+  // Draft signs shown as the options, in the order the learner sees them.
+  signIds: z
+    .array(ContentId)
+    .min(EXERCISE_MIN_OPTIONS)
+    .max(EXERCISE_MAX_OPTIONS)
+    .refine((ids) => new Set(ids).size === ids.length, { message: 'Repeated sign' }),
+  // One of `signIds`: the right answer.
+  correctSignId: ContentId,
+};
+
+function ensureCorrectSignIsAnOption(
+  exercise: { signIds: string[]; correctSignId: string },
+  ctx: z.RefinementCtx,
+): void {
+  if (exercise.signIds.includes(exercise.correctSignId)) return;
+  ctx.addIssue({
+    code: 'custom',
+    path: ['correctSignId'],
+    message: 'correctSignId must be one of signIds',
+  });
+}
+
+export const AdminExercise = z
+  .object({ id: ContentId, ...ExerciseFields })
+  .superRefine(ensureCorrectSignIsAnOption);
+export type AdminExercise = z.infer<typeof AdminExercise>;
+
+// GET /v1/admin/lessons/:lessonId/exercises — the draft lesson and its exercises in order.
+export const AdminLessonExercisesResponse = z.object({
+  lesson: z.object({ id: ContentId, title: ContentTitle }),
+  exercises: z.array(AdminExercise),
+});
+export type AdminLessonExercisesResponse = z.infer<typeof AdminLessonExercisesResponse>;
+
+// POST /v1/admin/lessons/:lessonId/exercises creates (at the end of the lesson); PUT
+// /v1/admin/exercises/:exerciseId replaces every field. The BFF copies the label and the
+// images of each sign into the exercise, as the app receives it.
+export const SaveExerciseRequest = z
+  .object(ExerciseFields)
+  .superRefine(ensureCorrectSignIsAnOption);
+export type SaveExerciseRequest = z.infer<typeof SaveExerciseRequest>;

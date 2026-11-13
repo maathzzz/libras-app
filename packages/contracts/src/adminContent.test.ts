@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { ReorderRequest, SaveSignRequest, SaveTitleRequest } from './adminContent';
+import {
+  ReorderRequest,
+  SaveExerciseRequest,
+  SaveSignRequest,
+  SaveTitleRequest,
+} from './adminContent';
 
 describe('admin content contracts', () => {
   it('trims titles and refuses an empty one', () => {
@@ -23,5 +28,25 @@ describe('admin content contracts', () => {
       false,
     );
     expect(SaveSignRequest.safeParse({ ...sign, description: '' }).success).toBe(false);
+  });
+});
+
+describe('exercise contracts', () => {
+  const exercise = { type: 'sign_to_word', signIds: ['a', 'b', 'c'], correctSignId: 'b' };
+
+  it('accepts two to four different signs with the correct one among them', () => {
+    expect(SaveExerciseRequest.safeParse(exercise).success).toBe(true);
+    expect(SaveExerciseRequest.safeParse({ ...exercise, signIds: ['b'] }).success).toBe(false);
+    expect(
+      SaveExerciseRequest.safeParse({ ...exercise, signIds: ['a', 'b', 'c', 'd', 'e'] }).success,
+    ).toBe(false);
+    expect(SaveExerciseRequest.safeParse({ ...exercise, signIds: ['a', 'b', 'b'] }).success).toBe(
+      false,
+    );
+    expect(SaveExerciseRequest.safeParse({ ...exercise, correctSignId: 'z' }).success).toBe(false);
+  });
+
+  it('refuses a type the CMS does not edit', () => {
+    expect(SaveExerciseRequest.safeParse({ ...exercise, type: 'handshape' }).success).toBe(false);
   });
 });
