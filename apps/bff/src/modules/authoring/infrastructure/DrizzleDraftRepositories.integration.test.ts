@@ -269,4 +269,28 @@ describe('DrizzleDraftExerciseRepository', () => {
       expect(await signRepo.delete('it-c')).toBe('inUse');
     }),
   );
+
+  it(
+    'brings the copy of an edited sign up to date in the exercises that show it',
+    inRollback(async (tx) => {
+      await prepare(tx);
+      const exercises = new DrizzleDraftExerciseRepository(tx);
+      await exercises.create('it-lesson-1', recognize('it-ex-1'));
+
+      await new DrizzleDraftSignRepository(tx).update({
+        ...signA,
+        label: 'IT Á',
+        imageUrls: ['https://x.test/it-a-v2.webp'],
+      });
+
+      const [exercise] = (await exercises.listByLesson('it-lesson-1'))?.exercises ?? [];
+      expect(exercise).toMatchObject({
+        images: [{ url: 'https://x.test/it-a-v2.webp' }],
+        options: [
+          { id: 'it-a', label: 'IT Á' },
+          { id: 'it-b', label: 'IT B' },
+        ],
+      });
+    }),
+  );
 });

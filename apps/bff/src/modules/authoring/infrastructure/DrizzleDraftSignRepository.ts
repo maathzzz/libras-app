@@ -1,8 +1,13 @@
-import type { AdminSign } from '@libras/contracts';
+import { Exercise, type AdminSign } from '@libras/contracts';
 import { and, asc, count, eq, inArray, notExists, sql } from 'drizzle-orm';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
-import { draftExerciseSigns, draftSigns } from '../../../shared/infrastructure/db/schema';
+import {
+  draftExercises,
+  draftExerciseSigns,
+  draftSigns,
+} from '../../../shared/infrastructure/db/schema';
+import { withSign } from '../domain/DraftExercise';
 import type {
   DeleteSignOutcome,
   DraftSign,
@@ -47,13 +52,30 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
     await this.db.insert(draftSigns).values({ id, label, imagePaths: imageUrls, alt, description });
   }
 
-  async update({ id, label, imageUrls, alt, description }: DraftSign): Promise<boolean> {
-    const rows = await this.db
-      .update(draftSigns)
-      .set({ label, imagePaths: imageUrls, alt, description })
-      .where(eq(draftSigns.id, id))
-      .returning({ id: draftSigns.id });
-    return rows.length > 0;
+  async update(sign: DraftSign): Promise<boolean> {
+    const { id, label, imageUrls, alt, description } = sign;
+    return this.db.transaction(async (tx) => {
+      const rows = await tx
+        .update(draftSigns)
+        .set({ label, imagePaths: imageUrls, alt, description })
+        .where(eq(draftSigns.id, id))
+        .returning({ id: draftSigns.id });
+      if (rows.length === 0) return false;
+
+      // Exercises carry their own copy of the sign, as the app receives it.
+      const showing = await tx
+        .select({ id: draftExercises.id, payload: draftExercises.payload })
+        .from(draftExercises)
+        .innerJoin(draftExerciseSigns, eq(draftExerciseSigns.exerciseId, draftExercises.id))
+        .where(eq(draftExerciseSigns.signId, id));
+      for (const exercise of showing) {
+        await tx
+          .update(draftExercises)
+          .set({ payload: withSign(Exercise.parse(exercise.payload), sign) })
+          .where(eq(draftExercises.id, exercise.id));
+      }
+      return true;
+    });
   }
 
   // The foreign key would refuse a sign in use too; checking in the delete itself gives a

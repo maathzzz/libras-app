@@ -6,8 +6,8 @@ import type { DraftSignRepository } from '../domain/DraftSignRepository';
 
 export type UpdateSignInput = SaveSignRequest & { id: string };
 
-// Changes only the draft sign. Exercises keep their own copy of the sign's images; that
-// copy is brought up to date by the exercise editing and publishing phases.
+// Changes the draft sign and the copy of its label and images in the draft exercises that
+// show it, so the draft never holds an exercise with an old picture.
 export class UpdateSign {
   constructor(private readonly signs: DraftSignRepository) {}
 
