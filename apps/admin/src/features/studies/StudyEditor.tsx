@@ -8,7 +8,7 @@ import { useCallback } from 'react';
 import { getSigns } from '@/features/signs/signsApi';
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
-import { Button, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
+import { Button, ContentNotice, ErrorBanner, LoadingText } from '@/shared/ui';
 
 import { createStudy, getStudy, getStudyGroups, updateStudy } from './studiesApi';
 import { StudyForm } from './StudyForm';
@@ -77,7 +77,7 @@ export function StudyEditor(props: { studyId: string } | { groupId: string }) {
     return (
       <>
         {backLink}
-        <p className="text-text-muted">Este grupo não existe mais no rascunho.</p>
+        <p className="text-text-muted">Este grupo não existe mais.</p>
       </>
     );
   }
@@ -86,7 +86,7 @@ export function StudyEditor(props: { studyId: string } | { groupId: string }) {
     <>
       {backLink}
       <h1 className="text-2xl font-bold">{study ? study.title : 'Novo estudo'}</h1>
-      <DraftNotice />
+      <ContentNotice />
       <StudyForm
         initial={study ? fromStudy(study) : emptyStudy(groupId)}
         groups={groups}

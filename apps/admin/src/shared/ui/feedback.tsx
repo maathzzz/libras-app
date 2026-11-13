@@ -16,11 +16,12 @@ export function ErrorBanner({ children, action }: { children: ReactNode; action?
   );
 }
 
-// Shown on every editing screen until the publish screen exists.
-export function DraftNotice() {
+// Shown on every editing screen: there is no draft, so changes reach the app at once.
+export function ContentNotice() {
   return (
     <p className="rounded-md bg-accent-soft px-4 py-3 text-accent-dark">
-      Tudo aqui é rascunho: os alunos só veem as alterações depois de “Publicar alterações”.
+      As alterações chegam aos alunos na hora em tudo que está visível. Trilhas, módulos, lições e
+      estudos novos nascem ocultos: mostre quando estiverem prontos.
     </p>
   );
 }

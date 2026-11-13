@@ -58,6 +58,10 @@ export async function updateStudy(id: string, study: SaveStudyRequest): Promise<
   await apiRequest(studyPath(id), NoContent, { method: 'PUT', body: study });
 }
 
+export async function setStudyVisibility(id: string, visible: boolean): Promise<void> {
+  await apiRequest(`${studyPath(id)}/visibility`, NoContent, { method: 'PUT', body: { visible } });
+}
+
 export async function deleteStudy(id: string): Promise<void> {
   await apiRequest(studyPath(id), NoContent, { method: 'DELETE' });
 }

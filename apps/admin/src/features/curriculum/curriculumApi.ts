@@ -36,6 +36,17 @@ export async function renameItem(level: OutlineLevel, id: string, title: string)
   await apiRequest(itemPath(level, id), NoContent, { method: 'PATCH', body: { title } });
 }
 
+export async function setVisibility(
+  level: OutlineLevel,
+  id: string,
+  visible: boolean,
+): Promise<void> {
+  await apiRequest(`${itemPath(level, id)}/visibility`, NoContent, {
+    method: 'PUT',
+    body: { visible },
+  });
+}
+
 export async function deleteItem(level: OutlineLevel, id: string): Promise<void> {
   await apiRequest(itemPath(level, id), NoContent, { method: 'DELETE' });
 }

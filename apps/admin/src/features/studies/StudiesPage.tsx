@@ -10,7 +10,15 @@ import { OutlineRow } from '@/features/curriculum/OutlineRow';
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
 import { plural } from '@/shared/plural';
-import { Button, buttonClassName, Card, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
+import {
+  Button,
+  buttonClassName,
+  Card,
+  ContentNotice,
+  ErrorBanner,
+  LoadingText,
+  VisibilityControl,
+} from '@/shared/ui';
 
 import {
   createStudyGroup,
@@ -20,6 +28,7 @@ import {
   renameStudyGroup,
   reorderStudies,
   reorderStudyGroups,
+  setStudyVisibility,
 } from './studiesApi';
 
 // Runs one change against the BFF. The list is always reloaded afterwards, also on failure:
@@ -38,7 +47,7 @@ function StudyRow({
   run: Run;
 }) {
   function confirmDelete() {
-    const question = `Excluir o estudo “${study.title}” do rascunho?\n\n${plural(study.pageCount, 'página', 'páginas')} também saem do rascunho.\n\nOs alunos continuam vendo o conteúdo publicado até a próxima publicação.`;
+    const question = `Excluir o estudo “${study.title}”?\n\n${plural(study.pageCount, 'página', 'páginas')} também são excluídas. Se ele estiver visível, some da aba “Estudar” na hora.`;
     if (window.confirm(question)) void run(() => deleteStudy(study.id));
   }
 
@@ -56,6 +65,11 @@ function StudyRow({
         </span>
       </div>
       <div className="flex items-center gap-1">
+        <VisibilityControl
+          visible={study.visible}
+          name={study.title}
+          onChange={(visible) => void run(() => setStudyVisibility(study.id, visible))}
+        />
         <Button
           variant="ghost"
           size="sm"
@@ -160,7 +174,7 @@ export function StudiesPage() {
           lições.
         </p>
       </div>
-      <DraftNotice />
+      <ContentNotice />
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
       {state.status === 'loading' && <LoadingText />}

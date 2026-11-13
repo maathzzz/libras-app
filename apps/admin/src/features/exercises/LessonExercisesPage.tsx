@@ -9,7 +9,7 @@ import { getSigns } from '@/features/signs/signsApi';
 import { SignThumb } from '@/features/signs/SignThumb';
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
-import { Button, Card, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
+import { Button, Card, ContentNotice, ErrorBanner, LoadingText } from '@/shared/ui';
 
 import { ExerciseForm } from './ExerciseForm';
 import {
@@ -184,7 +184,7 @@ export function LessonExercisesPage({ lessonId }: { lessonId: string }) {
   const ids = exercises.map((exercise) => exercise.id);
 
   function confirmDelete(number: number, id: string) {
-    const question = `Excluir o exercício ${number} do rascunho?\n\nOs alunos continuam vendo o conteúdo publicado até a próxima publicação.`;
+    const question = `Excluir o exercício ${number}?\n\nSe a lição estiver visível, os alunos deixam de vê-lo na hora.`;
     if (window.confirm(question)) void run(() => deleteExercise(id));
   }
 
@@ -195,7 +195,7 @@ export function LessonExercisesPage({ lessonId }: { lessonId: string }) {
         <h1 className="text-2xl font-bold">{lesson.title}</h1>
         <p className="text-text-muted">Exercícios da lição, na ordem em que o aluno os faz.</p>
       </div>
-      <DraftNotice />
+      <ContentNotice />
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
       {exercises.length === 0 && editing !== 'new' && (

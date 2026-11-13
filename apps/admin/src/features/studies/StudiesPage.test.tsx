@@ -12,6 +12,7 @@ import {
   deleteStudyGroup,
   getStudyGroups,
   reorderStudies,
+  setStudyVisibility,
 } from './studiesApi';
 
 vi.mock('./studiesApi', () => ({
@@ -22,6 +23,7 @@ vi.mock('./studiesApi', () => ({
   reorderStudyGroups: vi.fn(),
   reorderStudies: vi.fn(),
   deleteStudy: vi.fn(),
+  setStudyVisibility: vi.fn(),
 }));
 
 const groups: AdminStudyGroup[] = [
@@ -32,7 +34,7 @@ const groups: AdminStudyGroup[] = [
       {
         id: 'alfabeto',
         title: 'Alfabeto manual',
-        visible: true,
+        visible: false,
         description: 'As 26 letras.',
         pageCount: 6,
       },
@@ -48,6 +50,7 @@ beforeEach(() => {
   vi.mocked(deleteStudyGroup).mockReset().mockResolvedValue();
   vi.mocked(deleteStudy).mockReset().mockResolvedValue();
   vi.mocked(reorderStudies).mockReset().mockResolvedValue();
+  vi.mocked(setStudyVisibility).mockReset().mockResolvedValue();
 });
 
 describe('StudiesPage', () => {
@@ -105,5 +108,15 @@ describe('StudiesPage', () => {
     await user.click(within(row).getByRole('button', { name: 'Excluir' }));
 
     expect(deleteStudy).toHaveBeenCalledWith('numeros');
+  });
+
+  it('shows a hidden study', async () => {
+    const user = userEvent.setup();
+    render(<StudiesPage />);
+    await user.click(
+      await screen.findByRole('button', { name: 'Mostrar “Alfabeto manual” no app' }),
+    );
+
+    expect(setStudyVisibility).toHaveBeenCalledWith('alfabeto', true);
   });
 });

@@ -29,8 +29,8 @@ describe('AppLayout', () => {
 
     expect(screen.getByRole('link', { name: 'Sinais' }).getAttribute('href')).toBe('/sinais');
     expect(screen.getByRole('link', { name: 'Estudos' }).getAttribute('href')).toBe('/estudos');
-    expect(screen.queryByRole('link', { name: /Publicar/ })).toBeNull();
-    expect(screen.getByText('Publicar').getAttribute('aria-disabled')).toBe('true');
+    expect(screen.queryByRole('link', { name: /Operadores/ })).toBeNull();
+    expect(screen.getByText('Operadores').getAttribute('aria-disabled')).toBe('true');
   });
 
   it('shows the operator and signs out', async () => {

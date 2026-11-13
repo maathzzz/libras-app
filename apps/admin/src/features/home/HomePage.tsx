@@ -12,10 +12,10 @@ export function HomePage() {
       <Card className="grid gap-3">
         <h2 className="text-lg font-bold">Bem-vindo ao CMS</h2>
         <p className="text-text-muted">
-          Aqui você vai criar trilhas, módulos, lições, exercícios, sinais e estudos. As alterações
-          ficam em rascunho até alguém publicar; só então chegam aos alunos.
+          Aqui você cria trilhas, módulos, lições, exercícios, sinais e estudos. O que você cria
+          nasce oculto: monte tudo e, quando estiver pronto, mostre no app. Depois disso, cada
+          alteração chega aos alunos na hora.
         </p>
-        <p className="text-text-muted">As seções do menu serão liberadas nas próximas etapas.</p>
       </Card>
     </>
   );

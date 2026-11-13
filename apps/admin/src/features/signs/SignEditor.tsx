@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
 import { signUsage } from '@/shared/plural';
-import { Button, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
+import { Button, ContentNotice, ErrorBanner, LoadingText } from '@/shared/ui';
 
 import { SignForm } from './SignForm';
 import { createSign, deleteSign, getSigns, updateSign } from './signsApi';
@@ -37,7 +37,7 @@ function NewSign() {
     <>
       {backLink}
       <h1 className="text-2xl font-bold">Novo sinal</h1>
-      <DraftNotice />
+      <ContentNotice />
       <SignForm onSave={save} onCancel={() => router.push('/sinais')} />
     </>
   );
@@ -73,7 +73,7 @@ function LoadedSign({ sign }: { sign: AdminSign | undefined }) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (!sign) {
-    return <p className="text-text-muted">Este sinal não existe mais no rascunho.</p>;
+    return <p className="text-text-muted">Este sinal não existe mais.</p>;
   }
 
   async function save(changes: SaveSignRequest) {
@@ -84,7 +84,7 @@ function LoadedSign({ sign }: { sign: AdminSign | undefined }) {
 
   async function remove() {
     if (!sign) return;
-    const question = `Excluir o sinal “${sign.label}” do rascunho?\n\nOs alunos continuam vendo o conteúdo publicado até a próxima publicação.`;
+    const question = `Excluir o sinal “${sign.label}”?`;
     if (!window.confirm(question)) return;
     try {
       await deleteSign(sign.id);
@@ -112,7 +112,7 @@ function LoadedSign({ sign }: { sign: AdminSign | undefined }) {
           </Button>
         </div>
       </div>
-      <DraftNotice />
+      <ContentNotice />
       {deleteError && <ErrorBanner>{deleteError}</ErrorBanner>}
       <SignForm initial={sign} onSave={save} onCancel={() => router.push('/sinais')} />
     </>

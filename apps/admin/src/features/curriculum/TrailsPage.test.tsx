@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@/shared/api/client';
 
-import { createItem, deleteItem, getTrails, reorderItems } from './curriculumApi';
+import { createItem, deleteItem, getTrails, reorderItems, setVisibility } from './curriculumApi';
 import { TrailsPage } from './TrailsPage';
 
 vi.mock('./curriculumApi', async (importOriginal) => ({
@@ -16,6 +16,7 @@ vi.mock('./curriculumApi', async (importOriginal) => ({
   renameItem: vi.fn(),
   deleteItem: vi.fn(),
   reorderItems: vi.fn(),
+  setVisibility: vi.fn(),
 }));
 
 const trails: AdminTrail[] = [
@@ -43,6 +44,7 @@ beforeEach(() => {
   vi.mocked(createItem).mockReset().mockResolvedValue('lesson-1');
   vi.mocked(deleteItem).mockReset().mockResolvedValue();
   vi.mocked(reorderItems).mockReset().mockResolvedValue();
+  vi.mocked(setVisibility).mockReset().mockResolvedValue();
 });
 
 describe('TrailsPage', () => {
@@ -105,5 +107,48 @@ describe('TrailsPage', () => {
 
     expect(await screen.findByText(/A lista mudou enquanto você editava/)).toBeTruthy();
     expect(getTrails).toHaveBeenCalledTimes(2);
+  });
+
+  it('hides a lesson and explains a visible lesson without exercises', async () => {
+    vi.mocked(getTrails).mockResolvedValue([
+      {
+        id: 'basico',
+        title: 'Libras básico',
+        visible: true,
+        units: [
+          {
+            id: 'alfabeto',
+            title: 'Alfabeto',
+            visible: true,
+            lessons: [
+              { id: 'a-e', title: 'A a E', visible: true, exerciseCount: 10 },
+              { id: 'vazia', title: 'Vazia', visible: true, exerciseCount: 0 },
+            ],
+          },
+        ],
+      },
+    ]);
+    const user = userEvent.setup();
+    render(<TrailsPage />);
+
+    expect(await screen.findByText(/sem exercícios: fica fora do app/)).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Ocultar “A a E” no app' }));
+
+    expect(setVisibility).toHaveBeenCalledWith('lesson', 'a-e', false);
+    expect(getTrails).toHaveBeenCalledTimes(2);
+  });
+
+  it('explains why a lesson that learners did is not deleted', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(deleteItem).mockRejectedValue(
+      new ApiError('request', 'progress', 409, 'CONTENT_HAS_PROGRESS'),
+    );
+    const user = userEvent.setup();
+    render(<TrailsPage />);
+    const lesson = (await screen.findByText('A a E')).closest('li');
+    if (!lesson) throw new Error('lesson not rendered');
+    await user.click(within(lesson).getByRole('button', { name: 'Excluir' }));
+
+    expect((await screen.findByRole('alert')).textContent).toContain('oculte');
   });
 });

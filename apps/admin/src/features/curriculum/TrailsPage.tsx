@@ -7,7 +7,14 @@ import { useCallback, useState } from 'react';
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
 import { plural } from '@/shared/plural';
-import { Button, buttonClassName, Card, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
+import {
+  Button,
+  buttonClassName,
+  Card,
+  ContentNotice,
+  ErrorBanner,
+  LoadingText,
+} from '@/shared/ui';
 
 import {
   createItem,
@@ -16,6 +23,7 @@ import {
   moved,
   renameItem,
   reorderItems,
+  setVisibility,
   type OutlineList,
 } from './curriculumApi';
 import { AddItem } from './AddItem';
@@ -51,9 +59,13 @@ function UnitBlock({
         isLast={siblings.at(-1) === unit.id}
         deleteWarning={
           unit.lessons.length > 0
-            ? `${plural(unit.lessons.length, 'lição', 'lições')} e seus exercícios também saem do rascunho.`
+            ? `${plural(unit.lessons.length, 'lição', 'lições')} e seus exercícios também são excluídos.`
             : undefined
         }
+        visibility={{
+          visible: unit.visible,
+          onChange: (visible) => run(() => setVisibility('unit', unit.id, visible)),
+        }}
         onRename={(title) => run(() => renameItem('unit', unit.id, title))}
         onMove={(step) => run(() => reorderItems(unitList, moved(siblings, unit.id, step)))}
         onDelete={() => run(() => deleteItem('unit', unit.id))}
@@ -69,7 +81,11 @@ function UnitBlock({
               <OutlineRow
                 noun="a lição"
                 title={lesson.title}
-                meta={plural(lesson.exerciseCount, 'exercício', 'exercícios')}
+                meta={
+                  lesson.visible && lesson.exerciseCount === 0
+                    ? 'sem exercícios: fica fora do app até ter um'
+                    : plural(lesson.exerciseCount, 'exercício', 'exercícios')
+                }
                 extraAction={
                   <Link
                     href={`/trilhas/licoes/${encodeURIComponent(lesson.id)}`}
@@ -83,9 +99,13 @@ function UnitBlock({
                 isLast={lessonIds.at(-1) === lesson.id}
                 deleteWarning={
                   lesson.exerciseCount > 0
-                    ? `${plural(lesson.exerciseCount, 'exercício', 'exercícios')} também saem do rascunho.`
+                    ? `${plural(lesson.exerciseCount, 'exercício', 'exercícios')} também são excluídos.`
                     : undefined
                 }
+                visibility={{
+                  visible: lesson.visible,
+                  onChange: (visible) => run(() => setVisibility('lesson', lesson.id, visible)),
+                }}
                 onRename={(title) => run(() => renameItem('lesson', lesson.id, title))}
                 onMove={(step) =>
                   run(() => reorderItems(lessonList, moved(lessonIds, lesson.id, step)))
@@ -104,15 +124,18 @@ function UnitBlock({
 function TrailCard({
   trail,
   trailIds,
+  shownTrailId,
   run,
 }: {
   trail: AdminTrail;
   trailIds: readonly string[];
+  // The app shows the first visible trail.
+  shownTrailId: string | undefined;
   run: Run;
 }) {
   const unitIds = trail.units.map((unit) => unit.id);
   const lessonCount = trail.units.reduce((total, unit) => total + unit.lessons.length, 0);
-  const shownInApp = trailIds[0] === trail.id;
+  const shownInApp = shownTrailId === trail.id;
 
   return (
     <Card className="grid gap-4">
@@ -130,13 +153,17 @@ function TrailCard({
             )}
           </>
         }
-        isFirst={shownInApp}
+        isFirst={trailIds[0] === trail.id}
         isLast={trailIds.at(-1) === trail.id}
         deleteWarning={
           trail.units.length > 0
-            ? `${plural(trail.units.length, 'módulo', 'módulos')} e ${plural(lessonCount, 'lição', 'lições')} também saem do rascunho.`
+            ? `${plural(trail.units.length, 'módulo', 'módulos')} e ${plural(lessonCount, 'lição', 'lições')} também são excluídos.`
             : undefined
         }
+        visibility={{
+          visible: trail.visible,
+          onChange: (visible) => run(() => setVisibility('trail', trail.id, visible)),
+        }}
         onRename={(title) => run(() => renameItem('trail', trail.id, title))}
         onMove={(step) =>
           run(() => reorderItems({ level: 'trail' }, moved(trailIds, trail.id, step)))
@@ -183,7 +210,7 @@ export function TrailsPage() {
           ordem.
         </p>
       </div>
-      <DraftNotice />
+      <ContentNotice />
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
       {state.status === 'loading' && <LoadingText />}
@@ -206,6 +233,7 @@ export function TrailsPage() {
               key={trail.id}
               trail={trail}
               trailIds={state.data.map((item) => item.id)}
+              shownTrailId={state.data.find((item) => item.visible)?.id}
               run={run}
             />
           ))}

@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button, VisibilityControl } from '@/shared/ui';
 
 import { TitleForm } from './TitleForm';
 
@@ -16,8 +16,10 @@ interface OutlineRowProps {
   extraAction?: ReactNode;
   isFirst: boolean;
   isLast: boolean;
-  // What else disappears from the draft with this item, for the confirmation.
+  // What else is deleted with this item, for the confirmation.
   deleteWarning?: string | undefined;
+  // Trails, units and lessons; study groups have no visibility.
+  visibility?: { visible: boolean; onChange: (visible: boolean) => Promise<void> };
   onRename: (title: string) => Promise<void>;
   onMove: (step: -1 | 1) => Promise<void>;
   onDelete: () => Promise<void>;
@@ -25,7 +27,7 @@ interface OutlineRowProps {
 
 const headingClass = { h2: 'text-lg font-bold', h3: 'font-bold', p: 'font-semibold' } as const;
 
-// One trail, module or lesson with its actions: rename, move up or down and delete.
+// One trail, module or lesson with its actions: show or hide, move, rename and delete.
 export function OutlineRow({
   noun,
   title,
@@ -35,6 +37,7 @@ export function OutlineRow({
   isFirst,
   isLast,
   deleteWarning,
+  visibility,
   onRename,
   onMove,
   onDelete,
@@ -58,9 +61,11 @@ export function OutlineRow({
   }
 
   function confirmDelete() {
-    const lines = [`Excluir ${noun} “${title}” do rascunho?`];
+    const lines = [`Excluir ${noun} “${title}”?`];
     if (deleteWarning) lines.push(deleteWarning);
-    lines.push('Os alunos continuam vendo o conteúdo publicado até a próxima publicação.');
+    lines.push(
+      'Os alunos deixam de ver na hora. Se algum aluno já fez uma das lições, a exclusão é recusada: oculte em vez de excluir.',
+    );
     if (window.confirm(lines.join('\n\n'))) void onDelete();
   }
 
@@ -71,6 +76,13 @@ export function OutlineRow({
         {meta && <span className="text-[13px] text-text-muted">{meta}</span>}
       </div>
       <div className="flex items-center gap-1">
+        {visibility && (
+          <VisibilityControl
+            visible={visibility.visible}
+            name={title}
+            onChange={(next) => void visibility.onChange(next)}
+          />
+        )}
         {extraAction}
         <Button
           variant="ghost"

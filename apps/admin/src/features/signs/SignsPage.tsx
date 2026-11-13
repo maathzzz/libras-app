@@ -8,7 +8,7 @@ import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
 import { signUsage } from '@/shared/plural';
 import { normalized } from '@/shared/search';
-import { Button, DraftNotice, ErrorBanner, inputClassName, LoadingText } from '@/shared/ui';
+import { Button, ContentNotice, ErrorBanner, inputClassName, LoadingText } from '@/shared/ui';
 
 import { getSigns } from './signsApi';
 import { SignThumb } from './SignThumb';
@@ -61,7 +61,7 @@ export function SignsPage() {
           Novo sinal
         </Link>
       </div>
-      <DraftNotice />
+      <ContentNotice />
 
       {state.status === 'loading' && <LoadingText />}
       {state.status === 'error' && (
