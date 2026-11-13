@@ -10,17 +10,10 @@ import {
 } from '@libras/contracts';
 import { useState, type FormEvent } from 'react';
 
+import { SignSearch } from '@/features/signs/SignSearch';
 import { SignThumb } from '@/features/signs/SignThumb';
 import { errorMessage } from '@/shared/api/errorMessage';
-import { normalized } from '@/shared/search';
-import {
-  Button,
-  Card,
-  ErrorBanner,
-  hintClassName,
-  inputClassName,
-  labelClassName,
-} from '@/shared/ui';
+import { Button, Card, ErrorBanner, hintClassName } from '@/shared/ui';
 
 import { exerciseTypes } from './exerciseTypes';
 
@@ -30,9 +23,6 @@ interface ExerciseFormProps {
   onSave: (exercise: SaveExerciseRequest) => Promise<void>;
   onCancel: () => void;
 }
-
-// Enough to find a sign without turning the form into the whole sign list.
-const MAX_SEARCH_RESULTS = 12;
 
 function shuffled<T>(items: readonly T[]): T[] {
   const next = [...items];
@@ -57,7 +47,6 @@ export function ExerciseForm({ signs, initial, onSave, onCancel }: ExerciseFormP
   const [type, setType] = useState<AdminExerciseType>(initial?.type ?? 'sign_to_word');
   const [signIds, setSignIds] = useState<string[]>(initial?.signIds ?? []);
   const [correctSignId, setCorrectSignId] = useState<string | null>(initial?.correctSignId ?? null);
-  const [query, setQuery] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,18 +57,10 @@ export function ExerciseForm({ signs, initial, onSave, onCancel }: ExerciseFormP
   const canSave = request.success && repeated.length === 0 && !saving;
   const full = signIds.length >= EXERCISE_MAX_OPTIONS;
 
-  const wanted = normalized(query.trim());
-  const results = wanted
-    ? signs
-        .filter((sign) => !signIds.includes(sign.id) && normalized(sign.label).includes(wanted))
-        .slice(0, MAX_SEARCH_RESULTS)
-    : [];
-
   function add(id: string) {
     setSignIds((ids) => [...ids, id]);
     // The first sign chosen is the answer until the operator picks another.
     setCorrectSignId((current) => current ?? id);
-    setQuery('');
   }
 
   function remove(id: string) {
@@ -225,32 +206,12 @@ export function ExerciseForm({ signs, initial, onSave, onCancel }: ExerciseFormP
           {full ? (
             <p className={hintClassName}>Limite de {EXERCISE_MAX_OPTIONS} opções atingido.</p>
           ) : (
-            <div className="grid gap-2">
-              <label className={labelClassName}>
-                Adicionar sinal
-                <input
-                  type="search"
-                  className={`${inputClassName} max-w-sm`}
-                  placeholder="Buscar pelo nome"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </label>
-              {wanted && results.length === 0 && (
-                <p className={hintClassName}>Nenhum sinal com esse nome.</p>
-              )}
-              {results.length > 0 && (
-                <ul className="flex flex-wrap gap-2" aria-label="Sinais encontrados">
-                  {results.map((sign) => (
-                    <li key={sign.id}>
-                      <Button variant="secondary" size="sm" onClick={() => add(sign.id)}>
-                        + {sign.label}
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <SignSearch
+              signs={signs}
+              label="Adicionar sinal"
+              excludeIds={signIds}
+              onPick={(sign) => add(sign.id)}
+            />
           )}
         </fieldset>
       </Card>
