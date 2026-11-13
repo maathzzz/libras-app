@@ -31,6 +31,7 @@ const sign = (id: string, label: string): AdminSign => ({
   alt: 'Mão de teste',
   description: null,
   exerciseCount: 1,
+  studyCount: 0,
 });
 
 const signs = [sign('a', 'A'), sign('b', 'B'), sign('c', 'C'), sign('a2', 'a')];

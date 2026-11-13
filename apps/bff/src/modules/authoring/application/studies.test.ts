@@ -23,6 +23,7 @@ const letterA: AdminSign = {
   alt: 'Mão fechada',
   description: 'Mão fechada, polegar ao lado.',
   exerciseCount: 0,
+  studyCount: 0,
 };
 
 const intro: StudyPage = {

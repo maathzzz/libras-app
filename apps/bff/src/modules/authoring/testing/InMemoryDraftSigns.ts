@@ -6,7 +6,8 @@ import type {
   DraftSignRepository,
 } from '../domain/DraftSignRepository';
 
-// For tests. `exerciseCount` stands for the draft exercises that show each sign.
+// For tests. `exerciseCount` and `studyCount` stand for the draft content that shows each
+// sign.
 export class InMemoryDraftSigns implements DraftSignRepository {
   private readonly byId = new Map<string, AdminSign>();
 
@@ -30,20 +31,24 @@ export class InMemoryDraftSigns implements DraftSignRepository {
   }
 
   async create(sign: DraftSign): Promise<void> {
-    this.byId.set(sign.id, { ...structuredClone(sign), exerciseCount: 0 });
+    this.byId.set(sign.id, { ...structuredClone(sign), exerciseCount: 0, studyCount: 0 });
   }
 
   async update(sign: DraftSign): Promise<boolean> {
     const current = this.byId.get(sign.id);
     if (!current) return false;
-    this.byId.set(sign.id, { ...structuredClone(sign), exerciseCount: current.exerciseCount });
+    this.byId.set(sign.id, {
+      ...structuredClone(sign),
+      exerciseCount: current.exerciseCount,
+      studyCount: current.studyCount,
+    });
     return true;
   }
 
   async delete(id: string): Promise<DeleteSignOutcome> {
     const sign = this.byId.get(id);
     if (!sign) return 'notFound';
-    if (sign.exerciseCount > 0) return 'inUse';
+    if (sign.exerciseCount > 0 || sign.studyCount > 0) return 'inUse';
     this.byId.delete(id);
     return 'deleted';
   }

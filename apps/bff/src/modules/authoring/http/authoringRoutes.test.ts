@@ -52,6 +52,7 @@ describe('authoring routes', () => {
         alt: 'Mão fechada',
         description: null,
         exerciseCount: 2,
+        studyCount: 0,
       },
       {
         id: 'letter-b',
@@ -60,6 +61,7 @@ describe('authoring routes', () => {
         alt: 'Mão aberta, polegar dobrado',
         description: null,
         exerciseCount: 0,
+        studyCount: 0,
       },
     ]);
     const draftExercises = new InMemoryDraftExercises([

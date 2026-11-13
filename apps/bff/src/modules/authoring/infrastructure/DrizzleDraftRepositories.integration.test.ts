@@ -8,11 +8,14 @@ import {
   draftExerciseSigns,
   draftLessons,
   draftSigns,
+  draftStudies,
+  draftStudyGroups,
   draftUnits,
 } from '../../../shared/infrastructure/db/schema';
 import { signToWordExercise } from '../../../shared/infrastructure/db/testing/fixtures';
 import { useTestDatabase } from '../../../shared/infrastructure/db/testing/testDatabase';
 import { buildExercise } from '../domain/DraftExercise';
+import { signBlock } from '../domain/DraftStudy';
 import type { DraftSign } from '../domain/DraftSignRepository';
 import { DrizzleDraftExerciseRepository } from './DrizzleDraftExerciseRepository';
 import { DrizzleDraftOutlineRepository } from './DrizzleDraftOutlineRepository';
@@ -170,6 +173,7 @@ describe('DrizzleDraftSignRepository', () => {
         alt: 'Mão aberta',
         description: 'Abre a mão.',
         exerciseCount: 1,
+        studyCount: 0,
       });
     }),
   );
@@ -186,6 +190,67 @@ describe('DrizzleDraftSignRepository', () => {
       expect(await signs.delete('it-used')).toBe('inUse');
       expect(await signs.delete('it-free')).toBe('deleted');
       expect(await signs.delete('it-free')).toBe('notFound');
+    }),
+  );
+});
+
+describe('DrizzleDraftSignRepository with studies', () => {
+  const sign: DraftSign = {
+    id: 'it-sign',
+    label: 'IT sinal',
+    imageUrls: ['https://x.test/it-sign.webp'],
+    alt: 'Mão de teste',
+    description: null,
+  };
+
+  async function insertStudyShowing(tx: DbExecutor) {
+    await tx.insert(draftStudyGroups).values({ id: 'it-group', title: 'Grupo IT', position: 1 });
+    await tx.insert(draftStudies).values({
+      id: 'it-study',
+      groupId: 'it-group',
+      position: 1,
+      title: 'Estudo IT',
+      description: 'Descrição IT.',
+      pages: [
+        {
+          id: 'it-page',
+          title: 'Página IT',
+          blocks: [{ type: 'text', body: 'Oi.' }, signBlock(sign)],
+        },
+      ],
+    });
+  }
+
+  it(
+    'counts the studies that show a sign and keeps it from being deleted',
+    inRollback(async (tx) => {
+      const signs = new DrizzleDraftSignRepository(tx);
+      await signs.create(sign);
+      await insertStudyShowing(tx);
+
+      const listed = (await signs.list()).find((item) => item.id === 'it-sign');
+      expect(listed).toMatchObject({ exerciseCount: 0, studyCount: 1 });
+      expect(await signs.delete('it-sign')).toBe('inUse');
+    }),
+  );
+
+  it(
+    'brings the copy of an edited sign up to date in the studies that show it',
+    inRollback(async (tx) => {
+      const signs = new DrizzleDraftSignRepository(tx);
+      await signs.create(sign);
+      await insertStudyShowing(tx);
+
+      await signs.update({ ...sign, label: 'IT editado', description: 'Abre a mão.' });
+
+      const [study] = await tx
+        .select()
+        .from(draftStudies)
+        .where(sql`id = 'it-study'`);
+      expect(study?.pages[0]?.blocks).toEqual([
+        { type: 'text', body: 'Oi.' },
+        signBlock({ ...sign, label: 'IT editado', description: 'Abre a mão.' }),
+      ]);
     }),
   );
 });

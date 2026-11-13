@@ -17,6 +17,7 @@ const letterA: AdminSign = {
   alt: 'Mão fechada',
   description: null,
   exerciseCount: 3,
+  studyCount: 0,
 };
 
 const unused: AdminSign = { ...letterA, id: 'sign-old', label: 'Velho', exerciseCount: 0 };
@@ -72,6 +73,15 @@ describe('sign use cases', () => {
 
     expect(inUse.ok || inUse.error.code).toBe('SIGN_IN_USE');
     expect(missing.ok || missing.error.code).toBe('SIGN_NOT_FOUND');
+  });
+
+  it('keeps a sign that only a study shows', async () => {
+    const inStudy: AdminSign = { ...unused, id: 'sign-study', studyCount: 1 };
+    const result = await new DeleteSign(new InMemoryDraftSigns([inStudy])).execute({
+      id: 'sign-study',
+    });
+
+    expect(result.ok || result.error.code).toBe('SIGN_IN_USE');
   });
 
   it('authorizes each upload on a new path with the extension of its type', async () => {

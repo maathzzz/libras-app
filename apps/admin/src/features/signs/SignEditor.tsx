@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
-import { plural } from '@/shared/plural';
+import { signUsage } from '@/shared/plural';
 import { Button, DraftNotice, ErrorBanner, LoadingText } from '@/shared/ui';
 
 import { SignForm } from './SignForm';
@@ -94,7 +94,8 @@ function LoadedSign({ sign }: { sign: AdminSign | undefined }) {
     }
   }
 
-  const inUse = sign.exerciseCount > 0;
+  const usage = signUsage(sign);
+  const inUse = usage !== null;
 
   return (
     <>
@@ -103,8 +104,7 @@ function LoadedSign({ sign }: { sign: AdminSign | undefined }) {
         <div className="flex items-center gap-3">
           {inUse && (
             <span className="text-[13px] text-text-muted">
-              Usado em {plural(sign.exerciseCount, 'exercício', 'exercícios')}: não pode ser
-              excluído.
+              Usado em {usage}: não pode ser excluído.
             </span>
           )}
           <Button variant="danger" size="sm" disabled={inUse} onClick={() => void remove()}>

@@ -19,6 +19,7 @@ const sign = (id: string, label: string, frames = 1): AdminSign => ({
   alt: `Mão do ${label}`,
   description: null,
   exerciseCount: 0,
+  studyCount: 0,
 });
 
 const draftSigns = [sign('a', 'A'), sign('b', 'B'), sign('oi', 'Oi', 2), sign('a2', 'a')];

@@ -75,8 +75,9 @@ const SignFields = {
 export const AdminSign = z.object({
   id: ContentId,
   ...SignFields,
-  // Draft exercises that show the sign. A sign in use cannot be deleted.
+  // Draft exercises and studies that show the sign. A sign in use cannot be deleted.
   exerciseCount: z.number().int().nonnegative(),
+  studyCount: z.number().int().nonnegative(),
 });
 export type AdminSign = z.infer<typeof AdminSign>;
 

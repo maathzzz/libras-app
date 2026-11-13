@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import { errorMessage } from '@/shared/api/errorMessage';
 import { useApiData } from '@/shared/api/useApiData';
-import { plural } from '@/shared/plural';
+import { signUsage } from '@/shared/plural';
 import { normalized } from '@/shared/search';
 import { Button, DraftNotice, ErrorBanner, inputClassName, LoadingText } from '@/shared/ui';
 
@@ -26,7 +26,7 @@ function SignCard({ sign }: { sign: AdminSign }) {
         <div className="grid min-w-0 gap-0.5">
           <span className="truncate font-bold">{sign.label}</span>
           <span className="text-[13px] text-text-muted">
-            {plural(sign.exerciseCount, 'exercício', 'exercícios')}
+            {signUsage(sign) ?? 'sem uso'}
             {sign.imageUrls.length > 1 && ` · ${sign.imageUrls.length} imagens`}
           </span>
           {sign.description === null && (

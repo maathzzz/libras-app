@@ -4,7 +4,7 @@ const byCode: Record<string, string> = {
   AMBIGUOUS_OPTIONS: 'Duas opções têm o mesmo nome. Escolha sinais com nomes diferentes.',
   UNKNOWN_SIGN: 'Um dos sinais escolhidos não existe mais. Carregamos a versão atual.',
   INVALID_ORDER: 'A lista mudou enquanto você editava. Carregamos a versão atual; tente de novo.',
-  SIGN_IN_USE: 'Este sinal aparece em exercícios e não pode ser excluído.',
+  SIGN_IN_USE: 'Este sinal aparece em exercícios ou estudos e não pode ser excluído.',
   VALIDATION_ERROR: 'Algum campo está inválido. Confira os dados e tente de novo.',
 };
 

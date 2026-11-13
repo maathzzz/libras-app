@@ -1,18 +1,30 @@
-import { Exercise, type AdminSign } from '@libras/contracts';
-import { and, asc, count, eq, inArray, notExists, sql } from 'drizzle-orm';
+import { Exercise, StudyPage, type AdminSign } from '@libras/contracts';
+import { z } from 'zod';
+import { and, asc, count, eq, inArray, notExists, sql, type SQL } from 'drizzle-orm';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import {
   draftExercises,
   draftExerciseSigns,
   draftSigns,
+  draftStudies,
 } from '../../../shared/infrastructure/db/schema';
 import { withSign } from '../domain/DraftExercise';
+import { withSignInPages } from '../domain/DraftStudy';
 import type {
   DeleteSignOutcome,
   DraftSign,
   DraftSignRepository,
 } from '../domain/DraftSignRepository';
+
+// Studies have no join table: a sign block names its sign in `signId`, so a study shows a sign
+// when its pages contain a block with that id (jsonb containment).
+const pagesShowing = (pages: SQL, signId: SQL | string) => sql`${pages} @> jsonb_build_array(
+  jsonb_build_object('blocks', jsonb_build_array(jsonb_build_object('signId', ${signId}::text)))
+)`;
+
+const studiesShowing = (signId: SQL | string) =>
+  sql`select 1 from app.draft_studies as study where ${pagesShowing(sql`study.pages`, signId)}`;
 
 export class DrizzleDraftSignRepository implements DraftSignRepository {
   constructor(private readonly db: DbExecutor) {}
@@ -26,6 +38,7 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
         alt: draftSigns.alt,
         description: draftSigns.description,
         exerciseCount: count(draftExerciseSigns.exerciseId),
+        studyCount: sql<number>`(select count(*) from (${studiesShowing(sql`${draftSigns.id}`)}) as showing)::integer`,
       })
       .from(draftSigns)
       .leftJoin(draftExerciseSigns, eq(draftExerciseSigns.signId, draftSigns.id))
@@ -74,12 +87,23 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
           .set({ payload: withSign(Exercise.parse(exercise.payload), sign) })
           .where(eq(draftExercises.id, exercise.id));
       }
+
+      // So do the sign blocks of studies.
+      const studies = await tx
+        .select({ id: draftStudies.id, pages: draftStudies.pages })
+        .from(draftStudies)
+        .where(pagesShowing(sql`${draftStudies.pages}`, id));
+      for (const study of studies) {
+        const pages = withSignInPages(z.array(StudyPage).parse(study.pages), sign);
+        await tx.update(draftStudies).set({ pages }).where(eq(draftStudies.id, study.id));
+      }
       return true;
     });
   }
 
-  // The foreign key would refuse a sign in use too; checking in the delete itself gives a
-  // clear answer instead of a database error.
+  // The foreign key would refuse a sign shown by an exercise too; checking in the delete
+  // itself gives a clear answer instead of a database error. Studies have no foreign key,
+  // so this check is what keeps their signs.
   async delete(id: string): Promise<DeleteSignOutcome> {
     const usage = this.db
       .select({ one: sql`1` })
@@ -87,7 +111,7 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
       .where(eq(draftExerciseSigns.signId, id));
     const deleted = await this.db
       .delete(draftSigns)
-      .where(and(eq(draftSigns.id, id), notExists(usage)))
+      .where(and(eq(draftSigns.id, id), notExists(usage), sql`not exists (${studiesShowing(id)})`))
       .returning({ id: draftSigns.id });
     if (deleted.length > 0) return 'deleted';
 
