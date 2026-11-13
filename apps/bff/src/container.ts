@@ -1,4 +1,10 @@
+import { CreateOperator } from './modules/admin/application/CreateOperator';
+import { GetOperators } from './modules/admin/application/GetOperators';
+import { ResetOperatorPassword } from './modules/admin/application/ResetOperatorPassword';
+import { UpdateOperator } from './modules/admin/application/UpdateOperator';
 import { AuthorizeAdmin } from './modules/admin/application/AuthorizeAdmin';
+import { CryptoPasswordGenerator } from './modules/admin/infrastructure/CryptoPasswordGenerator';
+import { SupabaseOperatorAccounts } from './modules/admin/infrastructure/SupabaseOperatorAccounts';
 import { DrizzleAdminRepository } from './modules/admin/infrastructure/DrizzleAdminRepository';
 import { CreateExercise } from './modules/authoring/application/CreateExercise';
 import { CreateOutlineItem } from './modules/authoring/application/CreateOutlineItem';
@@ -69,6 +75,10 @@ export interface Container extends AuthoringUseCases {
   getStudies: GetStudies;
   getStudy: GetStudy;
   authorizeAdmin: AuthorizeAdmin;
+  getOperators: GetOperators;
+  createOperator: CreateOperator;
+  updateOperator: UpdateOperator;
+  resetOperatorPassword: ResetOperatorPassword;
   getHome: GetHome;
   getLesson: GetLesson;
   getProfile: GetProfile;
@@ -93,6 +103,9 @@ export function createContainer(
   const profiles = new DrizzleProfileRepository(db);
   const studies = new DrizzleStudyRepository(db);
   const ids = new RandomIdGenerator();
+  const admins = new DrizzleAdminRepository(db);
+  const operatorAccounts = new SupabaseOperatorAccounts(supabaseUrl, supabaseSecretKey);
+  const passwords = new CryptoPasswordGenerator();
   const outline = new DrizzleCmsOutlineRepository(db);
   const cmsSigns = new DrizzleCmsSignRepository(db);
   const cmsExercises = new DrizzleCmsExerciseRepository(db);
@@ -120,7 +133,11 @@ export function createContainer(
     getAchievements: new GetAchievements(trails, progress, progress, progress),
     getStudies: new GetStudies(studies),
     getStudy: new GetStudy(studies),
-    authorizeAdmin: new AuthorizeAdmin(new DrizzleAdminRepository(db)),
+    authorizeAdmin: new AuthorizeAdmin(admins),
+    getOperators: new GetOperators(admins),
+    createOperator: new CreateOperator(admins, operatorAccounts, passwords),
+    updateOperator: new UpdateOperator(admins),
+    resetOperatorPassword: new ResetOperatorPassword(admins, operatorAccounts, passwords),
     getCmsTrails: new GetCmsTrails(outline),
     createOutlineItem: new CreateOutlineItem(outline, ids),
     renameOutlineItem: new RenameOutlineItem(outline),

@@ -1,4 +1,9 @@
-import { AdminMeResponse, ErrorResponse } from '@libras/contracts';
+import {
+  AdminMeResponse,
+  AdminOperatorsResponse,
+  ErrorResponse,
+  TemporaryPasswordResponse,
+} from '@libras/contracts';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { buildApp } from '../../../app';
@@ -97,5 +102,83 @@ describe('admin routes', () => {
         expectError(await getAs(operatorId, url), 403, 'OPERATOR_ACCOUNT');
       },
     );
+  });
+
+  describe('operators', () => {
+    const send = async (method: 'GET' | 'POST' | 'PATCH', url: string, payload?: object) =>
+      app.inject({
+        method,
+        url,
+        headers: {
+          authorization: `Bearer ${await tokens.sign(operatorId, { now, operator: true })}`,
+        },
+        ...(payload ? { payload } : {}),
+      });
+    const list = async () =>
+      AdminOperatorsResponse.parse((await send('GET', '/v1/admin/operators')).json()).operators;
+
+    it('lists the operators, deactivated ones too', async () => {
+      expect((await list()).map(({ name, active }) => [name, active])).toEqual([
+        ['Ana', true],
+        ['Bia', false],
+        ['Caio', true],
+      ]);
+    });
+
+    it('creates an operator and answers its temporary password once, never cached', async () => {
+      const response = await send('POST', '/v1/admin/operators', {
+        email: 'Dani+CMS@example.com',
+        name: 'Dani',
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(response.headers['cache-control']).toBe('no-store');
+      expect(TemporaryPasswordResponse.parse(response.json()).temporaryPassword).toBe(
+        'temporary-password-1',
+      );
+      expect((await list()).find((operator) => operator.name === 'Dani')?.email).toBe(
+        'dani+cms@example.com',
+      );
+    });
+
+    it('deactivates another operator, who loses access at once', async () => {
+      const response = await send('PATCH', `/v1/admin/operators/${formerOperatorId}`, {
+        name: 'Bia',
+        active: true,
+      });
+      expect(response.statusCode).toBe(204);
+      expect((await getAs(formerOperatorId, '/v1/admin/me')).statusCode).toBe(200);
+
+      await send('PATCH', `/v1/admin/operators/${formerOperatorId}`, {
+        name: 'Bia',
+        active: false,
+      });
+      expectError(await getAs(formerOperatorId, '/v1/admin/me'), 403, 'NOT_ADMIN');
+    });
+
+    it('refuses to deactivate yourself and reports an unknown operator', async () => {
+      expectError(
+        await send('PATCH', `/v1/admin/operators/${operatorId}`, { name: 'Ana', active: false }),
+        422,
+        'CANNOT_DEACTIVATE_SELF',
+      );
+      expectError(
+        await send('POST', '/v1/admin/operators/7d6f1c2a-1b2d-4c5e-8f90-1a2b3c4d5e99/password'),
+        404,
+        'OPERATOR_NOT_FOUND',
+      );
+    });
+
+    it('gives an operator a new temporary password', async () => {
+      const response = await send('POST', `/v1/admin/operators/${formerOperatorId}/password`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['cache-control']).toBe('no-store');
+      expect(TemporaryPasswordResponse.parse(response.json()).userId).toBe(formerOperatorId);
+    });
+
+    it('keeps learners out', async () => {
+      expectError(await getAs(learnerId, '/v1/admin/operators'), 403, 'NOT_ADMIN');
+    });
   });
 });

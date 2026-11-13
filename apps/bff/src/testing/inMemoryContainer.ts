@@ -1,7 +1,15 @@
 import { createLocalJWKSet, type JWTVerifyGetKey } from 'jose';
 
 import type { Container } from '../container';
+import { CreateOperator } from '../modules/admin/application/CreateOperator';
+import { GetOperators } from '../modules/admin/application/GetOperators';
+import { ResetOperatorPassword } from '../modules/admin/application/ResetOperatorPassword';
+import { UpdateOperator } from '../modules/admin/application/UpdateOperator';
 import { AuthorizeAdmin } from '../modules/admin/application/AuthorizeAdmin';
+import {
+  InMemoryOperatorAccounts,
+  SequentialPasswordGenerator,
+} from '../modules/admin/testing/InMemoryOperatorAccounts';
 import { InMemoryAdminRepository } from '../modules/admin/testing/InMemoryAdminRepository';
 import { CreateExercise } from '../modules/authoring/application/CreateExercise';
 import { CreateOutlineItem } from '../modules/authoring/application/CreateOutlineItem';
@@ -66,6 +74,7 @@ interface InMemoryContainerOptions {
   trails?: InMemoryTrailCatalog;
   studies?: InMemoryStudyRepository;
   admins?: InMemoryAdminRepository;
+  operatorAccounts?: InMemoryOperatorAccounts;
   outline?: InMemoryCmsOutline;
   cmsSigns?: InMemoryCmsSigns;
   cmsExercises?: InMemoryCmsExercises;
@@ -85,6 +94,7 @@ export function createInMemoryContainer(
     trails = new InMemoryTrailCatalog([]),
     studies = new InMemoryStudyRepository(),
     admins = new InMemoryAdminRepository(),
+    operatorAccounts = new InMemoryOperatorAccounts(),
     outline = new InMemoryCmsOutline(),
     cmsSigns = new InMemoryCmsSigns(),
     cmsExercises = new InMemoryCmsExercises(),
@@ -93,6 +103,7 @@ export function createInMemoryContainer(
   }: InMemoryContainerOptions = {},
 ): Container {
   const ids = new SequentialIdGenerator();
+  const passwords = new SequentialPasswordGenerator();
   return {
     clock,
     verifyAccessToken: createAccessTokenVerifier({
@@ -114,6 +125,10 @@ export function createInMemoryContainer(
     getStudies: new GetStudies(studies),
     getStudy: new GetStudy(studies),
     authorizeAdmin: new AuthorizeAdmin(admins),
+    getOperators: new GetOperators(admins),
+    createOperator: new CreateOperator(admins, operatorAccounts, passwords),
+    updateOperator: new UpdateOperator(admins),
+    resetOperatorPassword: new ResetOperatorPassword(admins, operatorAccounts, passwords),
     getCmsTrails: new GetCmsTrails(outline),
     createOutlineItem: new CreateOutlineItem(outline, ids),
     renameOutlineItem: new RenameOutlineItem(outline),
