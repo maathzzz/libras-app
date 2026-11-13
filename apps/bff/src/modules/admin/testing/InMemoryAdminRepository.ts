@@ -12,6 +12,10 @@ export class InMemoryAdminRepository implements AdminRepository {
     return this.byUserId.get(userId) ?? null;
   }
 
+  async list(): Promise<Admin[]> {
+    return [...this.byUserId.values()].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }
+
   async save(admin: Admin): Promise<void> {
     this.byUserId.set(admin.userId, admin);
   }
