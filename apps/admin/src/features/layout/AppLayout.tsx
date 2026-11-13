@@ -19,7 +19,7 @@ const navItems: readonly NavItem[] = [
   { label: 'Trilhas e lições', href: '/trilhas' },
   { label: 'Sinais', href: '/sinais' },
   { label: 'Estudos', href: '/estudos' },
-  { label: 'Operadores' },
+  { label: 'Operadores', href: '/operadores' },
 ];
 
 const itemClassName =

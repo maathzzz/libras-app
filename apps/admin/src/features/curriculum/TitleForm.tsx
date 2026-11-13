@@ -9,6 +9,8 @@ interface TitleFormProps {
   label: string;
   initialTitle?: string;
   submitLabel: string;
+  // Shorter for names, such as an operator's (60).
+  maxLength?: number;
   onSubmit: (title: string) => Promise<void>;
   onCancel: () => void;
 }
@@ -18,12 +20,13 @@ export function TitleForm({
   label,
   initialTitle = '',
   submitLabel,
+  maxLength = 80,
   onSubmit,
   onCancel,
 }: TitleFormProps) {
   const [title, setTitle] = useState(initialTitle);
   const [saving, setSaving] = useState(false);
-  const valid = ContentTitle.safeParse(title).success;
+  const valid = ContentTitle.safeParse(title).success && title.trim().length <= maxLength;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -42,7 +45,7 @@ export function TitleForm({
         aria-label={label}
         className={`${inputClassName} max-w-md flex-1`}
         value={title}
-        maxLength={80}
+        maxLength={maxLength}
         autoFocus
         onChange={(event) => setTitle(event.target.value)}
         onKeyDown={(event) => {
