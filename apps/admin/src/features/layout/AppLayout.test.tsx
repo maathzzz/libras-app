@@ -32,6 +32,9 @@ describe('AppLayout', () => {
     expect(screen.getByRole('link', { name: 'Operadores' }).getAttribute('href')).toBe(
       '/operadores',
     );
+    expect(screen.getByRole('link', { name: 'Minha senha' }).getAttribute('href')).toBe(
+      '/conta/senha',
+    );
   });
 
   it('shows the operator and signs out', async () => {
