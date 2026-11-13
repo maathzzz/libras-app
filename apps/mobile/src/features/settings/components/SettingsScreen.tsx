@@ -58,7 +58,12 @@ export function SettingsScreen() {
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.titleRow}>
-          <IconButton icon="back" accessibilityLabel="Voltar" onPress={() => router.back()} filled />
+          <IconButton
+            icon="back"
+            accessibilityLabel="Voltar"
+            onPress={() => router.back()}
+            look="filled"
+          />
           <ScreenTitle title="Ajustes" />
         </View>
         {profile && (

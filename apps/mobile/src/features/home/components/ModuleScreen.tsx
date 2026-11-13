@@ -1,15 +1,16 @@
 import type { HomeResponse } from '@libras/contracts';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { borderWidth, colors, spacing } from '@/shared/theme';
-import { AppText, Button, IconButton, LoadError, Pill, ProgressBar } from '@/shared/ui';
+import { colors, spacing, trailColors } from '@/shared/theme';
+import { AppText, Button, IconButton, LoadError, Pill } from '@/shared/ui';
 
 import { useHomeStore } from '../store/homeStore';
 import { completedLessons, lessonsLabel, percentLabel, unitProgress } from './homeView';
-import { TrailPath } from './TrailPath';
+import { LessonSegments } from './LessonSegments';
+import { TrailMap } from './TrailMap';
 
 type ModuleScreenProps = {
   unitId: string;
@@ -84,24 +85,31 @@ function ModuleContent({ home, unitId }: ModuleContentProps) {
             icon="back"
             accessibilityLabel="Voltar"
             onPress={() => router.back()}
-            filled
+            look="raised"
           />
           <View style={styles.title}>
-            <AppText variant="kicker">{`Módulo ${index + 1} de ${units.length}`}</AppText>
-            <AppText variant="heading" accessibilityRole="header" numberOfLines={2}>
+            <AppText variant="kicker" color="textMuted">
+              {`Módulo ${index + 1} de ${units.length}`}
+            </AppText>
+            <AppText variant="headingStrong" accessibilityRole="header" numberOfLines={2}>
               {unit.title}
             </AppText>
           </View>
-          <Pill label={percent} accessibilityLabel={`${percent} concluído`} />
+          {/* The pill sizes to its text; the wrapper centers it on the title row. */}
+          <View>
+            <Pill label={percent} accessibilityLabel={`${percent} concluído`} />
+          </View>
         </View>
-        <ProgressBar value={progress} size="sm" accessibilityLabel="Progresso do módulo" />
-        <AppText variant="caption">
-          {`${completedLessons(unit)} de ${lessonsLabel(unit.lessons.length)} concluídas`}
-        </AppText>
+        <View style={styles.segments}>
+          <LessonSegments lessons={unit.lessons} progress={progress} />
+        </View>
+        <View style={styles.legend}>
+          <AppText variant="caption">
+            {`${completedLessons(unit)} de ${lessonsLabel(unit.lessons.length)} concluídas`}
+          </AppText>
+        </View>
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
-        <TrailPath lessons={unit.lessons} onOpenLesson={openLesson} />
-      </ScrollView>
+      <TrailMap lessons={unit.lessons} onOpenLesson={openLesson} />
     </>
   );
 }
@@ -109,15 +117,19 @@ function ModuleContent({ home, unitId }: ModuleContentProps) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
+  // Drawn over the top of the map, so its shadow falls on the scenery.
   header: {
-    gap: spacing.sm,
-    paddingTop: spacing['2xs'],
+    zIndex: 1,
+    paddingTop: spacing['3xs'],
     paddingHorizontal: spacing['2xl'],
-    paddingBottom: spacing.xl,
-    borderBottomWidth: borderWidth.hairline,
-    borderBottomColor: colors.borderSubtle,
+    paddingBottom: spacing.lg,
+    backgroundColor: colors.surface,
+    boxShadow: [
+      { offsetX: 0, offsetY: 1, blurRadius: 0, color: colors.border },
+      { offsetX: 0, offsetY: spacing.xs, blurRadius: spacing.xl, color: trailColors.headerShadow },
+    ],
   },
   titleRow: {
     flexDirection: 'row',
@@ -128,15 +140,17 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing['3xs'],
   },
-  content: {
-    paddingTop: spacing['3xl'],
-    paddingHorizontal: spacing['2xl'],
-    paddingBottom: spacing['5xl'],
+  segments: {
+    marginTop: spacing.lg,
+  },
+  legend: {
+    marginTop: spacing.xs,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.background,
   },
   missing: {
     gap: spacing.xl,

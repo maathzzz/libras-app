@@ -87,15 +87,15 @@ describe('homeView', () => {
     expect(new Set(titles).size).toBe(titles.length);
   });
 
-  it('describes each lesson for screen readers', () => {
-    expect(lessonAccessibilityLabel({ id: 'a', title: 'Oi', status: 'completed' })).toBe(
-      'Oi, concluída',
+  it('describes each lesson for screen readers with its number in the module', () => {
+    expect(lessonAccessibilityLabel({ id: 'a', title: 'Oi', status: 'completed' }, 1)).toBe(
+      'Lição 1, Oi, concluída',
     );
-    expect(lessonAccessibilityLabel({ id: 'b', title: 'Bom dia', status: 'available' })).toBe(
-      'Bom dia, disponível',
+    expect(lessonAccessibilityLabel({ id: 'b', title: 'H a M', status: 'available' }, 3)).toBe(
+      'Lição 3, H a M, disponível',
     );
-    expect(lessonAccessibilityLabel({ id: 'c', title: 'Casa', status: 'locked' })).toBe(
-      'Casa, bloqueada',
+    expect(lessonAccessibilityLabel({ id: 'c', title: 'Casa', status: 'locked' }, 4)).toBe(
+      'Lição 4, Casa, bloqueada',
     );
   });
 

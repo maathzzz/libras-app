@@ -11,6 +11,7 @@ const palette = {
   blueDark: '#1672AA',
   blueSoft: '#E6F3FC',
   blueSoftEdge: '#C8E3F7',
+  blueLight: '#9FD0F1',
 
   teal: '#14BFBA',
   tealDark: '#0F9A96',
@@ -18,6 +19,7 @@ const palette = {
 
   green: '#58CC02',
   greenDark: '#47A302',
+  greenDeep: '#2F7A00',
   greenLight: '#8AD83F',
   greenSoft: '#EEF9E0',
   greenSoftEdge: '#D7EFBA',
@@ -33,6 +35,7 @@ const palette = {
   orangeSoftEdge: '#FFE4C2',
 
   slate700: '#33586A',
+  slate650: '#4D6A79',
   slate600: '#5C7B8A',
   slate500: '#6B8695',
   slate300: '#D3E0E8',
@@ -62,10 +65,13 @@ export const colors = {
   accentDark: palette.blueDark,
   accentSoft: palette.blueSoft,
   accentSoftEdge: palette.blueSoftEdge,
+  accentLight: palette.blueLight,
 
   // Main call to action and correct answers.
   success: palette.green,
   successDark: palette.greenDark,
+  // Green text on white, darker than `successDark` so small labels stay readable.
+  successText: palette.greenDeep,
   successLight: palette.greenLight,
   successSoft: palette.greenSoft,
   successSoftEdge: palette.greenSoftEdge,
@@ -91,6 +97,7 @@ export const colors = {
   track: palette.slate150,
   locked: palette.slate300,
   lockedSurface: palette.slate125,
+  lockedText: palette.slate650,
 
   // Gray square shown while a sign image loads or when it is missing.
   imagePlaceholder: palette.slate150,
@@ -101,11 +108,45 @@ export const colors = {
 
 export type ColorToken = keyof typeof colors;
 
+// The module map ("trilha de aventura", docs/design/trilha-modulo-spec.md): the road, the
+// lesson nodes and the countryside drawn around them. Only that screen uses these.
+export const trailColors = {
+  skyTop: '#DCF0FB',
+  meadow: '#E9F7E0',
+  meadowEnd: '#E4F4D6',
+
+  roadEdge: '#E2D2AB',
+  roadBed: '#FBF4E3',
+  roadDots: '#D6C398',
+  roadDone: palette.green,
+
+  currentHalo: 'rgba(28, 142, 214, 0.2)',
+  currentRing: 'rgba(28, 142, 214, 0.55)',
+  lockedNode: '#F4F8FA',
+  lockedNodeEdge: '#C4D3DC',
+  labelEdge: '#D6E6C4',
+  balloonShadow: 'rgba(16, 36, 46, 0.1)',
+  headerShadow: 'rgba(16, 36, 46, 0.06)',
+
+  hill: '#D3EDB6',
+  hillInner: '#C3E5A0',
+  trunk: '#A8743A',
+  treeTop: palette.green,
+  treeShine: palette.greenLight,
+  treeShadow: '#BFE09A',
+  cloud: palette.white,
+  lake: '#A9D8F2',
+  lakeShine: '#C8E8F8',
+  stone: '#D3DDE3',
+  flowers: [palette.orange, palette.white, palette.teal, '#FFC23D'],
+} as const;
+
 export const fontFamily = {
   regular: 'Inter_400Regular',
   medium: 'Inter_500Medium',
   semibold: 'Inter_600SemiBold',
   bold: 'Inter_700Bold',
+  extrabold: 'Inter_800ExtraBold',
 } as const;
 
 export const fontSize = {
@@ -159,9 +200,12 @@ export const radius = {
 // The design's signature "chunky" look: a solid, unblurred shadow under the element
 // that shrinks when it is pressed, so the element appears to sink.
 export const depth = {
+  xs: 2,
   sm: 3,
   md: 4,
   lg: 5,
+  // Lesson nodes of the module map.
+  xl: 6,
   pressed: 1,
 } as const;
 
@@ -180,9 +224,17 @@ export const sizes = {
   iconMd: 16,
   iconLg: 22,
   iconXl: 52,
-  trailNode: 64,
-  // Soft ring that highlights the current node of the trail.
-  trailNodeHalo: 6,
+  trailNode: 72,
+  // Soft ring that highlights the current node of the trail, and the pulsing ring around it.
+  trailNodeHalo: 8,
+  trailNodeRingGap: 10,
+  trailNodeRing: 3,
+  // "Começar" balloon above the current lesson and its tail.
+  trailBalloonWidth: 132,
+  trailBalloonHeight: 44,
+  trailBalloonTail: 14,
+  // Lesson name under a node: it may be wider than the node, never wider than this.
+  trailLabelMaxWidth: 150,
   verdictIcon: 34,
   // Lesson reward: the soft circle behind the check and the area the confetti spreads over.
   rewardBurst: 92,
@@ -229,4 +281,8 @@ export const duration = {
   // Delay between the reward's sections as they come in.
   stagger: 120,
   toggle: 180,
+  // Ring that grows out of the current lesson of the module map.
+  trailRing: 1800,
+  // Each half of the "Começar" balloon floating up and down.
+  balloonFloat: 1100,
 } as const;

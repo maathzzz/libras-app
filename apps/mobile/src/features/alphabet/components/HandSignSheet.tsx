@@ -48,7 +48,7 @@ function SheetContent({ sign }: { sign: HandSign }) {
             {sign.label}
           </AppText>
         </View>
-        <IconButton icon="close" accessibilityLabel="Fechar" onPress={close} filled />
+        <IconButton icon="close" accessibilityLabel="Fechar" onPress={close} look="filled" />
       </View>
       <View style={styles.imageArea}>
         <SignImage image={sign.image} size={sizes.handSignFrame} />

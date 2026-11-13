@@ -26,6 +26,11 @@ export const textStyles = {
     lineHeight: fontSize['3xl'] * lineHeight.snug,
   }),
   heading: style('bold', fontSize['2xl'], { lineHeight: fontSize['2xl'] * lineHeight.snug }),
+  // Title of a game-like screen, such as the module map.
+  headingStrong: style('extrabold', fontSize['2xl'], {
+    letterSpacing: em(fontSize['2xl'], -0.02),
+    lineHeight: fontSize['2xl'] * lineHeight.snug,
+  }),
   subtitle: style('bold', fontSize.lg, { lineHeight: fontSize.lg * lineHeight.snug }),
   body: style('regular', fontSize.base, {
     color: colors.textBody,
@@ -62,6 +67,14 @@ export const textStyles = {
   }),
   pill: style('bold', fontSize.md),
   label: style('bold', fontSize.xs, { lineHeight: fontSize.xs * 1.3 }),
+  // Name of a lesson under its node on the module map.
+  nodeTitle: style('bold', fontSize.md, { lineHeight: fontSize.md * lineHeight.snug }),
+  // Short call to action inside a balloon ("COMEÇAR") and the line under it.
+  callout: style('extrabold', fontSize.sm, {
+    letterSpacing: em(fontSize.sm, 0.09),
+    textTransform: 'uppercase',
+  }),
+  calloutDetail: style('semibold', fontSize.xs, { color: colors.textMuted }),
   tab: style('bold', fontSize.xs),
 } satisfies Record<string, TextStyle>;
 

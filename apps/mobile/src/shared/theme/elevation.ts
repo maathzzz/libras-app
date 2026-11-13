@@ -24,6 +24,6 @@ export function raised(edgeColor: string, size: Depth, ringColor?: string): View
 }
 
 // Pressed elements move down by the depth they lose, so the bottom edge stays put.
-export function pressedOffset(size: Depth): ViewStyle {
-  return { transform: [{ translateY: size - depth.pressed }] };
+export function pressedOffset(size: Depth, pressedSize: Depth = depth.pressed): ViewStyle {
+  return { transform: [{ translateY: size - pressedSize }] };
 }

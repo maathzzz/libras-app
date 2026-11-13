@@ -104,8 +104,13 @@ export function streakCopy({ status, longest }: StreakSummary) {
   return { title: 'Sua sequência zerou', hint: 'Conclua uma lição hoje para começar de novo.' };
 }
 
-export function lessonAccessibilityLabel(lesson: TrailLesson): string {
-  if (lesson.status === 'locked') return `${lesson.title}, bloqueada`;
-  if (lesson.status === 'completed') return `${lesson.title}, concluída`;
-  return `${lesson.title}, disponível`;
+const lessonStatusWords = {
+  locked: 'bloqueada',
+  completed: 'concluída',
+  available: 'disponível',
+} as const;
+
+// `number` is the lesson's position in its module, starting at 1.
+export function lessonAccessibilityLabel(lesson: TrailLesson, number: number): string {
+  return `Lição ${number}, ${lesson.title}, ${lessonStatusWords[lesson.status]}`;
 }

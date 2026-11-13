@@ -88,6 +88,12 @@ src/
 * A tela de lição concluída mostra `UnlockedAchievementsCard` quando `achievementsUnlocked` não está vazio. As conquistas entram no anúncio do resultado para leitores de tela, e o háptico toca uma vez para streak e conquistas juntos.
 * Quando o BFF confirma uma conclusão (na hora ou pela fila), as conquistas são recarregadas junto com a home. Conquistas de uma lição enviada pela fila aparecem só no perfil. Ao sair da conta, a lista é apagada.
 
+## Tela de módulo
+
+* Segue `docs/design/trilha-modulo-spec.md` (protótipo em `trilha-modulo-referencia.html`): as lições ficam ligadas por uma estrada sobre um cenário de campo (`ModuleScreen` → `TrailMap`, em `features/home`).
+* A geometria é toda calculada em `components/trailMapLayout.ts` (posição dos nós, path da estrada, altura, rolagem inicial), com testes. O cenário é dado em `trailSceneryLayout.ts` e se repete a cada 4 lições, então qualquer quantidade de lições funciona. Estrada e cenário são desenhados com `react-native-svg`; as cores ficam em `trailColors` (`shared/theme`).
+* O balão "Começar" mostra o título da lição atual. Lições concluídas podem ser refeitas; bloqueadas são anunciadas como desabilitadas. O pulso do nó e a flutuação do balão desligam com "reduzir movimento" (`useReducedMotion`).
+
 ## Imagens
 
 * Sempre use `expo-image` com `cachePolicy="memory-disk"`. Nunca use o `Image` do React Native.
