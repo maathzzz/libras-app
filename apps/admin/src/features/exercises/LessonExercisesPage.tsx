@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
 import { moved } from '@/features/curriculum/curriculumApi';
+import { LessonPreview } from '@/features/preview/LessonPreview';
 import { getSigns } from '@/features/signs/signsApi';
 import { SignThumb } from '@/features/signs/SignThumb';
 import { errorMessage } from '@/shared/api/errorMessage';
@@ -126,6 +127,7 @@ export function LessonExercisesPage({ lessonId }: { lessonId: string }) {
   const { state, reload } = useApiData(load);
   const [editing, setEditing] = useState<Editing>(null);
   const [error, setError] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState(false);
 
   // The screen is reloaded after every change, also on failure: an error usually means it
   // was out of date.
@@ -191,12 +193,27 @@ export function LessonExercisesPage({ lessonId }: { lessonId: string }) {
   return (
     <>
       {backLink}
-      <div className="grid gap-1">
-        <h1 className="text-2xl font-bold">{lesson.title}</h1>
-        <p className="text-text-muted">Exercícios da lição, na ordem em que o aluno os faz.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="grid gap-1">
+          <h1 className="text-2xl font-bold">{lesson.title}</h1>
+          <p className="text-text-muted">Exercícios da lição, na ordem em que o aluno os faz.</p>
+        </div>
+        {exercises.length > 0 && (
+          <Button variant="secondary" onClick={() => setPreviewing((open) => !open)}>
+            {previewing ? 'Fechar prévia' : 'Pré-visualizar'}
+          </Button>
+        )}
       </div>
       <ContentNotice />
       {error && <ErrorBanner>{error}</ErrorBanner>}
+
+      {previewing && exercises.length > 0 && (
+        <LessonPreview
+          key={exercises.map((exercise) => exercise.id).join()}
+          title={lesson.title}
+          exercises={exercises.map((exercise) => exercise.payload)}
+        />
+      )}
 
       {exercises.length === 0 && editing !== 'new' && (
         <p className="text-text-muted">

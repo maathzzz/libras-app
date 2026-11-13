@@ -182,4 +182,28 @@ describe('LessonExercisesPage', () => {
 
     expect(deleteExercise).toHaveBeenCalledWith('ex-2');
   });
+
+  it('plays the lesson in the preview without saving anything', async () => {
+    const user = userEvent.setup();
+    render(<LessonExercisesPage lessonId="vogais" />);
+    await user.click(await screen.findByRole('button', { name: 'Pré-visualizar' }));
+
+    const phone = screen.getByRole('figure');
+    expect(within(phone).getByText('O que este sinal significa?')).toBeTruthy();
+    const verify = within(phone).getByRole('button', { name: 'Verificar' }) as HTMLButtonElement;
+    expect(verify.disabled).toBe(true);
+    await user.click(within(phone).getByRole('button', { name: 'B' }));
+    await user.click(verify);
+    expect(within(phone).getByRole('status').textContent).toContain('Ainda não');
+
+    await user.click(within(phone).getByRole('button', { name: 'Continuar' }));
+    expect(within(phone).getByText(/Qual destes sinais significa/)).toBeTruthy();
+    await user.click(within(phone).getByRole('button', { name: 'Opção 2' }));
+    await user.click(within(phone).getByRole('button', { name: 'Verificar' }));
+    expect(within(phone).getByRole('status').textContent).toContain('Isso!');
+    await user.click(within(phone).getByRole('button', { name: 'Continuar' }));
+
+    expect(within(phone).getByText('Lição concluída!')).toBeTruthy();
+    expect(createExercise).not.toHaveBeenCalled();
+  });
 });

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-const sizes = { sm: 'size-16', md: 'size-24' } as const;
+const sizes = { sm: 'size-16', md: 'size-24', lg: 'size-36' } as const;
 
 // One picture of a sign. Seeded signs without a picture point to `.invalid` addresses, so a
 // picture that fails to load shows a placeholder, as the app does.
