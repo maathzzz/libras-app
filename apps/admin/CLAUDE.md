@@ -12,7 +12,7 @@ src/
     auth/              # Login, sessão do Supabase e AdminGate (verifica se a conta é operador)
     layout/            # Menu lateral e área de conteúdo
     home/
-    curriculum/        # Trilhas, módulos e lições do rascunho (/trilhas)
+    curriculum/        # Trilhas, módulos e lições (/trilhas)
     exercises/         # Exercícios de uma lição (/trilhas/licoes/[lessonId])
     signs/             # Sinais com upload de imagens (/sinais, /sinais/novo, /sinais/[signId])
     studies/           # Grupos de estudo e estudos (/estudos, /estudos/[studyId], /estudos/grupos/[groupId]/novo)
@@ -42,12 +42,13 @@ src/
 - Imagens de sinais vão direto do navegador para o Storage (`uploadSignImage`): o BFF só cria a URL assinada. Tipos e tamanho são checados antes do envio (`imageProblem`), mas quem garante é o bucket.
 - Um exercício é montado escolhendo sinais já cadastrados (busca pelo nome), marcando a resposta certa e a ordem das opções. O CMS não guarda imagens no exercício: o BFF copia as do sinal. Opções com o mesmo nome bloqueiam o salvamento.
 - Um estudo é editado inteiro e salvo de uma vez: dados, páginas e blocos (subtítulo, texto, sinal e dica). O bloco de sinal só escolhe um sinal cadastrado; o BFF copia nome, imagens e descrição. Bloco de sinal sem `signId` (de antes do CMS) mostra o nome antigo e pede para escolher o sinal de novo.
-- Exclusões pedem confirmação dizendo o que sai junto e lembrando que os alunos só deixam de ver depois de publicar.
+- Exclusões pedem confirmação dizendo o que sai junto e que os alunos deixam de ver na hora. Excluir algo que um aluno já fez é recusado (`CONTENT_HAS_PROGRESS`) e a mensagem orienta a ocultar.
+- Trilhas, módulos, lições e estudos mostram se estão visíveis e têm o botão Mostrar/Ocultar (`VisibilityControl`). Toda tela de edição mostra o `ContentNotice`: alterações valem na hora e o que é novo nasce oculto.
 
 ## Decisões do produto
 
-- Rascunho + publicar: o operador edita uma cópia de trabalho; "Publicar alterações" mostra o que mudou e publica tudo de uma vez, numa transação.
-- Excluir conteúdo que alunos já fizeram é arquivar: some do app, mas progresso, XP e conquistas ficam.
+- Sem rascunho nem publicar: o CMS edita o conteúdo que o app lê. Tudo é criado de uma vez e depois editado; o que é novo nasce oculto e o operador decide quando mostrar.
+- Excluir conteúdo que alunos já fizeram não é permitido: arquivar é ocultar. Some do app, mas progresso, XP e conquistas ficam.
 - Pré-visualização simulada no navegador, com os tokens do app (aproximação, não o app real).
 
 ## Desenvolvimento
