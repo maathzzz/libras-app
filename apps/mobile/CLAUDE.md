@@ -69,6 +69,7 @@ src/
 * Ao abrir um estudo, buscar o `StudyGuide` e fazer `Image.prefetch()` das imagens antes de mostrar a primeira página.
 * Cada tipo de bloco é um `case` em `features/study/components/StudyBlockView.tsx`. Para adicionar um tipo: criar o schema em `contracts` e o `case` correspondente; o `switch` não tem `default`, então o typecheck aponta o caso que falta.
 * Nada é enviado ao BFF ao concluir: "Concluir" só fecha o leitor.
+* A lista é buscada ao montar a aba e de novo ao puxar a tela para baixo (`refreshStudies`), como na home. Uma recarga que falha mantém a lista na tela.
 * Os estudos vêm do BFF (`GET /v1/studies` e `GET /v1/studies/:studyId`). Com `EXPO\_PUBLIC\_USE\_MOCKS=true`, `api/studyFixtures.ts` traz o mesmo "Alfabeto manual" do seed, reaproveitando as letras de `features/alphabet`. O texto é provisório e precisa de revisão por especialista em Libras.
 * Layout da página (`studyRows` e `signFrameSize` em `components/studyView.ts`): sinais de uma imagem ficam dois por linha; um sinal com várias imagens ocupa a linha inteira, com as imagens lado a lado no mesmo tamanho das imagens dos sinais vizinhos (só encolhem se não couberem). Um sinal que fica sozinho na linha é centralizado. A ordem dos blocos nunca muda. Os demais blocos (`heading`, `text`, `tip`) ocupam a linha inteira.
 * A `description` de um bloco de sinal aparece uma vez, abaixo de todas as imagens do sinal. O modal do alfabeto (`HandSignSheet`) mostra a `description` do sinal tocado; o conteúdo do alfabeto continua embarcado no app.

@@ -1,7 +1,7 @@
 import type { StudyGroup, StudySummary } from '@libras/contracts';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, radius, sizes, spacing } from '@/shared/theme';
@@ -14,6 +14,8 @@ export function StudiesScreen() {
   const status = useStudyStore((state) => state.listStatus);
   const groups = useStudyStore((state) => state.groups);
   const loadStudies = useStudyStore((state) => state.loadStudies);
+  const refreshing = useStudyStore((state) => state.refreshing);
+  const refreshStudies = useStudyStore((state) => state.refreshStudies);
 
   useEffect(() => {
     void loadStudies();
@@ -22,7 +24,7 @@ export function StudiesScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       {status === 'ready' ? (
-        <StudyList groups={groups} />
+        <StudyList groups={groups} refreshing={refreshing} onRefresh={refreshStudies} />
       ) : status === 'error' ? (
         <LoadError onRetry={loadStudies} />
       ) : (
@@ -38,10 +40,26 @@ function openStudy(studyId: string) {
   router.push({ pathname: '/study/[studyId]', params: { studyId } });
 }
 
-function StudyList({ groups }: { groups: readonly StudyGroup[] }) {
+type StudyListProps = {
+  groups: readonly StudyGroup[];
+  refreshing: boolean;
+  onRefresh: () => void;
+};
+
+// Pulling the list down fetches it again, as on the home, so studies published while the app
+// stays open show up.
+function StudyList({ groups, refreshing, onRefresh }: StudyListProps) {
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <ScreenTitle title="Estudar" description="Leia o conteúdo no seu ritmo, antes ou depois de praticar." />
+    <ScrollView
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+      }
+    >
+      <ScreenTitle
+        title="Estudar"
+        description="Leia o conteúdo no seu ritmo, antes ou depois de praticar."
+      />
       {groups.length === 0 && (
         <AppText variant="body" color="textMuted" align="center">
           Ainda não há conteúdo para estudar.

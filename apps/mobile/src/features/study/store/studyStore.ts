@@ -14,12 +14,15 @@ const prefetchTimeoutMs = 5000;
 type StudyState = {
   listStatus: LoadStatus;
   groups: StudyGroup[];
+  /** True while a pull to refresh reloads the list. */
+  refreshing: boolean;
   guideStatus: LoadStatus;
   guide: StudyGuide | null;
   pageIndex: number;
   /** Bumped on every open or close, so a late response of a study left behind is dropped. */
   openRequest: number;
   loadStudies: () => Promise<void>;
+  refreshStudies: () => Promise<void>;
   openStudy: (studyId: string) => Promise<void>;
   nextPage: () => 'next' | 'finished';
   previousPage: () => void;
@@ -36,6 +39,7 @@ function guideImageUrls(guide: StudyGuide): string[] {
 export const useStudyStore = create<StudyState>()((set, get) => ({
   listStatus: 'idle',
   groups: [],
+  refreshing: false,
   guideStatus: 'idle',
   guide: null,
   pageIndex: 0,
@@ -52,6 +56,13 @@ export const useStudyStore = create<StudyState>()((set, get) => ({
       // A failed reload keeps the last list on screen; the error state is only for a first load.
       if (!hasList) set({ listStatus: 'error' });
     }
+  },
+
+  // Brings in studies published since the list loaded; the list on screen stays if it fails.
+  refreshStudies: async () => {
+    set({ refreshing: true });
+    await get().loadStudies();
+    set({ refreshing: false });
   },
 
   openStudy: async (studyId) => {
