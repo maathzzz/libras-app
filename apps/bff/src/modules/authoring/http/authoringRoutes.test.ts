@@ -1,4 +1,5 @@
 import {
+  AdminLessonExercisesResponse,
   AdminSignsResponse,
   AdminTrailsResponse,
   CreatedResponse,
@@ -12,6 +13,7 @@ import { FixedClock } from '../../../shared/application/FixedClock';
 import { createInMemoryContainer } from '../../../testing/inMemoryContainer';
 import { createTestTokens, type TestTokens } from '../../../testing/testTokens';
 import { InMemoryAdminRepository } from '../../admin/testing/InMemoryAdminRepository';
+import { InMemoryDraftExercises } from '../testing/InMemoryDraftExercises';
 import { InMemoryDraftOutline } from '../testing/InMemoryDraftOutline';
 import { InMemoryDraftSigns } from '../testing/InMemoryDraftSigns';
 
@@ -51,6 +53,17 @@ describe('authoring routes', () => {
         description: null,
         exerciseCount: 2,
       },
+      {
+        id: 'letter-b',
+        label: 'B',
+        imageUrls: ['https://x.test/b.webp'],
+        alt: 'Mão aberta, polegar dobrado',
+        description: null,
+        exerciseCount: 0,
+      },
+    ]);
+    const draftExercises = new InMemoryDraftExercises([
+      { lesson: { id: 'vogais', title: 'Vogais' }, exercises: [] },
     ]);
     app = buildApp(
       createInMemoryContainer(new FixedClock(now), {
@@ -58,6 +71,7 @@ describe('authoring routes', () => {
         admins,
         outline,
         draftSigns,
+        draftExercises,
       }),
       { logger: false },
     );
@@ -154,7 +168,7 @@ describe('authoring routes', () => {
 
       expect([created.statusCode, updated.statusCode]).toEqual([201, 204]);
       const { signs } = AdminSignsResponse.parse((await send('GET', '/v1/admin/signs')).json());
-      expect(signs.map((item) => item.label)).toEqual(['A', 'Olá']);
+      expect(signs.map((item) => item.label)).toEqual(['A', 'B', 'Olá']);
     });
 
     it('answers 409 when deleting a sign in use', async () => {
@@ -170,6 +184,64 @@ describe('authoring routes', () => {
       expect(accepted.statusCode).toBe(200);
       expect(SignImageUploadResponse.parse(accepted.json()).imageUrl).toMatch(/\.png$/);
       expect(refused.statusCode).toBe(400);
+    });
+  });
+
+  describe('exercises', () => {
+    const exercise = {
+      type: 'sign_to_word',
+      signIds: ['letter-b', 'letter-a'],
+      correctSignId: 'letter-a',
+    };
+    const listed = async () =>
+      AdminLessonExercisesResponse.parse(
+        (await send('GET', '/v1/admin/lessons/vogais/exercises')).json(),
+      ).exercises;
+
+    it('creates, replaces, reorders and deletes exercises of a lesson', async () => {
+      const created = await send('POST', '/v1/admin/lessons/vogais/exercises', exercise);
+      const { id } = CreatedResponse.parse(created.json());
+      const second = CreatedResponse.parse(
+        (await send('POST', '/v1/admin/lessons/vogais/exercises', exercise)).json(),
+      );
+      const replaced = await send('PUT', `/v1/admin/exercises/${id}`, {
+        ...exercise,
+        type: 'word_to_sign',
+      });
+      const reordered = await send('PUT', '/v1/admin/lessons/vogais/exercises/order', {
+        ids: [second.id, id],
+      });
+
+      expect([created.statusCode, replaced.statusCode, reordered.statusCode]).toEqual([
+        201, 204, 204,
+      ]);
+      expect((await listed()).map((item) => [item.id, item.type])).toEqual([
+        [second.id, 'sign_to_word'],
+        [id, 'word_to_sign'],
+      ]);
+
+      expect((await send('DELETE', `/v1/admin/exercises/${second.id}`)).statusCode).toBe(204);
+      expect((await listed()).map((item) => item.id)).toEqual([id]);
+    });
+
+    it('answers 404 for an unknown lesson and 422 for an unknown sign', async () => {
+      const noLesson = await send('GET', '/v1/admin/lessons/nope/exercises');
+      const unknownSign = await send('POST', '/v1/admin/lessons/vogais/exercises', {
+        ...exercise,
+        signIds: ['letter-a', 'nope'],
+      });
+
+      expect([noLesson.statusCode, errorCode(noLesson)]).toEqual([404, 'LESSON_NOT_FOUND']);
+      expect([unknownSign.statusCode, errorCode(unknownSign)]).toEqual([422, 'UNKNOWN_SIGN']);
+    });
+
+    it('answers 400 when the correct sign is not an option', async () => {
+      const response = await send('POST', '/v1/admin/lessons/vogais/exercises', {
+        ...exercise,
+        correctSignId: 'letter-c',
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 });

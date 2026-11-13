@@ -1,10 +1,12 @@
 import {
+  AdminLessonExercisesResponse,
   AdminSignsResponse,
   AdminTrailsResponse,
   CreatedResponse,
   CreateSignImageUploadRequest,
   ErrorResponse,
   ReorderRequest,
+  SaveExerciseRequest,
   SaveSignRequest,
   SaveTitleRequest,
   SignImageUploadResponse,
@@ -16,15 +18,20 @@ import { z } from 'zod';
 import type { DomainError } from '../../../shared/domain/DomainError';
 import type { Result } from '../../../shared/domain/Result';
 import { errorBody } from '../../../shared/infrastructure/errorHandler';
+import type { CreateExercise } from '../application/CreateExercise';
 import type { CreateOutlineItem } from '../application/CreateOutlineItem';
 import type { CreateSign } from '../application/CreateSign';
 import type { CreateSignImageUpload } from '../application/CreateSignImageUpload';
+import type { DeleteExercise } from '../application/DeleteExercise';
 import type { DeleteOutlineItem } from '../application/DeleteOutlineItem';
 import type { DeleteSign } from '../application/DeleteSign';
 import type { GetDraftSigns } from '../application/GetDraftSigns';
 import type { GetDraftTrails } from '../application/GetDraftTrails';
+import type { GetLessonExercises } from '../application/GetLessonExercises';
 import type { RenameOutlineItem } from '../application/RenameOutlineItem';
+import type { ReorderExercises } from '../application/ReorderExercises';
 import type { ReorderOutlineItems } from '../application/ReorderOutlineItems';
+import type { UpdateExercise } from '../application/UpdateExercise';
 import type { UpdateSign } from '../application/UpdateSign';
 import type { OutlineLevel } from '../domain/DraftOutline';
 
@@ -39,6 +46,11 @@ export interface AuthoringUseCases {
   updateSign: UpdateSign;
   deleteSign: DeleteSign;
   createSignImageUpload: CreateSignImageUpload;
+  getLessonExercises: GetLessonExercises;
+  createExercise: CreateExercise;
+  updateExercise: UpdateExercise;
+  deleteExercise: DeleteExercise;
+  reorderExercises: ReorderExercises;
 }
 
 function statusOf(code: string): 404 | 409 | 422 {
@@ -73,7 +85,8 @@ const outlineRoutes: Record<OutlineLevel, { path: string; param: string }> = {
 export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsyncZod {
   const { getDraftTrails, createOutlineItem, renameOutlineItem, deleteOutlineItem } = useCases;
   const { reorderOutlineItems, getDraftSigns, createSign, updateSign, deleteSign } = useCases;
-  const { createSignImageUpload } = useCases;
+  const { createSignImageUpload, getLessonExercises, createExercise, updateExercise } = useCases;
+  const { deleteExercise, reorderExercises } = useCases;
 
   return async (app) => {
     app.get('/trails', { schema: { response: { 200: AdminTrailsResponse } } }, async () =>
@@ -203,6 +216,72 @@ export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsync
       { schema: { params: signParams, response: errors } },
       async (request, reply) =>
         sendEmpty(reply, await deleteSign.execute({ id: request.params.signId })),
+    );
+
+    // Exercises
+
+    const lessonParams = idParams('lessonId');
+    const exerciseParams = z.object({ exerciseId: z.string().min(1).max(80) });
+    const lessonIdOf = (values: Record<string, string>) => values.lessonId ?? '';
+
+    app.get(
+      '/lessons/:lessonId/exercises',
+      {
+        schema: {
+          params: lessonParams,
+          response: { 200: AdminLessonExercisesResponse, ...errors },
+        },
+      },
+      async (request, reply) => {
+        const result = await getLessonExercises.execute({ lessonId: lessonIdOf(request.params) });
+        return result.ok ? result.value : sendError(reply, result.error);
+      },
+    );
+
+    app.post(
+      '/lessons/:lessonId/exercises',
+      {
+        schema: {
+          params: lessonParams,
+          body: SaveExerciseRequest,
+          response: { 201: CreatedResponse, ...errors },
+        },
+      },
+      async (request, reply) => {
+        const result = await createExercise.execute({
+          lessonId: lessonIdOf(request.params),
+          ...request.body,
+        });
+        if (!result.ok) return sendError(reply, result.error);
+        return reply.status(201).send(result.value);
+      },
+    );
+
+    app.put(
+      '/lessons/:lessonId/exercises/order',
+      { schema: { params: lessonParams, body: ReorderRequest, response: errors } },
+      async (request, reply) =>
+        sendEmpty(
+          reply,
+          await reorderExercises.execute({ lessonId: lessonIdOf(request.params), ...request.body }),
+        ),
+    );
+
+    app.put(
+      '/exercises/:exerciseId',
+      { schema: { params: exerciseParams, body: SaveExerciseRequest, response: errors } },
+      async (request, reply) =>
+        sendEmpty(
+          reply,
+          await updateExercise.execute({ id: request.params.exerciseId, ...request.body }),
+        ),
+    );
+
+    app.delete(
+      '/exercises/:exerciseId',
+      { schema: { params: exerciseParams, response: errors } },
+      async (request, reply) =>
+        sendEmpty(reply, await deleteExercise.execute({ id: request.params.exerciseId })),
     );
   };
 }

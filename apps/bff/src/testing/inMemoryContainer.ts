@@ -3,16 +3,22 @@ import { createLocalJWKSet, type JWTVerifyGetKey } from 'jose';
 import type { Container } from '../container';
 import { AuthorizeAdmin } from '../modules/admin/application/AuthorizeAdmin';
 import { InMemoryAdminRepository } from '../modules/admin/testing/InMemoryAdminRepository';
+import { CreateExercise } from '../modules/authoring/application/CreateExercise';
 import { CreateOutlineItem } from '../modules/authoring/application/CreateOutlineItem';
 import { CreateSign } from '../modules/authoring/application/CreateSign';
 import { CreateSignImageUpload } from '../modules/authoring/application/CreateSignImageUpload';
+import { DeleteExercise } from '../modules/authoring/application/DeleteExercise';
 import { DeleteOutlineItem } from '../modules/authoring/application/DeleteOutlineItem';
 import { DeleteSign } from '../modules/authoring/application/DeleteSign';
 import { GetDraftSigns } from '../modules/authoring/application/GetDraftSigns';
 import { GetDraftTrails } from '../modules/authoring/application/GetDraftTrails';
+import { GetLessonExercises } from '../modules/authoring/application/GetLessonExercises';
 import { RenameOutlineItem } from '../modules/authoring/application/RenameOutlineItem';
+import { ReorderExercises } from '../modules/authoring/application/ReorderExercises';
 import { ReorderOutlineItems } from '../modules/authoring/application/ReorderOutlineItems';
+import { UpdateExercise } from '../modules/authoring/application/UpdateExercise';
 import { UpdateSign } from '../modules/authoring/application/UpdateSign';
+import { InMemoryDraftExercises } from '../modules/authoring/testing/InMemoryDraftExercises';
 import { InMemoryDraftOutline } from '../modules/authoring/testing/InMemoryDraftOutline';
 import { InMemoryDraftSigns } from '../modules/authoring/testing/InMemoryDraftSigns';
 import { InMemorySignImageStorage } from '../modules/authoring/testing/InMemorySignImageStorage';
@@ -49,6 +55,7 @@ interface InMemoryContainerOptions {
   admins?: InMemoryAdminRepository;
   outline?: InMemoryDraftOutline;
   draftSigns?: InMemoryDraftSigns;
+  draftExercises?: InMemoryDraftExercises;
   signImages?: InMemorySignImageStorage;
 }
 
@@ -66,6 +73,7 @@ export function createInMemoryContainer(
     admins = new InMemoryAdminRepository(),
     outline = new InMemoryDraftOutline(),
     draftSigns = new InMemoryDraftSigns(),
+    draftExercises = new InMemoryDraftExercises(),
     signImages = new InMemorySignImageStorage(),
   }: InMemoryContainerOptions = {},
 ): Container {
@@ -100,6 +108,11 @@ export function createInMemoryContainer(
     createSign: new CreateSign(draftSigns, ids),
     updateSign: new UpdateSign(draftSigns),
     deleteSign: new DeleteSign(draftSigns),
+    getLessonExercises: new GetLessonExercises(draftExercises),
+    createExercise: new CreateExercise(draftExercises, draftSigns, ids),
+    updateExercise: new UpdateExercise(draftExercises, draftSigns),
+    deleteExercise: new DeleteExercise(draftExercises),
+    reorderExercises: new ReorderExercises(draftExercises),
     createSignImageUpload: new CreateSignImageUpload(signImages, ids),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),

@@ -9,7 +9,7 @@ src/
     curriculum/       # Unidades, lições, exercícios, sinais, estudos
     progress/         # Sessões de lição, XP, streak, conquistas
     admin/            # Operadores do CMS e rotas /v1/admin
-    authoring/        # Rascunho do CMS: trilhas, módulos, lições e sinais (rotas em /v1/admin)
+    authoring/        # Rascunho do CMS: trilhas, módulos, lições, exercícios e sinais (rotas em /v1/admin)
       domain/         # Entidades, value objects, interfaces de repositório
       application/    # Casos de uso
       infrastructure/ # Implementações Drizzle dos repositórios
@@ -120,7 +120,9 @@ src/
   - Os três níveis têm a mesma forma, então os mesmos casos de uso servem a todos (`CreateOutlineItem`, `RenameOutlineItem`, `DeleteOutlineItem`, `ReorderOutlineItems`, com `OutlineLevel`). Item ou pai inexistente: 404 `TRAIL_NOT_FOUND`, `UNIT_NOT_FOUND` ou `LESSON_NOT_FOUND`.
   - Excluir no rascunho remove o item e tudo abaixo dele só do rascunho. O que os alunos já fizeram é decidido ao publicar (arquivar, nunca apagar).
   - Sinais: `GET /v1/admin/signs` (`AdminSignsResponse`, com `exerciseCount`), `POST /v1/admin/signs` (201), `PUT /v1/admin/signs/:signId` (substitui todos os campos, 204), `DELETE /v1/admin/signs/:signId` (409 `SIGN_IN_USE` se um exercício do rascunho o usa). `POST /v1/admin/signs/uploads` (`CreateSignImageUploadRequest`) devolve a URL assinada de upload e a URL pública (`SignImageUploadResponse`); o BFF nunca recebe o arquivo (`SupabaseSignImageStorage`).
-  - Editar um sinal não atualiza a cópia das imagens guardada no `payload` dos exercícios; isso fica para a edição de exercícios e a publicação.
+  - Exercícios: `GET /v1/admin/lessons/:lessonId/exercises` (`AdminLessonExercisesResponse`, a lição e os exercícios em ordem), `POST /v1/admin/lessons/:lessonId/exercises` (`SaveExerciseRequest`, 201, entra no fim), `PUT /v1/admin/exercises/:exerciseId` (substitui tudo, inclusive o tipo, 204), `DELETE /v1/admin/exercises/:exerciseId` (204) e `PUT /v1/admin/lessons/:lessonId/exercises/order` (`ReorderRequest`, `INVALID_ORDER` como no esboço). Lição ou exercício inexistente: 404 `LESSON_NOT_FOUND` ou `EXERCISE_NOT_FOUND`.
+  - O CMS edita `sign_to_word` e `word_to_sign` só escolhendo sinais do rascunho (2 a 4 opções, na ordem que o aluno vê, e a certa entre elas). O BFF monta o `payload` com `buildExercise` (`authoring/domain/DraftExercise.ts`), copiando rótulo e imagens de cada sinal, valida com `Exercise` e regrava `draft_exercise_signs` na mesma transação. O id de cada opção é o id do sinal (como no seed), por isso o `payload` basta para saber quais sinais o exercício usa. Sinal inexistente: 422 `UNKNOWN_SIGN`; duas opções com o mesmo rótulo (sem diferenciar maiúsculas): 422 `AMBIGUOUS_OPTIONS`.
+  - Editar um sinal atualiza, na mesma transação, a cópia dele no `payload` de todos os exercícios do rascunho que o mostram (`withSign`). Assim o rascunho nunca tem exercício com imagem antiga.
   - Ids de conteúdo novo vêm do `IdGenerator` injetado (`<prefixo>-<aleatório>`, ex.: `lesson-k3f9x2qa1m`), nunca do título, que pode mudar.
 - Formato de erro padronizado: `{ "error": { "code": string, "message": string } }`.
 
