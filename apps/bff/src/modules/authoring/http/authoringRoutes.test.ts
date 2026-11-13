@@ -1,6 +1,8 @@
 import {
   AdminLessonExercisesResponse,
   AdminSignsResponse,
+  AdminStudiesResponse,
+  AdminStudy,
   AdminTrailsResponse,
   CreatedResponse,
   ErrorResponse,
@@ -16,6 +18,7 @@ import { InMemoryAdminRepository } from '../../admin/testing/InMemoryAdminReposi
 import { InMemoryDraftExercises } from '../testing/InMemoryDraftExercises';
 import { InMemoryDraftOutline } from '../testing/InMemoryDraftOutline';
 import { InMemoryDraftSigns } from '../testing/InMemoryDraftSigns';
+import { InMemoryDraftStudies } from '../testing/InMemoryDraftStudies';
 
 const now = new Date('2026-03-15T12:00:00Z');
 const operatorId = '7d6f1c2a-1b2d-4c5e-8f90-1a2b3c4d5e01';
@@ -67,6 +70,7 @@ describe('authoring routes', () => {
     const draftExercises = new InMemoryDraftExercises([
       { lesson: { id: 'vogais', title: 'Vogais' }, exercises: [] },
     ]);
+    const draftStudies = new InMemoryDraftStudies([{ id: 'iniciante', title: 'Primeiros passos' }]);
     app = buildApp(
       createInMemoryContainer(new FixedClock(now), {
         jwks: tokens.jwks,
@@ -74,6 +78,7 @@ describe('authoring routes', () => {
         outline,
         draftSigns,
         draftExercises,
+        draftStudies,
       }),
       { logger: false },
     );
@@ -244,6 +249,78 @@ describe('authoring routes', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('studies', () => {
+    const study = {
+      groupId: 'iniciante',
+      title: 'Alfabeto',
+      description: 'As letras.',
+      pages: [{ title: 'A', blocks: [{ type: 'sign', signId: 'letter-a' }] }],
+    };
+    const groups = async () =>
+      AdminStudiesResponse.parse((await send('GET', '/v1/admin/studies')).json()).groups;
+
+    it('creates a group and a study, then reads the study with its copy of the sign', async () => {
+      const group = await send('POST', '/v1/admin/study-groups', { title: 'Cotidiano' });
+      const created = await send('POST', '/v1/admin/studies', study);
+      const { id } = CreatedResponse.parse(created.json());
+      const read = await send('GET', `/v1/admin/studies/${id}`);
+
+      expect([group.statusCode, created.statusCode, read.statusCode]).toEqual([201, 201, 200]);
+      const block = AdminStudy.parse(read.json()).pages[0]?.blocks[0];
+      expect(block).toMatchObject({ type: 'sign', signId: 'letter-a', label: 'A' });
+      expect((await groups()).map((item) => [item.title, item.studies.length])).toEqual([
+        ['Primeiros passos', 1],
+        ['Cotidiano', 0],
+      ]);
+    });
+
+    it('moves a study, reorders groups and deletes an empty group', async () => {
+      const other = CreatedResponse.parse(
+        (await send('POST', '/v1/admin/study-groups', { title: 'Outro' })).json(),
+      );
+      const { id } = CreatedResponse.parse((await send('POST', '/v1/admin/studies', study)).json());
+
+      const moved = await send('PUT', `/v1/admin/studies/${id}`, { ...study, groupId: other.id });
+      const reordered = await send('PUT', '/v1/admin/study-groups/order', {
+        ids: [other.id, 'iniciante'],
+      });
+      const renamed = await send('PATCH', '/v1/admin/study-groups/iniciante', { title: 'Início' });
+      const notEmpty = await send('DELETE', `/v1/admin/study-groups/${other.id}`);
+      const deleted = await send('DELETE', '/v1/admin/study-groups/iniciante');
+
+      expect([moved.statusCode, reordered.statusCode, renamed.statusCode]).toEqual([204, 204, 204]);
+      expect([notEmpty.statusCode, errorCode(notEmpty)]).toEqual([409, 'STUDY_GROUP_NOT_EMPTY']);
+      expect(deleted.statusCode).toBe(204);
+      expect((await groups()).map((item) => item.id)).toEqual([other.id]);
+    });
+
+    it('reorders and deletes studies', async () => {
+      const first = CreatedResponse.parse((await send('POST', '/v1/admin/studies', study)).json());
+      const second = CreatedResponse.parse((await send('POST', '/v1/admin/studies', study)).json());
+
+      const reordered = await send('PUT', '/v1/admin/study-groups/iniciante/studies/order', {
+        ids: [second.id, first.id],
+      });
+      const deleted = await send('DELETE', `/v1/admin/studies/${first.id}`);
+
+      expect([reordered.statusCode, deleted.statusCode]).toEqual([204, 204]);
+      expect((await groups())[0]?.studies.map((item) => item.id)).toEqual([second.id]);
+    });
+
+    it('answers 422 for an unknown group or sign and 404 for an unknown study', async () => {
+      const noGroup = await send('POST', '/v1/admin/studies', { ...study, groupId: 'nope' });
+      const noSign = await send('POST', '/v1/admin/studies', {
+        ...study,
+        pages: [{ title: 'A', blocks: [{ type: 'sign', signId: 'nope' }] }],
+      });
+      const noStudy = await send('GET', '/v1/admin/studies/nope');
+
+      expect([noGroup.statusCode, errorCode(noGroup)]).toEqual([422, 'UNKNOWN_STUDY_GROUP']);
+      expect([noSign.statusCode, errorCode(noSign)]).toEqual([422, 'UNKNOWN_SIGN']);
+      expect([noStudy.statusCode, errorCode(noStudy)]).toEqual([404, 'STUDY_NOT_FOUND']);
     });
   });
 });

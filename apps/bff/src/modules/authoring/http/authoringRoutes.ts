@@ -1,6 +1,8 @@
 import {
   AdminLessonExercisesResponse,
   AdminSignsResponse,
+  AdminStudiesResponse,
+  AdminStudy,
   AdminTrailsResponse,
   CreatedResponse,
   CreateSignImageUploadRequest,
@@ -8,6 +10,7 @@ import {
   ReorderRequest,
   SaveExerciseRequest,
   SaveSignRequest,
+  SaveStudyRequest,
   SaveTitleRequest,
   SignImageUploadResponse,
 } from '@libras/contracts';
@@ -33,6 +36,16 @@ import type { ReorderExercises } from '../application/ReorderExercises';
 import type { ReorderOutlineItems } from '../application/ReorderOutlineItems';
 import type { UpdateExercise } from '../application/UpdateExercise';
 import type { UpdateSign } from '../application/UpdateSign';
+import type { CreateStudy } from '../application/CreateStudy';
+import type { CreateStudyGroup } from '../application/CreateStudyGroup';
+import type { DeleteStudy } from '../application/DeleteStudy';
+import type { DeleteStudyGroup } from '../application/DeleteStudyGroup';
+import type { GetDraftStudies } from '../application/GetDraftStudies';
+import type { GetDraftStudy } from '../application/GetDraftStudy';
+import type { RenameStudyGroup } from '../application/RenameStudyGroup';
+import type { ReorderStudies } from '../application/ReorderStudies';
+import type { ReorderStudyGroups } from '../application/ReorderStudyGroups';
+import type { UpdateStudy } from '../application/UpdateStudy';
 import type { OutlineLevel } from '../domain/DraftOutline';
 
 export interface AuthoringUseCases {
@@ -51,11 +64,21 @@ export interface AuthoringUseCases {
   updateExercise: UpdateExercise;
   deleteExercise: DeleteExercise;
   reorderExercises: ReorderExercises;
+  getDraftStudies: GetDraftStudies;
+  createStudyGroup: CreateStudyGroup;
+  renameStudyGroup: RenameStudyGroup;
+  deleteStudyGroup: DeleteStudyGroup;
+  reorderStudyGroups: ReorderStudyGroups;
+  getDraftStudy: GetDraftStudy;
+  createStudy: CreateStudy;
+  updateStudy: UpdateStudy;
+  deleteStudy: DeleteStudy;
+  reorderStudies: ReorderStudies;
 }
 
 function statusOf(code: string): 404 | 409 | 422 {
   if (code.endsWith('_NOT_FOUND')) return 404;
-  if (code === 'SIGN_IN_USE') return 409;
+  if (code === 'SIGN_IN_USE' || code === 'STUDY_GROUP_NOT_EMPTY') return 409;
   return 422;
 }
 
@@ -87,6 +110,9 @@ export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsync
   const { reorderOutlineItems, getDraftSigns, createSign, updateSign, deleteSign } = useCases;
   const { createSignImageUpload, getLessonExercises, createExercise, updateExercise } = useCases;
   const { deleteExercise, reorderExercises } = useCases;
+  const { getDraftStudies, createStudyGroup, renameStudyGroup, deleteStudyGroup } = useCases;
+  const { reorderStudyGroups, getDraftStudy, createStudy, updateStudy, deleteStudy } = useCases;
+  const { reorderStudies } = useCases;
 
   return async (app) => {
     app.get('/trails', { schema: { response: { 200: AdminTrailsResponse } } }, async () =>
@@ -282,6 +308,93 @@ export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsync
       { schema: { params: exerciseParams, response: errors } },
       async (request, reply) =>
         sendEmpty(reply, await deleteExercise.execute({ id: request.params.exerciseId })),
+    );
+
+    // Study groups and studies
+
+    const groupParams = idParams('groupId');
+    const studyParams = idParams('studyId');
+    const groupIdOf = (values: Record<string, string>) => values.groupId ?? '';
+    const studyIdOf = (values: Record<string, string>) => values.studyId ?? '';
+
+    app.get('/studies', { schema: { response: { 200: AdminStudiesResponse } } }, async () =>
+      getDraftStudies.execute(),
+    );
+
+    app.post(
+      '/study-groups',
+      { schema: { body: SaveTitleRequest, response: { 201: CreatedResponse } } },
+      async (request, reply) =>
+        reply.status(201).send(await createStudyGroup.execute(request.body)),
+    );
+
+    app.put(
+      '/study-groups/order',
+      { schema: { body: ReorderRequest, response: errors } },
+      async (request, reply) => sendEmpty(reply, await reorderStudyGroups.execute(request.body)),
+    );
+
+    app.patch(
+      '/study-groups/:groupId',
+      { schema: { params: groupParams, body: SaveTitleRequest, response: errors } },
+      async (request, reply) =>
+        sendEmpty(
+          reply,
+          await renameStudyGroup.execute({ id: groupIdOf(request.params), ...request.body }),
+        ),
+    );
+
+    app.delete(
+      '/study-groups/:groupId',
+      { schema: { params: groupParams, response: errors } },
+      async (request, reply) =>
+        sendEmpty(reply, await deleteStudyGroup.execute({ id: groupIdOf(request.params) })),
+    );
+
+    app.put(
+      '/study-groups/:groupId/studies/order',
+      { schema: { params: groupParams, body: ReorderRequest, response: errors } },
+      async (request, reply) =>
+        sendEmpty(
+          reply,
+          await reorderStudies.execute({ groupId: groupIdOf(request.params), ...request.body }),
+        ),
+    );
+
+    app.post(
+      '/studies',
+      { schema: { body: SaveStudyRequest, response: { 201: CreatedResponse, ...errors } } },
+      async (request, reply) => {
+        const result = await createStudy.execute(request.body);
+        if (!result.ok) return sendError(reply, result.error);
+        return reply.status(201).send(result.value);
+      },
+    );
+
+    app.get(
+      '/studies/:studyId',
+      { schema: { params: studyParams, response: { 200: AdminStudy, ...errors } } },
+      async (request, reply) => {
+        const result = await getDraftStudy.execute({ id: studyIdOf(request.params) });
+        return result.ok ? result.value : sendError(reply, result.error);
+      },
+    );
+
+    app.put(
+      '/studies/:studyId',
+      { schema: { params: studyParams, body: SaveStudyRequest, response: errors } },
+      async (request, reply) =>
+        sendEmpty(
+          reply,
+          await updateStudy.execute({ id: studyIdOf(request.params), ...request.body }),
+        ),
+    );
+
+    app.delete(
+      '/studies/:studyId',
+      { schema: { params: studyParams, response: errors } },
+      async (request, reply) =>
+        sendEmpty(reply, await deleteStudy.execute({ id: studyIdOf(request.params) })),
     );
   };
 }

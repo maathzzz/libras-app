@@ -17,9 +17,20 @@ import { RenameOutlineItem } from '../modules/authoring/application/RenameOutlin
 import { ReorderExercises } from '../modules/authoring/application/ReorderExercises';
 import { ReorderOutlineItems } from '../modules/authoring/application/ReorderOutlineItems';
 import { UpdateExercise } from '../modules/authoring/application/UpdateExercise';
+import { CreateStudy } from '../modules/authoring/application/CreateStudy';
+import { CreateStudyGroup } from '../modules/authoring/application/CreateStudyGroup';
+import { DeleteStudy } from '../modules/authoring/application/DeleteStudy';
+import { DeleteStudyGroup } from '../modules/authoring/application/DeleteStudyGroup';
+import { GetDraftStudies } from '../modules/authoring/application/GetDraftStudies';
+import { GetDraftStudy } from '../modules/authoring/application/GetDraftStudy';
+import { RenameStudyGroup } from '../modules/authoring/application/RenameStudyGroup';
+import { ReorderStudies } from '../modules/authoring/application/ReorderStudies';
+import { ReorderStudyGroups } from '../modules/authoring/application/ReorderStudyGroups';
+import { UpdateStudy } from '../modules/authoring/application/UpdateStudy';
 import { UpdateSign } from '../modules/authoring/application/UpdateSign';
 import { InMemoryDraftExercises } from '../modules/authoring/testing/InMemoryDraftExercises';
 import { InMemoryDraftOutline } from '../modules/authoring/testing/InMemoryDraftOutline';
+import { InMemoryDraftStudies } from '../modules/authoring/testing/InMemoryDraftStudies';
 import { InMemoryDraftSigns } from '../modules/authoring/testing/InMemoryDraftSigns';
 import { InMemorySignImageStorage } from '../modules/authoring/testing/InMemorySignImageStorage';
 import { GetStudies } from '../modules/curriculum/application/GetStudies';
@@ -56,6 +67,7 @@ interface InMemoryContainerOptions {
   outline?: InMemoryDraftOutline;
   draftSigns?: InMemoryDraftSigns;
   draftExercises?: InMemoryDraftExercises;
+  draftStudies?: InMemoryDraftStudies;
   signImages?: InMemorySignImageStorage;
 }
 
@@ -74,6 +86,7 @@ export function createInMemoryContainer(
     outline = new InMemoryDraftOutline(),
     draftSigns = new InMemoryDraftSigns(),
     draftExercises = new InMemoryDraftExercises(),
+    draftStudies = new InMemoryDraftStudies(),
     signImages = new InMemorySignImageStorage(),
   }: InMemoryContainerOptions = {},
 ): Container {
@@ -113,6 +126,16 @@ export function createInMemoryContainer(
     updateExercise: new UpdateExercise(draftExercises, draftSigns),
     deleteExercise: new DeleteExercise(draftExercises),
     reorderExercises: new ReorderExercises(draftExercises),
+    getDraftStudies: new GetDraftStudies(draftStudies),
+    createStudyGroup: new CreateStudyGroup(draftStudies, ids),
+    renameStudyGroup: new RenameStudyGroup(draftStudies),
+    deleteStudyGroup: new DeleteStudyGroup(draftStudies),
+    reorderStudyGroups: new ReorderStudyGroups(draftStudies),
+    getDraftStudy: new GetDraftStudy(draftStudies),
+    createStudy: new CreateStudy(draftStudies, draftSigns, ids),
+    updateStudy: new UpdateStudy(draftStudies, draftSigns, ids),
+    deleteStudy: new DeleteStudy(draftStudies),
+    reorderStudies: new ReorderStudies(draftStudies),
     createSignImageUpload: new CreateSignImageUpload(signImages, ids),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),
