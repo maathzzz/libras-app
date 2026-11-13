@@ -18,6 +18,11 @@ export const TextBlock = z.object({
 
 export const SignBlock = z.object({
   type: z.literal('sign'),
+  /**
+   * The sign the block was copied from. The CMS uses it to keep the copy up to date and to
+   * keep a sign in use from being deleted; the app does not need it.
+   */
+  signId: z.string().min(1).optional(),
   /** The letter, number or word the sign stands for. */
   label: z.string().min(1),
   images: SignImageSequence,

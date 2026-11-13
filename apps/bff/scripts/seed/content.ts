@@ -285,7 +285,12 @@ const tip = (body: string): StudyBlock => ({ type: 'tip', body });
 // page in one read. The description comes from the sign, so it is written in one place.
 function sign(id: string): StudyBlock {
   const found = findSign(id);
-  const block = { type: 'sign' as const, label: found.label, images: imagesOf(found) };
+  const block = {
+    type: 'sign' as const,
+    signId: found.id,
+    label: found.label,
+    images: imagesOf(found),
+  };
   return found.description === null ? block : { ...block, description: found.description };
 }
 
