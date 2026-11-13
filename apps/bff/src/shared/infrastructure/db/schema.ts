@@ -418,3 +418,42 @@ export const userAchievements = app.table(
     ),
   ],
 );
+
+// No cascade, as in the published tables: a draft group with studies cannot be deleted.
+export const draftStudyGroups = app.table(
+  'draft_study_groups',
+  {
+    id: text('id').primaryKey(),
+    title: text('title').notNull(),
+    position: integer('position').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('draft_study_groups_title_check', sql`char_length(${table.title}) between 1 and 80`),
+    check('draft_study_groups_position_check', sql`${table.position} > 0`),
+  ],
+);
+
+export const draftStudies = app.table(
+  'draft_studies',
+  {
+    id: text('id').primaryKey(),
+    groupId: text('group_id')
+      .notNull()
+      .references(() => draftStudyGroups.id),
+    position: integer('position').notNull(),
+    title: text('title').notNull(),
+    description: text('description').notNull(),
+    // Validate with the StudyPage schema from @libras/contracts before writing.
+    pages: jsonb('pages').$type<StudyPage[]>().notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('draft_studies_position_check', sql`${table.position} > 0`),
+    check(
+      'draft_studies_pages_check',
+      sql`jsonb_typeof(${table.pages}) = 'array' and jsonb_array_length(${table.pages}) > 0`,
+    ),
+    index('draft_studies_group_id_position_idx').on(table.groupId, table.position),
+  ],
+);

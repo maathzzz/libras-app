@@ -150,6 +150,12 @@ begin
 
   insert into app.draft_exercise_signs (exercise_id, sign_id)
   select exercise_id, sign_id from app.exercise_signs;
+
+  insert into app.draft_study_groups (id, title, position)
+  select id, title, position from app.study_groups;
+
+  insert into app.draft_studies (id, group_id, position, title, description, pages)
+  select id, group_id, position, title, description, pages from app.studies;
 end
 $$;
 `;
