@@ -1,5 +1,5 @@
 import type { AdminSign } from '@libras/contracts';
-import { and, asc, count, eq, notExists, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, notExists, sql } from 'drizzle-orm';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import { draftExerciseSigns, draftSigns } from '../../../shared/infrastructure/db/schema';
@@ -27,6 +27,20 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
       .groupBy(draftSigns.id)
       .orderBy(asc(draftSigns.label), asc(draftSigns.id));
     return rows;
+  }
+
+  async findByIds(ids: readonly string[]): Promise<DraftSign[]> {
+    if (ids.length === 0) return [];
+    return this.db
+      .select({
+        id: draftSigns.id,
+        label: draftSigns.label,
+        imageUrls: draftSigns.imagePaths,
+        alt: draftSigns.alt,
+        description: draftSigns.description,
+      })
+      .from(draftSigns)
+      .where(inArray(draftSigns.id, [...ids]));
   }
 
   async create({ id, label, imageUrls, alt, description }: DraftSign): Promise<void> {

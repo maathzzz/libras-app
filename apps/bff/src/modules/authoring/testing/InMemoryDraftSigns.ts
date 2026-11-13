@@ -20,6 +20,15 @@ export class InMemoryDraftSigns implements DraftSignRepository {
       .map((sign) => structuredClone(sign));
   }
 
+  async findByIds(ids: readonly string[]): Promise<DraftSign[]> {
+    return ids.flatMap((id) => {
+      const sign = this.byId.get(id);
+      if (!sign) return [];
+      const { id: signId, label, imageUrls, alt, description } = structuredClone(sign);
+      return [{ id: signId, label, imageUrls, alt, description }];
+    });
+  }
+
   async create(sign: DraftSign): Promise<void> {
     this.byId.set(sign.id, { ...structuredClone(sign), exerciseCount: 0 });
   }
