@@ -12,6 +12,9 @@ import {
 } from '../../../shared/infrastructure/db/schema';
 import { signToWordExercise } from '../../../shared/infrastructure/db/testing/fixtures';
 import { useTestDatabase } from '../../../shared/infrastructure/db/testing/testDatabase';
+import { buildExercise } from '../domain/DraftExercise';
+import type { DraftSign } from '../domain/DraftSignRepository';
+import { DrizzleDraftExerciseRepository } from './DrizzleDraftExerciseRepository';
 import { DrizzleDraftOutlineRepository } from './DrizzleDraftOutlineRepository';
 import { DrizzleDraftSignRepository } from './DrizzleDraftSignRepository';
 
@@ -183,6 +186,87 @@ describe('DrizzleDraftSignRepository', () => {
       expect(await signs.delete('it-used')).toBe('inUse');
       expect(await signs.delete('it-free')).toBe('deleted');
       expect(await signs.delete('it-free')).toBe('notFound');
+    }),
+  );
+});
+
+describe('DrizzleDraftExerciseRepository', () => {
+  const signA: DraftSign = {
+    id: 'it-a',
+    label: 'IT A',
+    imageUrls: ['https://x.test/it-a.webp'],
+    alt: 'Mão de teste',
+    description: null,
+  };
+  const signB: DraftSign = {
+    ...signA,
+    id: 'it-b',
+    label: 'IT B',
+    imageUrls: ['https://x.test/it-b.webp'],
+  };
+  const signs = new Map([signA, signB].map((sign) => [sign.id, sign]));
+
+  async function prepare(tx: DbExecutor) {
+    await insertDraftOutline(tx);
+    await insertDraftSign(tx, 'it-a', 'IT A');
+    await insertDraftSign(tx, 'it-b', 'IT B');
+  }
+
+  const recognize = (id: string) =>
+    buildExercise(
+      id,
+      { type: 'sign_to_word', signIds: ['it-a', 'it-b'], correctSignId: 'it-a' },
+      signs,
+    );
+
+  it(
+    'creates exercises at the end of a lesson with the signs they show',
+    inRollback(async (tx) => {
+      await prepare(tx);
+      const exercises = new DrizzleDraftExerciseRepository(tx);
+
+      expect(await exercises.create('it-lesson-1', recognize('it-ex-1'))).toBe(true);
+      expect(await exercises.create('it-lesson-1', recognize('it-ex-2'))).toBe(true);
+      expect(await exercises.create('it-missing', recognize('it-ex-3'))).toBe(false);
+
+      const found = await exercises.listByLesson('it-lesson-1');
+      expect(found?.lesson).toEqual({ id: 'it-lesson-1', title: 'Lição 1' });
+      expect(found?.exercises.map((exercise) => exercise.id)).toEqual(['it-ex-1', 'it-ex-2']);
+      expect(await exercises.listByLesson('it-missing')).toBeNull();
+
+      const shown = await tx
+        .select({ signId: draftExerciseSigns.signId })
+        .from(draftExerciseSigns)
+        .where(sql`${draftExerciseSigns.exerciseId} = 'it-ex-1'`);
+      expect(shown.map(({ signId }) => signId).sort()).toEqual(['it-a', 'it-b']);
+    }),
+  );
+
+  it(
+    'replaces, reorders and deletes exercises',
+    inRollback(async (tx) => {
+      await prepare(tx);
+      await insertDraftSign(tx, 'it-c', 'IT C');
+      const exercises = new DrizzleDraftExerciseRepository(tx);
+      await exercises.create('it-lesson-1', recognize('it-ex-1'));
+      await exercises.create('it-lesson-1', recognize('it-ex-2'));
+
+      const signC: DraftSign = { ...signA, id: 'it-c', label: 'IT C' };
+      const produce = buildExercise(
+        'it-ex-1',
+        { type: 'word_to_sign', signIds: ['it-c', 'it-a'], correctSignId: 'it-c' },
+        new Map([...signs, ['it-c', signC]]),
+      );
+      expect(await exercises.update(produce)).toBe(true);
+      await exercises.reorder('it-lesson-1', ['it-ex-2', 'it-ex-1']);
+      expect(await exercises.delete('it-ex-2')).toBe(true);
+      expect(await exercises.delete('it-ex-2')).toBe(false);
+
+      const found = await exercises.listByLesson('it-lesson-1');
+      expect(found?.exercises).toEqual([produce]);
+      const signRepo = new DrizzleDraftSignRepository(tx);
+      expect(await signRepo.delete('it-b')).toBe('deleted');
+      expect(await signRepo.delete('it-c')).toBe('inUse');
     }),
   );
 });
