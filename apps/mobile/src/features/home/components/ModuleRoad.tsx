@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg from 'react-native-svg';
 
-import { sizes, spacing } from '@/shared/theme';
+import { spacing } from '@/shared/theme';
 import { MapLabel } from '@/shared/ui';
 
 import { moduleRoadPaths, reachedUnitIndex } from './moduleRoadLayout';
-import { ModuleStation } from './ModuleStation';
+import { ModuleStation, stationNodeCenter } from './ModuleStation';
 import { TrailRoad } from './TrailRoad';
 
 type ModuleRoadProps = {
@@ -15,10 +15,9 @@ type ModuleRoadProps = {
   onOpenModule: (unitId: string) => void;
 };
 
-const railCenter = sizes.moduleRail / 2;
-
 // The modules of the trail as stops on the module map's road: green up to the module the
-// learner is in, dotted after it. The road is drawn once every row has been measured.
+// learner is in, dotted after it. The road runs behind the cards, through their nodes, and
+// shows in the gaps between them. It is drawn once every row has been measured.
 export function ModuleRoad({ trail, onOpenModule }: ModuleRoadProps) {
   const [centers, setCenters] = useState<Record<number, number>>({});
   const [height, setHeight] = useState(0);
@@ -28,7 +27,7 @@ export function ModuleRoad({ trail, onOpenModule }: ModuleRoadProps) {
     .filter((center): center is number => center !== undefined);
   const paths =
     measured.length === trail.units.length && height > 0
-      ? moduleRoadPaths(measured, railCenter, reachedUnitIndex(trail.units))
+      ? moduleRoadPaths(measured, stationNodeCenter, reachedUnitIndex(trail.units))
       : null;
 
   function measureRow(index: number, center: number) {
@@ -46,7 +45,7 @@ export function ModuleRoad({ trail, onOpenModule }: ModuleRoadProps) {
       >
         {paths && paths.road !== '' && (
           <Svg
-            width={sizes.moduleRail}
+            width={stationNodeCenter * 2}
             height={height}
             style={styles.road}
             accessibilityElementsHidden

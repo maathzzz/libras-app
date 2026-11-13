@@ -99,7 +99,7 @@ src/
 Trilhas (home), Perfil e Lição concluída seguem a linguagem visual da tela de módulo. As peças ficam em `shared/ui`:
 
 * `GameHeader` / `GameFooter`: barra branca fixa com a sombra do cabeçalho do módulo (no topo; embaixo, com o botão principal).
-* `Countryside`: fundo fixo de céu e campo (nuvens, colinas, árvores), atrás do conteúdo rolável. Decorativo, oculto para leitores de tela. As formas avulsas (`Tree`, `Cloud`, `Hill`, `Lake`, `Flower`, `SkyGradient`) ficam em `SceneryShapes.tsx` e também desenham o cenário do mapa e a faixa do perfil.
+* `Countryside`: fundo fixo de céu e campo (nuvens, colinas, árvores), atrás do conteúdo rolável da lição concluída. A home não usa: ela fica no fundo liso do app. Decorativo, oculto para leitores de tela. As formas avulsas (`Tree`, `Cloud`, `Hill`, `Lake`, `Flower`, `SkyGradient`) ficam em `SceneryShapes.tsx` e também desenham o cenário do mapa e a faixa do perfil.
 * `Medal`: o nó redondo com borda sólida (tons `success`, `accent`, `warning`, `info`, `locked`), usado em cartões, estatísticas e conquistas. `PulseRing` é o anel pulsante do que fazer agora.
 * `MapLabel` (etiqueta branca de seção, como "LIÇÃO 3") e `SegmentBar` (barra com uma parte por lição ou módulo).
 

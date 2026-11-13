@@ -5,7 +5,7 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/shared/theme';
-import { AppText, Countryside, GameHeader, LoadError } from '@/shared/ui';
+import { AppText, GameHeader, LoadError } from '@/shared/ui';
 
 import { useHomeStore } from '../store/homeStore';
 import { HomeStats } from './HomeStats';
@@ -64,8 +64,7 @@ function openModule(unitId: string) {
   router.push({ pathname: '/module/[unitId]', params: { unitId } });
 }
 
-// Same frame as the module map: a white header with the trail's progress, and the
-// countryside under the cards.
+// Same header as the module map, with the trail's progress, over the plain app background.
 function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
   const { trail } = home;
   const next = findNextLesson(trail);
@@ -92,7 +91,6 @@ function HomeContent({ home, refreshing, onRefresh }: HomeContentProps) {
         </View>
       </GameHeader>
       <View style={styles.world}>
-        <Countryside id="home-sky" />
         <ScrollView
           contentContainerStyle={styles.content}
           refreshControl={
@@ -140,6 +138,7 @@ const styles = StyleSheet.create({
   },
   world: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   content: {
     gap: spacing['4xl'],

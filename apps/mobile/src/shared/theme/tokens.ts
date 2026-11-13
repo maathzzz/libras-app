@@ -238,8 +238,6 @@ export const sizes = {
   // Round "medals" in the style of the trail nodes: stat tiles, achievements, home cards.
   medalSm: 40,
   medalMd: 48,
-  // Rail of the home's module road: the module nodes sit on it, centered.
-  moduleRail: 72,
   verdictIcon: 34,
   // Lesson reward: the soft circle behind the check and the area the confetti spreads over.
   rewardBurst: 92,

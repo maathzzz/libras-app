@@ -61,8 +61,17 @@ const statusLabels: Record<UnitStatus, string> = {
   locked: 'bloqueado',
 };
 
-// One stop of the home's module road: the round node on the road and, beside it, a card with
-// the module's name and one bar part per lesson. Locked modules do not open.
+// Room around the node for its halo, as in the next lesson card.
+const nodeMargin = sizes.trailNodeHalo / 2;
+const cardPadding = spacing['2xl'];
+
+// Distance from the left of a station to the center of its node: the module road runs
+// down through it.
+export const stationNodeCenter = cardPadding + nodeMargin + sizes.trailNode / 2;
+
+// One stop of the home's module road: a single card with the round node (pulsing on the
+// current module), the module's name and one bar part per lesson. The whole card is the
+// control; locked modules do not open.
 export function ModuleStation({ unit, index, onPress }: ModuleStationProps) {
   const status = unitStatus(unit);
   const look = looks[status];
@@ -71,27 +80,19 @@ export function ModuleStation({ unit, index, onPress }: ModuleStationProps) {
   const accessibilityLabel = `Módulo ${index + 1}, ${unit.title}, ${statusLabels[status]}, ${percent}`;
 
   const content = (pressed: boolean) => (
-    <>
-      <View style={styles.rail}>
-        <View style={styles.node}>
-          {status === 'current' && <PulseRing />}
-          <Medal
-            icon={look.icon}
-            tone={look.medal}
-            size="lg"
-            pressed={pressed}
-            halo={status === 'current'}
-          />
-        </View>
+    <View
+      style={[
+        styles.card,
+        pressed
+          ? [raised(look.edge, depth.pressed), pressedOffset(depth.md)]
+          : raised(look.edge, depth.md),
+      ]}
+    >
+      <View style={styles.node}>
+        {status === 'current' && <PulseRing />}
+        <Medal icon={look.icon} tone={look.medal} size="lg" halo={status === 'current'} />
       </View>
-      <View
-        style={[
-          styles.card,
-          pressed
-            ? [raised(look.edge, depth.pressed), pressedOffset(depth.md)]
-            : raised(look.edge, depth.md),
-        ]}
-      >
+      <View style={styles.text}>
         <AppText variant="statLabel" color={look.kickerColor} numberOfLines={1}>
           {unitKicker(index, unit)}
         </AppText>
@@ -107,12 +108,12 @@ export function ModuleStation({ unit, index, onPress }: ModuleStationProps) {
           </AppText>
         </View>
       </View>
-    </>
+    </View>
   );
 
   if (status === 'locked') {
     return (
-      <View accessible accessibilityLabel={accessibilityLabel} style={styles.station}>
+      <View accessible accessibilityLabel={accessibilityLabel}>
         {content(false)}
       </View>
     );
@@ -124,7 +125,6 @@ export function ModuleStation({ unit, index, onPress }: ModuleStationProps) {
       accessibilityLabel={accessibilityLabel}
       accessibilityHint="Abre a trilha do módulo"
       onPress={onPress}
-      style={styles.station}
     >
       {({ pressed }) => content(pressed)}
     </Pressable>
@@ -132,26 +132,23 @@ export function ModuleStation({ unit, index, onPress }: ModuleStationProps) {
 }
 
 const styles = StyleSheet.create({
-  station: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.lg,
-  },
-  rail: {
-    width: sizes.moduleRail,
-    alignItems: 'center',
+    gap: spacing['2xl'],
+    paddingVertical: spacing.lg,
+    paddingHorizontal: cardPadding,
+    borderRadius: radius['2xl'],
+    backgroundColor: colors.surface,
   },
   node: {
     width: sizes.trailNode,
     height: sizes.trailNode,
+    margin: nodeMargin,
   },
-  card: {
+  text: {
     flex: 1,
     gap: spacing['3xs'],
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radius['2xl'],
-    backgroundColor: colors.surface,
   },
   progress: {
     flexDirection: 'row',
