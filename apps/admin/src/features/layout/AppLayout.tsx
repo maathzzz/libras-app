@@ -19,7 +19,7 @@ const navItems: readonly NavItem[] = [
   { label: 'Trilhas e lições', href: '/trilhas' },
   { label: 'Sinais', href: '/sinais' },
   { label: 'Estudos', href: '/estudos' },
-  { label: 'Operadores' },
+  { label: 'Operadores', href: '/operadores' },
 ];
 
 const itemClassName =
@@ -79,6 +79,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <strong>{admin.name}</strong>
             <div className="text-text-muted">{admin.email}</div>
           </div>
+          <Link
+            href="/conta/senha"
+            aria-current={pathname === '/conta/senha' ? 'page' : undefined}
+            className="text-accent-dark underline-offset-2 hover:underline"
+          >
+            Minha senha
+          </Link>
           <Button variant="secondary" onClick={() => void signOut()}>
             Sair
           </Button>

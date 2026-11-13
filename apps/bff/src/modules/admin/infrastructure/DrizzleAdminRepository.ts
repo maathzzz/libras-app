@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import { admins } from '../../../shared/infrastructure/db/schema';
@@ -18,6 +18,18 @@ export class DrizzleAdminRepository implements AdminRepository {
       .from(admins)
       .where(eq(admins.userId, userId));
     return row ?? null;
+  }
+
+  async list(): Promise<Admin[]> {
+    return this.db
+      .select({
+        userId: admins.userId,
+        email: admins.email,
+        name: admins.name,
+        active: admins.active,
+      })
+      .from(admins)
+      .orderBy(asc(admins.name), asc(admins.email));
   }
 
   async save({ userId, email, name, active }: Admin): Promise<void> {

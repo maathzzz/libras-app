@@ -5,6 +5,9 @@ const byCode: Record<string, string> = {
   UNKNOWN_SIGN: 'Um dos sinais escolhidos não existe mais. Carregamos a versão atual.',
   CONTENT_HAS_PROGRESS:
     'Algum aluno já fez esta lição (ou uma lição deste item), então ela não pode ser excluída. Para tirar do app, oculte.',
+  EMAIL_HAS_ACCOUNT:
+    'Este e-mail já tem uma conta (talvez de aluno). Use outro, como um apelido nome+cms@gmail.com.',
+  CANNOT_DEACTIVATE_SELF: 'Você não pode desativar a si mesmo. Peça a outro operador.',
   INVALID_ORDER: 'A lista mudou enquanto você editava. Carregamos a versão atual; tente de novo.',
   STUDY_GROUP_NOT_EMPTY:
     'Este grupo ainda tem estudos. Mova ou exclua os estudos antes de excluí-lo.',

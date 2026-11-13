@@ -24,13 +24,17 @@ describe('AppLayout', () => {
     expect(screen.getByText('Conteúdo')).toBeTruthy();
   });
 
-  it('lists the sections of later phases without links', () => {
+  it('links every section', () => {
     render(<AppLayout>Conteúdo</AppLayout>);
 
     expect(screen.getByRole('link', { name: 'Sinais' }).getAttribute('href')).toBe('/sinais');
     expect(screen.getByRole('link', { name: 'Estudos' }).getAttribute('href')).toBe('/estudos');
-    expect(screen.queryByRole('link', { name: /Operadores/ })).toBeNull();
-    expect(screen.getByText('Operadores').getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByRole('link', { name: 'Operadores' }).getAttribute('href')).toBe(
+      '/operadores',
+    );
+    expect(screen.getByRole('link', { name: 'Minha senha' }).getAttribute('href')).toBe(
+      '/conta/senha',
+    );
   });
 
   it('shows the operator and signs out', async () => {

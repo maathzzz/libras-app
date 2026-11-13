@@ -59,3 +59,23 @@ export async function signIn(email: string, password: string): Promise<'ok' | 'i
 export async function signOut(): Promise<void> {
   await getSupabase().auth.signOut();
 }
+
+export const MIN_PASSWORD_LENGTH = 10;
+
+export type ChangePasswordOutcome = 'ok' | 'wrongCurrent' | 'weak' | 'error';
+
+// Changes the signed-in operator's own password. The current one is checked first by signing
+// in with it, so an open, unattended CMS cannot have its password changed.
+export async function changePassword(
+  email: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<ChangePasswordOutcome> {
+  const supabase = getSupabase();
+  const check = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+  if (check.error) return check.error.status === 400 ? 'wrongCurrent' : 'error';
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (!error) return 'ok';
+  return error.code === 'weak_password' || error.code === 'same_password' ? 'weak' : 'error';
+}
