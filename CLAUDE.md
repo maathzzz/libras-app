@@ -42,7 +42,7 @@ pnpm exec supabase migration new <nome>   # Nova migration
 pnpm exec supabase db push --dry-run      # Mostra o que seria aplicado no projeto remoto
 pnpm --filter bff db:seed:generate        # Regera supabase/seed.sql a partir de scripts/seed
 pnpm --silent --filter bff dev:token      # Imprime o access token do usuário de teste (só desenvolvimento)
-pnpm --filter bff admin:create --email <email> --name <nome>  # Cria uma conta de operador do CMS (nova, separada das contas do app)
+pnpm --filter bff admin:create --email <email> --name <nome>  # Cria o primeiro operador do CMS (os demais vêm da tela de operadores)
 ```
 
 O desenvolvimento usa um projeto Supabase **na nuvem** (não há Supabase local). Por isso:

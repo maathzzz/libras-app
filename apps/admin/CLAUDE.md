@@ -9,8 +9,9 @@ src/
   app/                 # Rotas do App Router; layout.tsx envolve tudo no AdminGate + AppLayout
     globals.css        # Tailwind e tokens do app no @theme (manter em sincronia)
   features/
-    auth/              # Login, sessão do Supabase e AdminGate (verifica se a conta é operador)
+    auth/              # Login, sessão do Supabase, AdminGate e troca da própria senha (/conta/senha)
     layout/            # Menu lateral e área de conteúdo
+    operators/         # Operadores do CMS (/operadores)
     home/
     curriculum/        # Trilhas, módulos e lições (/trilhas)
     exercises/         # Exercícios de uma lição (/trilhas/licoes/[lessonId])
@@ -32,7 +33,8 @@ src/
 - Toda chamada passa por `shared/api/client.ts`, que envia o token e valida a resposta com `contracts`. Falhas viram `ApiError` (`network`, `server` ou `request` com o `code` do BFF). Um 401 encerra a sessão.
 - O `AdminGate` decide o que aparece: sem sessão, a tela de login; com sessão, pergunta ao BFF (`GET /v1/admin/me`). Uma conta que não é operador ativo recebe `403 NOT_ADMIN` e vê "Sem acesso ao CMS".
 - Contas de operador são separadas das contas do app: são criadas só pelo BFF, com `app\_metadata.role = 'admin'`, e o BFF exige esse papel **e** uma linha ativa em `app.admins`. Uma conta de aluno nunca vira operadora, e uma conta de operador não entra no app.
-- O primeiro operador é criado com `pnpm --filter bff admin:create --email <email> --name <nome>`, que sempre cria uma conta nova (recusa e-mail que já tem conta) e mostra uma senha temporária uma única vez. Os demais operadores virão da tela de operadores (fase 6).
+- O primeiro operador é criado com `pnpm --filter bff admin:create --email <email> --name <nome>`, que sempre cria uma conta nova (recusa e-mail que já tem conta) e mostra uma senha temporária uma única vez. Os demais são criados em `/operadores`, também com senha temporária mostrada uma única vez (fica só no estado da tela, nunca em armazenamento do navegador). O operador troca a senha em "Minha senha" (`/conta/senha`): o CMS confere a senha atual (entrando com ela) e grava a nova com `auth.updateUser`, a única escrita no Supabase feita pelo CMS.
+- Todo operador pode gerenciar os outros (renomear, desativar, reativar, gerar nova senha). Ninguém desativa a si mesmo, então sempre sobra um operador ativo, e a tela nem oferece o botão.
 - Textos da interface em português; código em inglês.
 - Estilo só com classes do Tailwind, usando os tokens de `app/globals.css` (`bg-surface`, `text-text-muted`, `rounded-md`...). Nada de cores soltas, CSS por componente ou bibliotecas de UI; o que se repete vira componente em `shared/ui`.
 - O CMS roda no navegador: a sessão do Supabase vive no `localStorage`, então páginas e componentes que usam sessão, BFF ou estado são `'use client'`. Não usar Server Actions, route handlers nem buscar conteúdo no servidor do Next: o conteúdo vem do BFF. No render do servidor o `AdminGate` só mostra "Carregando…".
