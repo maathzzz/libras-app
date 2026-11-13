@@ -1,8 +1,12 @@
-import { asc, count, eq, inArray, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, exists, inArray, type SQL } from 'drizzle-orm';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
-import { courses, lessons, units } from '../../../shared/infrastructure/db/schema';
+import { courses, exercises, lessons, units } from '../../../shared/infrastructure/db/schema';
 import type { TrailOutline, TrailOutlineUnit, TrailRepository } from '../domain/TrailRepository';
+
+// Learners only see what the CMS made visible. A lesson without exercises cannot be played,
+// so it is left out too, as a unit left without lessons already is.
+const visibleTrail = eq(courses.visible, true);
 
 export class DrizzleTrailRepository implements TrailRepository {
   constructor(private readonly db: DbExecutor) {}
@@ -16,6 +20,7 @@ export class DrizzleTrailRepository implements TrailRepository {
     const first = this.db
       .select({ id: courses.id })
       .from(courses)
+      .where(visibleTrail)
       .orderBy(asc(courses.position), asc(courses.id))
       .limit(1);
     return this.findOne(inArray(courses.id, first));
@@ -31,7 +36,7 @@ export class DrizzleTrailRepository implements TrailRepository {
   }
 
   async count(): Promise<number> {
-    const [row] = await this.db.select({ total: count() }).from(courses);
+    const [row] = await this.db.select({ total: count() }).from(courses).where(visibleTrail);
     return row?.total ?? 0;
   }
 
@@ -46,9 +51,21 @@ export class DrizzleTrailRepository implements TrailRepository {
         lesson: { id: lessons.id, title: lessons.title },
       })
       .from(courses)
-      .leftJoin(units, eq(units.courseId, courses.id))
-      .leftJoin(lessons, eq(lessons.unitId, units.id))
-      .where(which)
+      .leftJoin(units, and(eq(units.courseId, courses.id), eq(units.visible, true)))
+      .leftJoin(
+        lessons,
+        and(
+          eq(lessons.unitId, units.id),
+          eq(lessons.visible, true),
+          exists(
+            this.db
+              .select({ id: exercises.id })
+              .from(exercises)
+              .where(eq(exercises.lessonId, lessons.id)),
+          ),
+        ),
+      )
+      .where(and(which, visibleTrail))
       .orderBy(asc(units.position), asc(lessons.position));
 
     const [first] = rows;

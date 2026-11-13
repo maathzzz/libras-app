@@ -23,8 +23,14 @@ export async function insertUser(tx: DbExecutor): Promise<string> {
   return id;
 }
 
-export async function insertCourse(tx: DbExecutor, id: string, position = 1000): Promise<void> {
-  await tx.insert(courses).values({ id, title: `Trilha ${id}`, position });
+// Content is visible unless a test says otherwise; the CMS creates it hidden.
+export async function insertCourse(
+  tx: DbExecutor,
+  id: string,
+  position = 1000,
+  visible = true,
+): Promise<void> {
+  await tx.insert(courses).values({ id, title: `Trilha ${id}`, position, visible });
 }
 
 // The shared database already has the seed trails. Inside the rolled-back transaction they
@@ -44,16 +50,39 @@ export async function moveExistingStudyGroupsBack(tx: DbExecutor): Promise<void>
 
 export async function insertUnit(
   tx: DbExecutor,
-  { id, courseId, position }: { id: string; courseId: string; position: number },
+  {
+    id,
+    courseId,
+    position,
+    visible = true,
+  }: { id: string; courseId: string; position: number; visible?: boolean },
 ): Promise<void> {
-  await tx.insert(units).values({ id, courseId, title: `Módulo ${id}`, position });
+  await tx.insert(units).values({ id, courseId, title: `Módulo ${id}`, position, visible });
 }
 
 export async function insertLesson(
   tx: DbExecutor,
-  { id, unitId, position }: { id: string; unitId: string; position: number },
+  {
+    id,
+    unitId,
+    position,
+    visible = true,
+  }: { id: string; unitId: string; position: number; visible?: boolean },
 ): Promise<void> {
-  await tx.insert(lessons).values({ id, unitId, title: `Lição ${id}`, position });
+  await tx.insert(lessons).values({ id, unitId, title: `Lição ${id}`, position, visible });
+}
+
+// A lesson learners can play: visible and with one exercise.
+export async function insertPlayableLesson(
+  tx: DbExecutor,
+  lesson: { id: string; unitId: string; position: number; visible?: boolean },
+): Promise<void> {
+  await insertLesson(tx, lesson);
+  await insertExercise(tx, {
+    lessonId: lesson.id,
+    position: 1,
+    payload: signToWordExercise(`${lesson.id}-exercise`),
+  });
 }
 
 export async function insertExercise(

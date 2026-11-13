@@ -40,6 +40,7 @@ src/
 * Uma feature importa apenas de `shared` e do `index.ts` de outras features. Nunca importe arquivos internos de outra feature. Essas fronteiras são verificadas pelo `eslint-plugin-boundaries` (`apps/mobile/eslint.config.mjs`).
 * Componentes não chamam a API diretamente: chamam ações do store (`load`, `refresh`, `submit`), que usam as funções de `api/`.
 * Toda chamada ao BFF passa por `shared/api/client.ts`, que injeta o token e valida a resposta com `contracts`. Toda falha vira um `ApiError` com `kind`: `network` (sem resposta ou tempo esgotado), `server` (5xx ou resposta fora do contrato, `code: INVALID\_RESPONSE`) ou `request` (4xx, com o `code` do BFF). Os stores usam `isNetworkError` para separar "sem internet" de "erro do servidor".
+* Contas de operador do CMS (`app\_metadata.role = 'admin'`) não entram no app: o login as recusa com a mensagem `operatorAccount` e encerra a sessão, e um 403 `OPERATOR\_ACCOUNT` do BFF também encerra a sessão.
 * O app usa o Supabase **apenas** para autenticação. Dados de negócio vêm sempre do BFF.
 * O cadastro não exige confirmação de e-mail: a opção **Confirm email** fica desativada no Supabase, e o `signUp` já devolve uma sessão que leva o usuário direto ao app. Se o `signUp` voltar sem sessão (a opção foi religada), o app mostra um erro e mantém o usuário no cadastro. Só a recuperação de senha envia e-mail (código de 6 dígitos).
 * O app conhece só a chave publicável do Supabase. A chave secreta nunca entra no app: qualquer operação administrativa (como excluir a conta) passa pelo BFF.

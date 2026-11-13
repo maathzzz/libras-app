@@ -2,6 +2,7 @@ import type { CompleteLessonResponse, Exercise, StudyPage } from '@libras/contra
 import { sql } from 'drizzle-orm';
 import {
   bigint,
+  boolean,
   check,
   date,
   index,
@@ -31,6 +32,8 @@ export const courses = app.table(
     id: text('id').primaryKey(),
     title: text('title').notNull(),
     position: integer('position').notNull(),
+    // Shown to learners. Content created in the CMS starts hidden.
+    visible: boolean('visible').notNull().default(false),
     createdAt: createdAt(),
   },
   (table) => [check('courses_position_check', sql`${table.position} > 0`)],
@@ -45,6 +48,8 @@ export const units = app.table(
       .references(() => courses.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     position: integer('position').notNull(),
+    // Shown to learners. Content created in the CMS starts hidden.
+    visible: boolean('visible').notNull().default(false),
     createdAt: createdAt(),
   },
   (table) => [
@@ -62,6 +67,8 @@ export const lessons = app.table(
       .references(() => units.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     position: integer('position').notNull(),
+    // Shown to learners. Content created in the CMS starts hidden.
+    visible: boolean('visible').notNull().default(false),
     createdAt: createdAt(),
   },
   (table) => [
@@ -154,6 +161,8 @@ export const studies = app.table(
       .notNull()
       .references(() => studyGroups.id),
     position: integer('position').notNull(),
+    // Shown to learners. Content created in the CMS starts hidden.
+    visible: boolean('visible').notNull().default(false),
     title: text('title').notNull(),
     description: text('description').notNull(),
     // Validate with the StudyPage schema from @libras/contracts before writing.
@@ -171,7 +180,6 @@ export const studies = app.table(
 );
 
 // User
-
 export const profiles = app.table(
   'profiles',
   {
@@ -193,6 +201,23 @@ export const profiles = app.table(
       'profiles_start_level_check',
       sql`${table.startLevel} in ('beginner', 'basic', 'conversational')`,
     ),
+  ],
+);
+
+export const admins = app.table(
+  'admins',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
+    email: text('email').notNull(),
+    name: text('name').notNull(),
+    active: boolean('active').notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check('admins_email_check', sql`char_length(${table.email}) between 3 and 254`),
+    check('admins_name_check', sql`char_length(${table.name}) between 1 and 60`),
   ],
 );
 

@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+/* Tokens copied from the app (apps/mobile/src/shared/theme/tokens.ts), so the CMS and its
+   previews look like the app. Keep both in sync; the names follow the app's (textMuted is
+   text-muted here, hence classes like `text-text-muted`). Spacing uses Tailwind's default
+   scale, which already matches the app's (1.5 = 6px, 2 = 8px, 3 = 12px, 4 = 16px...). */
+@theme {
+  --color-background: #f2f9fd;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f1f6f9;
+  --color-border: #e2ecf2;
+  --color-border-subtle: #eef4f8;
+  --color-text: #10242e;
+  --color-text-body: #33586a;
+  --color-text-muted: #5c7b8a;
+  --color-text-subtle: #6b8695;
+  --color-on-color: #ffffff;
+  --color-accent: #1c8ed6;
+  --color-accent-dark: #1672aa;
+  --color-accent-soft: #e6f3fc;
+  --color-success: #58cc02;
+  --color-success-dark: #47a302;
+  --color-success-soft: #eef9e0;
+  --color-danger: #e6394a;
+  --color-danger-dark: #b32b39;
+  --color-danger-soft: #fdecee;
+  --color-warning: #ff9600;
+  --color-warning-dark: #cc7800;
+  --color-warning-soft: #fff3e0;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-background font-sans text-sm/normal text-text;
+  }
+}

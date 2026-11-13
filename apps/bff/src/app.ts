@@ -6,10 +6,12 @@ import {
 } from 'fastify-type-provider-zod';
 
 import type { Container } from './container';
+import { adminRoutes } from './modules/admin/http/adminRoutes';
+import { authoringRoutes } from './modules/authoring/http/authoringRoutes';
 import { studyRoutes } from './modules/curriculum/http/studyRoutes';
 import { profileRoutes } from './modules/profile/http/profileRoutes';
 import { progressRoutes } from './modules/progress/http/progressRoutes';
-import { authPlugin } from './shared/infrastructure/auth';
+import { authPlugin, rejectOperatorAccounts } from './shared/infrastructure/auth';
 import { errorHandler, notFoundHandler } from './shared/infrastructure/errorHandler';
 import { healthRoutes } from './shared/infrastructure/healthRoutes';
 
@@ -31,9 +33,14 @@ export function buildApp(container: Container, { logger }: AppOptions) {
   app.register(
     async (v1) => {
       await v1.register(authPlugin(container.verifyAccessToken));
-      await v1.register(profileRoutes(container));
-      await v1.register(progressRoutes(container));
-      await v1.register(studyRoutes(container));
+      // Learners and CMS operators use separate accounts, and each scope refuses the other's.
+      await v1.register(async (learner) => {
+        learner.addHook('onRequest', rejectOperatorAccounts);
+        await learner.register(profileRoutes(container));
+        await learner.register(progressRoutes(container));
+        await learner.register(studyRoutes(container));
+      });
+      await v1.register(adminRoutes(container, [authoringRoutes(container)]), { prefix: '/admin' });
     },
     { prefix: '/v1' },
   );

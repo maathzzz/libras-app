@@ -9,7 +9,14 @@ import { HttpError } from './HttpError';
 export interface AuthenticatedUser {
   userId: string;
   email: string | null;
+  // A CMS operator account. Operators and learners are separate accounts: each side refuses
+  // the other's (see rejectOperatorAccounts and the /v1/admin scope).
+  operator: boolean;
 }
+
+// The role an operator account carries in `app_metadata`. Only the Auth admin API, with the
+// secret key, can write `app_metadata`, so a learner cannot give it to themselves.
+export const OPERATOR_ROLE = 'admin';
 
 // Null when the token is not acceptable. Throws only when the keys cannot be fetched, so an
 // outage of the JWKS endpoint shows up as a 500 instead of logging every learner out.
@@ -26,6 +33,7 @@ const TokenClaims = z.object({
   sub: z.uuid(),
   // Empty for anonymous and phone-only users.
   email: z.string().optional(),
+  app_metadata: z.object({ role: z.string().optional() }).optional(),
 });
 
 // Failures of the key source, not of the token.
@@ -55,7 +63,11 @@ export function createAccessTokenVerifier({
       });
       const claims = TokenClaims.safeParse(payload);
       if (!claims.success) return null;
-      return { userId: claims.data.sub, email: claims.data.email || null };
+      return {
+        userId: claims.data.sub,
+        email: claims.data.email || null,
+        operator: claims.data.app_metadata?.role === OPERATOR_ROLE,
+      };
     } catch (error) {
       if (error instanceof errors.JOSEError && !keySourceFailures.has(error.code)) return null;
       throw error;
@@ -87,6 +99,14 @@ export function authPlugin(verify: AccessTokenVerifier): FastifyPluginAsync {
       request.auth = user;
     });
   });
+}
+
+// The learners' routes refuse operator accounts, which only exist for the CMS. Without this
+// an operator signing in to the app would get a learner profile created for them.
+export async function rejectOperatorAccounts(request: FastifyRequest): Promise<void> {
+  if (authenticatedUser(request).operator) {
+    throw new HttpError(403, 'OPERATOR_ACCOUNT', 'This account is a CMS operator account');
+  }
 }
 
 // For handlers behind authPlugin, where `auth` is always set.

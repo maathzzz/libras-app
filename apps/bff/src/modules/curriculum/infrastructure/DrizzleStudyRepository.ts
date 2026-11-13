@@ -1,5 +1,5 @@
 import { StudyGuide, type StudyGroup } from '@libras/contracts';
-import { asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import { studies, studyGroups } from '../../../shared/infrastructure/db/schema';
@@ -23,6 +23,8 @@ export class DrizzleStudyRepository implements StudyRepository {
       })
       .from(studies)
       .innerJoin(studyGroups, eq(studyGroups.id, studies.groupId))
+      // Hidden studies are still being written in the CMS.
+      .where(eq(studies.visible, true))
       .orderBy(
         asc(studyGroups.position),
         asc(studyGroups.id),
@@ -50,7 +52,7 @@ export class DrizzleStudyRepository implements StudyRepository {
         pages: studies.pages,
       })
       .from(studies)
-      .where(eq(studies.id, studyId));
+      .where(and(eq(studies.id, studyId), eq(studies.visible, true)));
     if (!row) return null;
 
     // The pages column is only typed, not checked: content written by hand or by an older
