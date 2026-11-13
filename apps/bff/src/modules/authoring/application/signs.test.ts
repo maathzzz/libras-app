@@ -2,12 +2,12 @@ import type { AdminSign } from '@libras/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { SequentialIdGenerator } from '../../../shared/application/SequentialIdGenerator';
-import { InMemoryDraftSigns } from '../testing/InMemoryDraftSigns';
+import { InMemoryCmsSigns } from '../testing/InMemoryCmsSigns';
 import { InMemorySignImageStorage } from '../testing/InMemorySignImageStorage';
 import { CreateSign } from './CreateSign';
 import { CreateSignImageUpload } from './CreateSignImageUpload';
 import { DeleteSign } from './DeleteSign';
-import { GetDraftSigns } from './GetDraftSigns';
+import { GetCmsSigns } from './GetCmsSigns';
 import { UpdateSign } from './UpdateSign';
 
 const letterA: AdminSign = {
@@ -22,10 +22,10 @@ const letterA: AdminSign = {
 
 const unused: AdminSign = { ...letterA, id: 'sign-old', label: 'Velho', exerciseCount: 0 };
 
-let signs: InMemoryDraftSigns;
+let signs: InMemoryCmsSigns;
 
 beforeEach(() => {
-  signs = new InMemoryDraftSigns([letterA, unused]);
+  signs = new InMemoryCmsSigns([letterA, unused]);
 });
 
 describe('sign use cases', () => {
@@ -38,7 +38,7 @@ describe('sign use cases', () => {
     });
 
     expect(id).toBe('sign-1');
-    const { signs: listed } = await new GetDraftSigns(signs).execute();
+    const { signs: listed } = await new GetCmsSigns(signs).execute();
     expect(listed.find((sign) => sign.id === id)).toMatchObject({ label: 'Oi', exerciseCount: 0 });
   });
 
@@ -52,7 +52,7 @@ describe('sign use cases', () => {
     });
 
     expect(result.ok).toBe(true);
-    const { signs: listed } = await new GetDraftSigns(signs).execute();
+    const { signs: listed } = await new GetCmsSigns(signs).execute();
     expect(listed.find((sign) => sign.id === 'letter-a')?.imageUrls).toEqual([
       'https://x.test/a-v2.webp',
     ]);
@@ -77,7 +77,7 @@ describe('sign use cases', () => {
 
   it('keeps a sign that only a study shows', async () => {
     const inStudy: AdminSign = { ...unused, id: 'sign-study', studyCount: 1 };
-    const result = await new DeleteSign(new InMemoryDraftSigns([inStudy])).execute({
+    const result = await new DeleteSign(new InMemoryCmsSigns([inStudy])).execute({
       id: 'sign-study',
     });
 

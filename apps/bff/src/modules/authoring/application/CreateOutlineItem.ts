@@ -1,6 +1,6 @@
 import type { IdGenerator } from '../../../shared/application/IdGenerator';
 import { err, ok, type Result } from '../../../shared/domain/Result';
-import { notFound, parentLevel, type DraftOutlineRepository } from '../domain/DraftOutline';
+import { notFound, parentLevel, type CmsOutlineRepository } from '../domain/CmsOutline';
 
 export type CreateOutlineItemInput =
   { level: 'trail'; title: string } | { level: 'unit' | 'lesson'; parentId: string; title: string };
@@ -8,7 +8,7 @@ export type CreateOutlineItemInput =
 // Creates a trail, a unit in a trail or a lesson in a unit, at the end of its list.
 export class CreateOutlineItem {
   constructor(
-    private readonly outline: DraftOutlineRepository,
+    private readonly outline: CmsOutlineRepository,
     private readonly ids: IdGenerator,
   ) {}
 

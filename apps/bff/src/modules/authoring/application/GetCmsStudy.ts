@@ -1,10 +1,10 @@
 import type { AdminStudy } from '@libras/contracts';
 
 import { err, ok, type Result } from '../../../shared/domain/Result';
-import { studyNotFound, type DraftStudyRepository } from '../domain/DraftStudy';
+import { studyNotFound, type CmsStudyRepository } from '../domain/CmsStudy';
 
-export class GetDraftStudy {
-  constructor(private readonly studies: DraftStudyRepository) {}
+export class GetCmsStudy {
+  constructor(private readonly studies: CmsStudyRepository) {}
 
   async execute({ id }: { id: string }): Promise<Result<AdminStudy>> {
     const study = await this.studies.find(id);

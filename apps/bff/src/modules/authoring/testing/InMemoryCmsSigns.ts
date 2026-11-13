@@ -1,14 +1,10 @@
 import type { AdminSign } from '@libras/contracts';
 
-import type {
-  DeleteSignOutcome,
-  DraftSign,
-  DraftSignRepository,
-} from '../domain/DraftSignRepository';
+import type { DeleteSignOutcome, CmsSign, CmsSignRepository } from '../domain/CmsSignRepository';
 
-// For tests. `exerciseCount` and `studyCount` stand for the draft content that shows each
+// For tests. `exerciseCount` and `studyCount` stand for the content that shows each
 // sign.
-export class InMemoryDraftSigns implements DraftSignRepository {
+export class InMemoryCmsSigns implements CmsSignRepository {
   private readonly byId = new Map<string, AdminSign>();
 
   constructor(signs: readonly AdminSign[] = []) {
@@ -21,7 +17,7 @@ export class InMemoryDraftSigns implements DraftSignRepository {
       .map((sign) => structuredClone(sign));
   }
 
-  async findByIds(ids: readonly string[]): Promise<DraftSign[]> {
+  async findByIds(ids: readonly string[]): Promise<CmsSign[]> {
     return ids.flatMap((id) => {
       const sign = this.byId.get(id);
       if (!sign) return [];
@@ -30,11 +26,11 @@ export class InMemoryDraftSigns implements DraftSignRepository {
     });
   }
 
-  async create(sign: DraftSign): Promise<void> {
+  async create(sign: CmsSign): Promise<void> {
     this.byId.set(sign.id, { ...structuredClone(sign), exerciseCount: 0, studyCount: 0 });
   }
 
-  async update(sign: DraftSign): Promise<boolean> {
+  async update(sign: CmsSign): Promise<boolean> {
     const current = this.byId.get(sign.id);
     if (!current) return false;
     this.byId.set(sign.id, {

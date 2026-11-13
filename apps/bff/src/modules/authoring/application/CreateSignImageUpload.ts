@@ -14,7 +14,7 @@ export interface CreateSignImageUploadInput {
 }
 
 // Every upload gets a new path under `cms/`, so a published sign never has its file
-// replaced: it keeps pointing to the old picture until the draft is published.
+// replaced: a sign keeps its old picture until the operator saves the new one.
 export class CreateSignImageUpload {
   constructor(
     private readonly storage: SignImageStorage,

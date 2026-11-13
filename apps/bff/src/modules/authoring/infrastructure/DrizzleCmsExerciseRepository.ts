@@ -6,9 +6,9 @@ import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import { exercises, exerciseSigns, lessons } from '../../../shared/infrastructure/db/schema';
 import {
   exerciseFields,
-  type DraftExerciseRepository,
-  type DraftLessonExercises,
-} from '../domain/DraftExercise';
+  type CmsExerciseRepository,
+  type CmsLessonExercises,
+} from '../domain/CmsExercise';
 
 const IdRows = z.array(z.object({ id: z.string() }));
 
@@ -18,14 +18,14 @@ const textArray = (values: readonly string[]) =>
     sql`, `,
   )}]::text[]`;
 
-// Rows of draft_exercise_signs: the signs an exercise shows are its options.
+// Rows of exercise_signs: the signs an exercise shows are its options.
 const signRows = (exercise: Exercise) =>
   exerciseFields(exercise).signIds.map((signId) => ({ exerciseId: exercise.id, signId }));
 
-export class DrizzleDraftExerciseRepository implements DraftExerciseRepository {
+export class DrizzleCmsExerciseRepository implements CmsExerciseRepository {
   constructor(private readonly db: DbExecutor) {}
 
-  async listByLesson(lessonId: string): Promise<DraftLessonExercises | null> {
+  async listByLesson(lessonId: string): Promise<CmsLessonExercises | null> {
     const [lesson] = await this.db
       .select({ id: lessons.id, title: lessons.title })
       .from(lessons)

@@ -6,11 +6,11 @@ import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import { studies, studyGroups } from '../../../shared/infrastructure/db/schema';
 import type {
   DeleteStudyGroupOutcome,
-  DraftStudy,
-  DraftStudyRepository,
+  CmsStudy,
+  CmsStudyRepository,
   StoredStudy,
   UpdateStudyOutcome,
-} from '../domain/DraftStudy';
+} from '../domain/CmsStudy';
 
 const IdRows = z.array(z.object({ id: z.string() }));
 
@@ -30,7 +30,7 @@ const groupExists = (groupId: string) =>
 // Content outside the contract is a content error, as in the curriculum module.
 const parsePages = (pages: unknown) => z.array(StudyPage).parse(pages);
 
-export class DrizzleDraftStudyRepository implements DraftStudyRepository {
+export class DrizzleCmsStudyRepository implements CmsStudyRepository {
   constructor(private readonly db: DbExecutor) {}
 
   async listGroups(): Promise<AdminStudyGroup[]> {
@@ -147,7 +147,7 @@ export class DrizzleDraftStudyRepository implements DraftStudyRepository {
     return rows.map(({ id }) => id);
   }
 
-  async create({ id, groupId, title, description, pages }: DraftStudy): Promise<boolean> {
+  async create({ id, groupId, title, description, pages }: CmsStudy): Promise<boolean> {
     const rows = await this.db.execute(sql`
       insert into app.studies (id, group_id, position, title, description, pages)
       select ${id}, ${groupId}, ${nextPositionIn(groupId)}, ${title}, ${description},
@@ -158,13 +158,7 @@ export class DrizzleDraftStudyRepository implements DraftStudyRepository {
     return IdRows.parse(rows).length > 0;
   }
 
-  async update({
-    id,
-    groupId,
-    title,
-    description,
-    pages,
-  }: DraftStudy): Promise<UpdateStudyOutcome> {
+  async update({ id, groupId, title, description, pages }: CmsStudy): Promise<UpdateStudyOutcome> {
     // The position changes only when the study moves to another group.
     const rows = await this.db.execute(sql`
       update app.studies as study

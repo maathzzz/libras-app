@@ -2,7 +2,7 @@ import type { AdminTrail } from '@libras/contracts';
 
 import { DomainError } from '../../../shared/domain/DomainError';
 
-// The three levels of the draft outline. They have the same shape (id, title, position in
+// The three levels of the outline. They have the same shape (id, title, position in
 // the list of their parent), so the same use cases serve all of them. A unit is shown as
 // "módulo" in the CMS.
 export type OutlineLevel = 'trail' | 'unit' | 'lesson';
@@ -14,7 +14,7 @@ export const parentLevel = { trail: null, unit: 'trail', lesson: 'unit' } as con
 >;
 
 export function notFound(level: OutlineLevel, id: string): DomainError {
-  return new DomainError(`${level.toUpperCase()}_NOT_FOUND`, `Draft ${level} ${id} not found`);
+  return new DomainError(`${level.toUpperCase()}_NOT_FOUND`, `${level} ${id} not found`);
 }
 
 export interface NewOutlineItem {
@@ -31,7 +31,7 @@ export type DeleteOutlineOutcome = 'deleted' | 'notFound' | 'hasProgress';
 export const contentHasProgress = (what: string) =>
   new DomainError('CONTENT_HAS_PROGRESS', `Learners already did ${what}; hide it instead`);
 
-export interface DraftOutlineRepository {
+export interface CmsOutlineRepository {
   // Every trail, hidden ones too, with its units and lessons, each list in order.
   listTrails(): Promise<AdminTrail[]>;
   // Ids of one list, in order. `parentId` is null for the trails. Null when the parent

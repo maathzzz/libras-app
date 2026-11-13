@@ -1,11 +1,11 @@
 import type { SaveSignRequest } from '@libras/contracts';
 
 import type { IdGenerator } from '../../../shared/application/IdGenerator';
-import type { DraftSignRepository } from '../domain/DraftSignRepository';
+import type { CmsSignRepository } from '../domain/CmsSignRepository';
 
 export class CreateSign {
   constructor(
-    private readonly signs: DraftSignRepository,
+    private readonly signs: CmsSignRepository,
     private readonly ids: IdGenerator,
   ) {}
 

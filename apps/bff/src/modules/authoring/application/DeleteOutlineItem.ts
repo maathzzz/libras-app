@@ -2,9 +2,9 @@ import { err, ok, type Result } from '../../../shared/domain/Result';
 import {
   contentHasProgress,
   notFound,
-  type DraftOutlineRepository,
+  type CmsOutlineRepository,
   type OutlineLevel,
-} from '../domain/DraftOutline';
+} from '../domain/CmsOutline';
 
 export interface DeleteOutlineItemInput {
   level: OutlineLevel;
@@ -14,7 +14,7 @@ export interface DeleteOutlineItemInput {
 // Removes the item and everything below it. Content a learner already did stays, so their
 // progress, XP and achievements are kept: the operator hides it instead.
 export class DeleteOutlineItem {
-  constructor(private readonly outline: DraftOutlineRepository) {}
+  constructor(private readonly outline: CmsOutlineRepository) {}
 
   async execute({ level, id }: DeleteOutlineItemInput): Promise<Result<void>> {
     switch (await this.outline.delete(level, id)) {

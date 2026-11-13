@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import { useTestDatabase } from '../../../shared/infrastructure/db/testing/testDatabase';
-import type { DraftStudy } from '../domain/DraftStudy';
-import { DrizzleDraftStudyRepository } from './DrizzleDraftStudyRepository';
+import type { CmsStudy } from '../domain/CmsStudy';
+import { DrizzleCmsStudyRepository } from './DrizzleCmsStudyRepository';
 
 const inRollback = useTestDatabase();
 
@@ -14,7 +14,7 @@ const page: StudyPage = {
   blocks: [{ type: 'text', body: 'Texto de teste.' }],
 };
 
-const study = (id: string, groupId: string): DraftStudy => ({
+const study = (id: string, groupId: string): CmsStudy => ({
   id,
   groupId,
   title: `Estudo ${id}`,
@@ -22,11 +22,11 @@ const study = (id: string, groupId: string): DraftStudy => ({
   pages: [page],
 });
 
-// The shared database has the seed's draft groups, so the tests look only at their own.
+// The shared database has the seed's study groups, so the tests look only at their own.
 const own = (ids: readonly string[]) => ids.filter((id) => id.startsWith('it-'));
 
 async function prepare(tx: DbExecutor) {
-  const studies = new DrizzleDraftStudyRepository(tx);
+  const studies = new DrizzleCmsStudyRepository(tx);
   await studies.createGroup({ id: 'it-group-1', title: 'Grupo IT 1' });
   await studies.createGroup({ id: 'it-group-2', title: 'Grupo IT 2' });
   await studies.create(study('it-study-1', 'it-group-1'));
@@ -34,7 +34,7 @@ async function prepare(tx: DbExecutor) {
   return studies;
 }
 
-describe('DrizzleDraftStudyRepository', () => {
+describe('DrizzleCmsStudyRepository', () => {
   it(
     'lists groups at the end with their studies in order, empty groups too',
     inRollback(async (tx) => {

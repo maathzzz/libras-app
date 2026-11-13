@@ -1,16 +1,16 @@
 import type { Exercise } from '@libras/contracts';
 
-import type { DraftExerciseRepository, DraftLessonExercises } from '../domain/DraftExercise';
+import type { CmsExerciseRepository, CmsLessonExercises } from '../domain/CmsExercise';
 
 // For tests: each lesson with its exercises in order.
-export class InMemoryDraftExercises implements DraftExerciseRepository {
-  private readonly lessons: DraftLessonExercises[];
+export class InMemoryCmsExercises implements CmsExerciseRepository {
+  private readonly lessons: CmsLessonExercises[];
 
-  constructor(lessons: readonly DraftLessonExercises[] = []) {
+  constructor(lessons: readonly CmsLessonExercises[] = []) {
     this.lessons = structuredClone([...lessons]);
   }
 
-  async listByLesson(lessonId: string): Promise<DraftLessonExercises | null> {
+  async listByLesson(lessonId: string): Promise<CmsLessonExercises | null> {
     const found = this.lessons.find(({ lesson }) => lesson.id === lessonId);
     return found ? structuredClone(found) : null;
   }

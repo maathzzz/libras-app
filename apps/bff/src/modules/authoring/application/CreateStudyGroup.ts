@@ -1,10 +1,10 @@
 import type { IdGenerator } from '../../../shared/application/IdGenerator';
-import type { DraftStudyRepository } from '../domain/DraftStudy';
+import type { CmsStudyRepository } from '../domain/CmsStudy';
 
 // Adds a study group at the end of the "Estudar" tab.
 export class CreateStudyGroup {
   constructor(
-    private readonly studies: DraftStudyRepository,
+    private readonly studies: CmsStudyRepository,
     private readonly ids: IdGenerator,
   ) {}
 

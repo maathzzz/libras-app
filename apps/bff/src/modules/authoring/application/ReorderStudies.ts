@@ -1,5 +1,5 @@
 import { err, ok, type Result } from '../../../shared/domain/Result';
-import { studyGroupNotFound, type DraftStudyRepository } from '../domain/DraftStudy';
+import { studyGroupNotFound, type CmsStudyRepository } from '../domain/CmsStudy';
 import { invalidOrder, isSameList } from '../domain/listOrder';
 
 export interface ReorderStudiesInput {
@@ -8,7 +8,7 @@ export interface ReorderStudiesInput {
 }
 
 export class ReorderStudies {
-  constructor(private readonly studies: DraftStudyRepository) {}
+  constructor(private readonly studies: CmsStudyRepository) {}
 
   async execute({ groupId, ids }: ReorderStudiesInput): Promise<Result<void>> {
     const current = await this.studies.listStudyIds(groupId);

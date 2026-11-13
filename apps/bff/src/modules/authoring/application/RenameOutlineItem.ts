@@ -1,5 +1,5 @@
 import { err, ok, type Result } from '../../../shared/domain/Result';
-import { notFound, type DraftOutlineRepository, type OutlineLevel } from '../domain/DraftOutline';
+import { notFound, type CmsOutlineRepository, type OutlineLevel } from '../domain/CmsOutline';
 
 export interface RenameOutlineItemInput {
   level: OutlineLevel;
@@ -8,7 +8,7 @@ export interface RenameOutlineItemInput {
 }
 
 export class RenameOutlineItem {
-  constructor(private readonly outline: DraftOutlineRepository) {}
+  constructor(private readonly outline: CmsOutlineRepository) {}
 
   async execute({ level, id, title }: RenameOutlineItemInput): Promise<Result<void>> {
     const renamed = await this.outline.rename(level, id, title);

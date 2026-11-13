@@ -15,10 +15,10 @@ import { FixedClock } from '../../../shared/application/FixedClock';
 import { createInMemoryContainer } from '../../../testing/inMemoryContainer';
 import { createTestTokens, type TestTokens } from '../../../testing/testTokens';
 import { InMemoryAdminRepository } from '../../admin/testing/InMemoryAdminRepository';
-import { InMemoryDraftExercises } from '../testing/InMemoryDraftExercises';
-import { InMemoryDraftOutline } from '../testing/InMemoryDraftOutline';
-import { InMemoryDraftSigns } from '../testing/InMemoryDraftSigns';
-import { InMemoryDraftStudies } from '../testing/InMemoryDraftStudies';
+import { InMemoryCmsExercises } from '../testing/InMemoryCmsExercises';
+import { InMemoryCmsOutline } from '../testing/InMemoryCmsOutline';
+import { InMemoryCmsSigns } from '../testing/InMemoryCmsSigns';
+import { InMemoryCmsStudies } from '../testing/InMemoryCmsStudies';
 
 const now = new Date('2026-03-15T12:00:00Z');
 const operatorId = '7d6f1c2a-1b2d-4c5e-8f90-1a2b3c4d5e01';
@@ -37,7 +37,7 @@ describe('authoring routes', () => {
     const admins = new InMemoryAdminRepository([
       { userId: operatorId, email: 'ana@example.com', name: 'Ana', active: true },
     ]);
-    const outline = new InMemoryDraftOutline([
+    const outline = new InMemoryCmsOutline([
       {
         id: 'basico',
         title: 'Libras básico',
@@ -48,7 +48,7 @@ describe('authoring routes', () => {
         ],
       },
     ]);
-    const draftSigns = new InMemoryDraftSigns([
+    const cmsSigns = new InMemoryCmsSigns([
       {
         id: 'letter-a',
         label: 'A',
@@ -68,18 +68,18 @@ describe('authoring routes', () => {
         studyCount: 0,
       },
     ]);
-    const draftExercises = new InMemoryDraftExercises([
+    const cmsExercises = new InMemoryCmsExercises([
       { lesson: { id: 'vogais', title: 'Vogais' }, exercises: [] },
     ]);
-    const draftStudies = new InMemoryDraftStudies([{ id: 'iniciante', title: 'Primeiros passos' }]);
+    const cmsStudies = new InMemoryCmsStudies([{ id: 'iniciante', title: 'Primeiros passos' }]);
     app = buildApp(
       createInMemoryContainer(new FixedClock(now), {
         jwks: tokens.jwks,
         admins,
         outline,
-        draftSigns,
-        draftExercises,
-        draftStudies,
+        cmsSigns,
+        cmsExercises,
+        cmsStudies,
       }),
       { logger: false },
     );

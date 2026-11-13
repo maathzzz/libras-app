@@ -2,16 +2,16 @@ import type { AdminLesson, AdminTrail, AdminUnit } from '@libras/contracts';
 
 import type {
   DeleteOutlineOutcome,
-  DraftOutlineRepository,
+  CmsOutlineRepository,
   NewOutlineItem,
   OutlineLevel,
-} from '../domain/DraftOutline';
+} from '../domain/CmsOutline';
 
 type Item = AdminTrail | AdminUnit | AdminLesson;
 
 // For tests: the outline as nested lists, in the order they are given. `lessonsWithProgress`
 // stands for the lessons some learner already did.
-export class InMemoryDraftOutline implements DraftOutlineRepository {
+export class InMemoryCmsOutline implements CmsOutlineRepository {
   private readonly trails: AdminTrail[];
 
   constructor(

@@ -4,13 +4,9 @@ import { and, asc, count, eq, inArray, notExists, sql, type SQL } from 'drizzle-
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import { exercises, exerciseSigns, signs, studies } from '../../../shared/infrastructure/db/schema';
-import { withSign } from '../domain/DraftExercise';
-import { withSignInPages } from '../domain/DraftStudy';
-import type {
-  DeleteSignOutcome,
-  DraftSign,
-  DraftSignRepository,
-} from '../domain/DraftSignRepository';
+import { withSign } from '../domain/CmsExercise';
+import { withSignInPages } from '../domain/CmsStudy';
+import type { DeleteSignOutcome, CmsSign, CmsSignRepository } from '../domain/CmsSignRepository';
 
 // Studies have no join table: a sign block names its sign in `signId`, so a study shows a sign
 // when its pages contain a block with that id (jsonb containment).
@@ -21,7 +17,7 @@ const pagesShowing = (pages: SQL, signId: SQL | string) => sql`${pages} @> jsonb
 const studiesShowing = (signId: SQL | string) =>
   sql`select 1 from app.studies as study where ${pagesShowing(sql`study.pages`, signId)}`;
 
-export class DrizzleDraftSignRepository implements DraftSignRepository {
+export class DrizzleCmsSignRepository implements CmsSignRepository {
   constructor(private readonly db: DbExecutor) {}
 
   async list(): Promise<AdminSign[]> {
@@ -42,7 +38,7 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
     return rows;
   }
 
-  async findByIds(ids: readonly string[]): Promise<DraftSign[]> {
+  async findByIds(ids: readonly string[]): Promise<CmsSign[]> {
     if (ids.length === 0) return [];
     return this.db
       .select({
@@ -56,11 +52,11 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
       .where(inArray(signs.id, [...ids]));
   }
 
-  async create({ id, label, imageUrls, alt, description }: DraftSign): Promise<void> {
+  async create({ id, label, imageUrls, alt, description }: CmsSign): Promise<void> {
     await this.db.insert(signs).values({ id, label, imagePaths: imageUrls, alt, description });
   }
 
-  async update(sign: DraftSign): Promise<boolean> {
+  async update(sign: CmsSign): Promise<boolean> {
     const { id, label, imageUrls, alt, description } = sign;
     return this.db.transaction(async (tx) => {
       const rows = await tx

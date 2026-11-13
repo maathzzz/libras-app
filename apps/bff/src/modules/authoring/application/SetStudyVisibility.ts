@@ -1,9 +1,9 @@
 import { err, ok, type Result } from '../../../shared/domain/Result';
-import { studyNotFound, type DraftStudyRepository } from '../domain/DraftStudy';
+import { studyNotFound, type CmsStudyRepository } from '../domain/CmsStudy';
 
 // Shows a study in the "Estudar" tab, or hides it.
 export class SetStudyVisibility {
-  constructor(private readonly studies: DraftStudyRepository) {}
+  constructor(private readonly studies: CmsStudyRepository) {}
 
   async execute({ id, visible }: { id: string; visible: boolean }): Promise<Result<void>> {
     const changed = await this.studies.setVisible(id, visible);

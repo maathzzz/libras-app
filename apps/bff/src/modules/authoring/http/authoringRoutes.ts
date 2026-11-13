@@ -29,8 +29,8 @@ import type { CreateSignImageUpload } from '../application/CreateSignImageUpload
 import type { DeleteExercise } from '../application/DeleteExercise';
 import type { DeleteOutlineItem } from '../application/DeleteOutlineItem';
 import type { DeleteSign } from '../application/DeleteSign';
-import type { GetDraftSigns } from '../application/GetDraftSigns';
-import type { GetDraftTrails } from '../application/GetDraftTrails';
+import type { GetCmsSigns } from '../application/GetCmsSigns';
+import type { GetCmsTrails } from '../application/GetCmsTrails';
 import type { GetLessonExercises } from '../application/GetLessonExercises';
 import type { RenameOutlineItem } from '../application/RenameOutlineItem';
 import type { ReorderExercises } from '../application/ReorderExercises';
@@ -43,22 +43,22 @@ import type { CreateStudy } from '../application/CreateStudy';
 import type { CreateStudyGroup } from '../application/CreateStudyGroup';
 import type { DeleteStudy } from '../application/DeleteStudy';
 import type { DeleteStudyGroup } from '../application/DeleteStudyGroup';
-import type { GetDraftStudies } from '../application/GetDraftStudies';
-import type { GetDraftStudy } from '../application/GetDraftStudy';
+import type { GetCmsStudies } from '../application/GetCmsStudies';
+import type { GetCmsStudy } from '../application/GetCmsStudy';
 import type { RenameStudyGroup } from '../application/RenameStudyGroup';
 import type { ReorderStudies } from '../application/ReorderStudies';
 import type { ReorderStudyGroups } from '../application/ReorderStudyGroups';
 import type { UpdateStudy } from '../application/UpdateStudy';
-import type { OutlineLevel } from '../domain/DraftOutline';
+import type { OutlineLevel } from '../domain/CmsOutline';
 
 export interface AuthoringUseCases {
-  getDraftTrails: GetDraftTrails;
+  getCmsTrails: GetCmsTrails;
   createOutlineItem: CreateOutlineItem;
   renameOutlineItem: RenameOutlineItem;
   deleteOutlineItem: DeleteOutlineItem;
   reorderOutlineItems: ReorderOutlineItems;
   setOutlineItemVisibility: SetOutlineItemVisibility;
-  getDraftSigns: GetDraftSigns;
+  getCmsSigns: GetCmsSigns;
   createSign: CreateSign;
   updateSign: UpdateSign;
   deleteSign: DeleteSign;
@@ -68,12 +68,12 @@ export interface AuthoringUseCases {
   updateExercise: UpdateExercise;
   deleteExercise: DeleteExercise;
   reorderExercises: ReorderExercises;
-  getDraftStudies: GetDraftStudies;
+  getCmsStudies: GetCmsStudies;
   createStudyGroup: CreateStudyGroup;
   renameStudyGroup: RenameStudyGroup;
   deleteStudyGroup: DeleteStudyGroup;
   reorderStudyGroups: ReorderStudyGroups;
-  getDraftStudy: GetDraftStudy;
+  getCmsStudy: GetCmsStudy;
   createStudy: CreateStudy;
   updateStudy: UpdateStudy;
   deleteStudy: DeleteStudy;
@@ -107,21 +107,23 @@ const outlineRoutes: Record<OutlineLevel, { path: string; param: string }> = {
   lesson: { path: 'lessons', param: 'lessonId' },
 };
 
-// Draft content for the CMS. Registered inside adminRoutes, so every route here already
-// belongs to an active operator. All of it edits the draft; nothing reaches learners
+// Content for the CMS. Registered inside adminRoutes, so every route here already belongs
+// to an active operator. It edits the tables the app reads: a change to visible content
+// reaches learners at once. New trails, units, lessons and studies start hidden.
+//
 // before a publish.
 export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsyncZod {
-  const { getDraftTrails, createOutlineItem, renameOutlineItem, deleteOutlineItem } = useCases;
-  const { reorderOutlineItems, getDraftSigns, createSign, updateSign, deleteSign } = useCases;
+  const { getCmsTrails, createOutlineItem, renameOutlineItem, deleteOutlineItem } = useCases;
+  const { reorderOutlineItems, getCmsSigns, createSign, updateSign, deleteSign } = useCases;
   const { createSignImageUpload, getLessonExercises, createExercise, updateExercise } = useCases;
   const { deleteExercise, reorderExercises } = useCases;
-  const { getDraftStudies, createStudyGroup, renameStudyGroup, deleteStudyGroup } = useCases;
-  const { reorderStudyGroups, getDraftStudy, createStudy, updateStudy, deleteStudy } = useCases;
+  const { getCmsStudies, createStudyGroup, renameStudyGroup, deleteStudyGroup } = useCases;
+  const { reorderStudyGroups, getCmsStudy, createStudy, updateStudy, deleteStudy } = useCases;
   const { reorderStudies, setOutlineItemVisibility, setStudyVisibility } = useCases;
 
   return async (app) => {
     app.get('/trails', { schema: { response: { 200: AdminTrailsResponse } } }, async () =>
-      getDraftTrails.execute(),
+      getCmsTrails.execute(),
     );
 
     app.post(
@@ -232,7 +234,7 @@ export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsync
     const signParams = z.object({ signId: z.string().min(1).max(80) });
 
     app.get('/signs', { schema: { response: { 200: AdminSignsResponse } } }, async () =>
-      getDraftSigns.execute(),
+      getCmsSigns.execute(),
     );
 
     app.post(
@@ -337,7 +339,7 @@ export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsync
     const studyIdOf = (values: Record<string, string>) => values.studyId ?? '';
 
     app.get('/studies', { schema: { response: { 200: AdminStudiesResponse } } }, async () =>
-      getDraftStudies.execute(),
+      getCmsStudies.execute(),
     );
 
     app.post(
@@ -394,7 +396,7 @@ export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsync
       '/studies/:studyId',
       { schema: { params: studyParams, response: { 200: AdminStudy, ...errors } } },
       async (request, reply) => {
-        const result = await getDraftStudy.execute({ id: studyIdOf(request.params) });
+        const result = await getCmsStudy.execute({ id: studyIdOf(request.params) });
         return result.ok ? result.value : sendError(reply, result.error);
       },
     );

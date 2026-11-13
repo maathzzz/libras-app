@@ -1,21 +1,17 @@
 import type { SaveExerciseRequest } from '@libras/contracts';
 
 import { err, ok, type Result } from '../../../shared/domain/Result';
-import {
-  buildExercise,
-  exerciseNotFound,
-  type DraftExerciseRepository,
-} from '../domain/DraftExercise';
-import type { DraftSignRepository } from '../domain/DraftSignRepository';
+import { buildExercise, exerciseNotFound, type CmsExerciseRepository } from '../domain/CmsExercise';
+import type { CmsSignRepository } from '../domain/CmsSignRepository';
 import { signsOfExercise } from './signsOfExercise';
 
 export type UpdateExerciseInput = SaveExerciseRequest & { id: string };
 
-// Replaces every field of a draft exercise; it may also change type.
+// Replaces every field of an exercise; it may also change type.
 export class UpdateExercise {
   constructor(
-    private readonly exercises: DraftExerciseRepository,
-    private readonly signs: DraftSignRepository,
+    private readonly exercises: CmsExerciseRepository,
+    private readonly signs: CmsSignRepository,
   ) {}
 
   async execute({ id, ...fields }: UpdateExerciseInput): Promise<Result<void>> {

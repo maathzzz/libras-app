@@ -1,5 +1,5 @@
 import { err, ok, type Result } from '../../../shared/domain/Result';
-import { notFound, parentLevel, type DraftOutlineRepository } from '../domain/DraftOutline';
+import { notFound, parentLevel, type CmsOutlineRepository } from '../domain/CmsOutline';
 import { invalidOrder, isSameList } from '../domain/listOrder';
 
 export type ReorderOutlineItemsInput =
@@ -7,7 +7,7 @@ export type ReorderOutlineItemsInput =
   | { level: 'unit' | 'lesson'; parentId: string; ids: readonly string[] };
 
 export class ReorderOutlineItems {
-  constructor(private readonly outline: DraftOutlineRepository) {}
+  constructor(private readonly outline: CmsOutlineRepository) {}
 
   async execute(input: ReorderOutlineItemsInput): Promise<Result<void>> {
     const parentId = input.level === 'trail' ? null : input.parentId;

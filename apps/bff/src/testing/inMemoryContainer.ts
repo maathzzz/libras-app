@@ -10,8 +10,8 @@ import { CreateSignImageUpload } from '../modules/authoring/application/CreateSi
 import { DeleteExercise } from '../modules/authoring/application/DeleteExercise';
 import { DeleteOutlineItem } from '../modules/authoring/application/DeleteOutlineItem';
 import { DeleteSign } from '../modules/authoring/application/DeleteSign';
-import { GetDraftSigns } from '../modules/authoring/application/GetDraftSigns';
-import { GetDraftTrails } from '../modules/authoring/application/GetDraftTrails';
+import { GetCmsSigns } from '../modules/authoring/application/GetCmsSigns';
+import { GetCmsTrails } from '../modules/authoring/application/GetCmsTrails';
 import { GetLessonExercises } from '../modules/authoring/application/GetLessonExercises';
 import { RenameOutlineItem } from '../modules/authoring/application/RenameOutlineItem';
 import { ReorderExercises } from '../modules/authoring/application/ReorderExercises';
@@ -23,17 +23,17 @@ import { CreateStudy } from '../modules/authoring/application/CreateStudy';
 import { CreateStudyGroup } from '../modules/authoring/application/CreateStudyGroup';
 import { DeleteStudy } from '../modules/authoring/application/DeleteStudy';
 import { DeleteStudyGroup } from '../modules/authoring/application/DeleteStudyGroup';
-import { GetDraftStudies } from '../modules/authoring/application/GetDraftStudies';
-import { GetDraftStudy } from '../modules/authoring/application/GetDraftStudy';
+import { GetCmsStudies } from '../modules/authoring/application/GetCmsStudies';
+import { GetCmsStudy } from '../modules/authoring/application/GetCmsStudy';
 import { RenameStudyGroup } from '../modules/authoring/application/RenameStudyGroup';
 import { ReorderStudies } from '../modules/authoring/application/ReorderStudies';
 import { ReorderStudyGroups } from '../modules/authoring/application/ReorderStudyGroups';
 import { UpdateStudy } from '../modules/authoring/application/UpdateStudy';
 import { UpdateSign } from '../modules/authoring/application/UpdateSign';
-import { InMemoryDraftExercises } from '../modules/authoring/testing/InMemoryDraftExercises';
-import { InMemoryDraftOutline } from '../modules/authoring/testing/InMemoryDraftOutline';
-import { InMemoryDraftStudies } from '../modules/authoring/testing/InMemoryDraftStudies';
-import { InMemoryDraftSigns } from '../modules/authoring/testing/InMemoryDraftSigns';
+import { InMemoryCmsExercises } from '../modules/authoring/testing/InMemoryCmsExercises';
+import { InMemoryCmsOutline } from '../modules/authoring/testing/InMemoryCmsOutline';
+import { InMemoryCmsStudies } from '../modules/authoring/testing/InMemoryCmsStudies';
+import { InMemoryCmsSigns } from '../modules/authoring/testing/InMemoryCmsSigns';
 import { InMemorySignImageStorage } from '../modules/authoring/testing/InMemorySignImageStorage';
 import { GetStudies } from '../modules/curriculum/application/GetStudies';
 import { GetStudy } from '../modules/curriculum/application/GetStudy';
@@ -66,10 +66,10 @@ interface InMemoryContainerOptions {
   trails?: InMemoryTrailCatalog;
   studies?: InMemoryStudyRepository;
   admins?: InMemoryAdminRepository;
-  outline?: InMemoryDraftOutline;
-  draftSigns?: InMemoryDraftSigns;
-  draftExercises?: InMemoryDraftExercises;
-  draftStudies?: InMemoryDraftStudies;
+  outline?: InMemoryCmsOutline;
+  cmsSigns?: InMemoryCmsSigns;
+  cmsExercises?: InMemoryCmsExercises;
+  cmsStudies?: InMemoryCmsStudies;
   signImages?: InMemorySignImageStorage;
 }
 
@@ -85,10 +85,10 @@ export function createInMemoryContainer(
     trails = new InMemoryTrailCatalog([]),
     studies = new InMemoryStudyRepository(),
     admins = new InMemoryAdminRepository(),
-    outline = new InMemoryDraftOutline(),
-    draftSigns = new InMemoryDraftSigns(),
-    draftExercises = new InMemoryDraftExercises(),
-    draftStudies = new InMemoryDraftStudies(),
+    outline = new InMemoryCmsOutline(),
+    cmsSigns = new InMemoryCmsSigns(),
+    cmsExercises = new InMemoryCmsExercises(),
+    cmsStudies = new InMemoryCmsStudies(),
     signImages = new InMemorySignImageStorage(),
   }: InMemoryContainerOptions = {},
 ): Container {
@@ -114,32 +114,32 @@ export function createInMemoryContainer(
     getStudies: new GetStudies(studies),
     getStudy: new GetStudy(studies),
     authorizeAdmin: new AuthorizeAdmin(admins),
-    getDraftTrails: new GetDraftTrails(outline),
+    getCmsTrails: new GetCmsTrails(outline),
     createOutlineItem: new CreateOutlineItem(outline, ids),
     renameOutlineItem: new RenameOutlineItem(outline),
     deleteOutlineItem: new DeleteOutlineItem(outline),
     reorderOutlineItems: new ReorderOutlineItems(outline),
     setOutlineItemVisibility: new SetOutlineItemVisibility(outline),
-    getDraftSigns: new GetDraftSigns(draftSigns),
-    createSign: new CreateSign(draftSigns, ids),
-    updateSign: new UpdateSign(draftSigns),
-    deleteSign: new DeleteSign(draftSigns),
-    getLessonExercises: new GetLessonExercises(draftExercises),
-    createExercise: new CreateExercise(draftExercises, draftSigns, ids),
-    updateExercise: new UpdateExercise(draftExercises, draftSigns),
-    deleteExercise: new DeleteExercise(draftExercises),
-    reorderExercises: new ReorderExercises(draftExercises),
-    getDraftStudies: new GetDraftStudies(draftStudies),
-    createStudyGroup: new CreateStudyGroup(draftStudies, ids),
-    renameStudyGroup: new RenameStudyGroup(draftStudies),
-    deleteStudyGroup: new DeleteStudyGroup(draftStudies),
-    reorderStudyGroups: new ReorderStudyGroups(draftStudies),
-    getDraftStudy: new GetDraftStudy(draftStudies),
-    createStudy: new CreateStudy(draftStudies, draftSigns, ids),
-    updateStudy: new UpdateStudy(draftStudies, draftSigns, ids),
-    deleteStudy: new DeleteStudy(draftStudies),
-    reorderStudies: new ReorderStudies(draftStudies),
-    setStudyVisibility: new SetStudyVisibility(draftStudies),
+    getCmsSigns: new GetCmsSigns(cmsSigns),
+    createSign: new CreateSign(cmsSigns, ids),
+    updateSign: new UpdateSign(cmsSigns),
+    deleteSign: new DeleteSign(cmsSigns),
+    getLessonExercises: new GetLessonExercises(cmsExercises),
+    createExercise: new CreateExercise(cmsExercises, cmsSigns, ids),
+    updateExercise: new UpdateExercise(cmsExercises, cmsSigns),
+    deleteExercise: new DeleteExercise(cmsExercises),
+    reorderExercises: new ReorderExercises(cmsExercises),
+    getCmsStudies: new GetCmsStudies(cmsStudies),
+    createStudyGroup: new CreateStudyGroup(cmsStudies, ids),
+    renameStudyGroup: new RenameStudyGroup(cmsStudies),
+    deleteStudyGroup: new DeleteStudyGroup(cmsStudies),
+    reorderStudyGroups: new ReorderStudyGroups(cmsStudies),
+    getCmsStudy: new GetCmsStudy(cmsStudies),
+    createStudy: new CreateStudy(cmsStudies, cmsSigns, ids),
+    updateStudy: new UpdateStudy(cmsStudies, cmsSigns, ids),
+    deleteStudy: new DeleteStudy(cmsStudies),
+    reorderStudies: new ReorderStudies(cmsStudies),
+    setStudyVisibility: new SetStudyVisibility(cmsStudies),
     createSignImageUpload: new CreateSignImageUpload(signImages, ids),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),

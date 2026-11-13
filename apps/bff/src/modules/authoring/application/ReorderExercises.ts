@@ -1,5 +1,5 @@
 import { err, ok, type Result } from '../../../shared/domain/Result';
-import { lessonNotFound, type DraftExerciseRepository } from '../domain/DraftExercise';
+import { lessonNotFound, type CmsExerciseRepository } from '../domain/CmsExercise';
 import { invalidOrder, isSameList } from '../domain/listOrder';
 
 export interface ReorderExercisesInput {
@@ -8,7 +8,7 @@ export interface ReorderExercisesInput {
 }
 
 export class ReorderExercises {
-  constructor(private readonly exercises: DraftExerciseRepository) {}
+  constructor(private readonly exercises: CmsExerciseRepository) {}
 
   async execute({ lessonId, ids }: ReorderExercisesInput): Promise<Result<void>> {
     const found = await this.exercises.listByLesson(lessonId);

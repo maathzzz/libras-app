@@ -6,10 +6,10 @@ import type { DbExecutor } from '../../../shared/infrastructure/db/client';
 import { courses, exercises, lessons, units } from '../../../shared/infrastructure/db/schema';
 import type {
   DeleteOutlineOutcome,
-  DraftOutlineRepository,
+  CmsOutlineRepository,
   NewOutlineItem,
   OutlineLevel,
-} from '../domain/DraftOutline';
+} from '../domain/CmsOutline';
 
 // The three levels share their shape, so the writes are one SQL per operation with the
 // level's table and parent column filled in. They are constants, never user input.
@@ -54,7 +54,7 @@ function inList({ parent }: LevelTables, parentId: string | null, alias?: SQL): 
   return sql`${column} = ${parentId}`;
 }
 
-export class DrizzleDraftOutlineRepository implements DraftOutlineRepository {
+export class DrizzleCmsOutlineRepository implements CmsOutlineRepository {
   constructor(private readonly db: DbExecutor) {}
 
   async listTrails(): Promise<AdminTrail[]> {

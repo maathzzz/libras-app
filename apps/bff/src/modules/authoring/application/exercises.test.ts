@@ -2,10 +2,10 @@ import type { AdminSign } from '@libras/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { SequentialIdGenerator } from '../../../shared/application/SequentialIdGenerator';
-import { buildExercise, withSign } from '../domain/DraftExercise';
-import type { DraftSign } from '../domain/DraftSignRepository';
-import { InMemoryDraftExercises } from '../testing/InMemoryDraftExercises';
-import { InMemoryDraftSigns } from '../testing/InMemoryDraftSigns';
+import { buildExercise, withSign } from '../domain/CmsExercise';
+import type { CmsSign } from '../domain/CmsSignRepository';
+import { InMemoryCmsExercises } from '../testing/InMemoryCmsExercises';
+import { InMemoryCmsSigns } from '../testing/InMemoryCmsSigns';
 import { CreateExercise } from './CreateExercise';
 import { DeleteExercise } from './DeleteExercise';
 import { GetLessonExercises } from './GetLessonExercises';
@@ -22,15 +22,15 @@ const sign = (id: string, label: string, frames = 1): AdminSign => ({
   studyCount: 0,
 });
 
-const draftSigns = [sign('a', 'A'), sign('b', 'B'), sign('oi', 'Oi', 2), sign('a2', 'a')];
-const byId = new Map<string, DraftSign>(draftSigns.map((item) => [item.id, item]));
+const cmsSigns = [sign('a', 'A'), sign('b', 'B'), sign('oi', 'Oi', 2), sign('a2', 'a')];
+const byId = new Map<string, CmsSign>(cmsSigns.map((item) => [item.id, item]));
 
-let exercises: InMemoryDraftExercises;
-let signs: InMemoryDraftSigns;
+let exercises: InMemoryCmsExercises;
+let signs: InMemoryCmsSigns;
 
 beforeEach(() => {
-  signs = new InMemoryDraftSigns(draftSigns);
-  exercises = new InMemoryDraftExercises([
+  signs = new InMemoryCmsSigns(cmsSigns);
+  exercises = new InMemoryCmsExercises([
     {
       lesson: { id: 'vogais', title: 'Vogais' },
       exercises: [
@@ -88,7 +88,7 @@ describe('buildExercise', () => {
 
 describe('withSign', () => {
   it('updates the copy of an edited sign where the exercise shows it', () => {
-    const edited: DraftSign = { ...sign('a', 'Á'), imageUrls: ['https://x.test/a-v2.webp'] };
+    const edited: CmsSign = { ...sign('a', 'Á'), imageUrls: ['https://x.test/a-v2.webp'] };
     const [recognize, produce] = [
       buildExercise('x', { type: 'sign_to_word', signIds: ['a', 'b'], correctSignId: 'a' }, byId),
       buildExercise('y', { type: 'word_to_sign', signIds: ['b', 'a'], correctSignId: 'b' }, byId),

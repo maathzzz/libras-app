@@ -2,10 +2,10 @@ import type { AdminTrail } from '@libras/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { SequentialIdGenerator } from '../../../shared/application/SequentialIdGenerator';
-import { InMemoryDraftOutline } from '../testing/InMemoryDraftOutline';
+import { InMemoryCmsOutline } from '../testing/InMemoryCmsOutline';
 import { CreateOutlineItem } from './CreateOutlineItem';
 import { DeleteOutlineItem } from './DeleteOutlineItem';
-import { GetDraftTrails } from './GetDraftTrails';
+import { GetCmsTrails } from './GetCmsTrails';
 import { RenameOutlineItem } from './RenameOutlineItem';
 import { ReorderOutlineItems } from './ReorderOutlineItems';
 import { SetOutlineItemVisibility } from './SetOutlineItemVisibility';
@@ -28,13 +28,13 @@ const trail: AdminTrail = {
   ],
 };
 
-let outline: InMemoryDraftOutline;
+let outline: InMemoryCmsOutline;
 
 beforeEach(() => {
-  outline = new InMemoryDraftOutline([trail]);
+  outline = new InMemoryCmsOutline([trail]);
 });
 
-const trailsNow = async () => (await new GetDraftTrails(outline).execute()).trails;
+const trailsNow = async () => (await new GetCmsTrails(outline).execute()).trails;
 
 describe('CreateOutlineItem', () => {
   it('adds a lesson at the end of its unit with a new id', async () => {
@@ -172,7 +172,7 @@ describe('SetOutlineItemVisibility', () => {
 
 describe('DeleteOutlineItem with learner progress', () => {
   it('keeps a lesson, its unit and its trail once a learner did the lesson', async () => {
-    const withProgress = new InMemoryDraftOutline([trail], new Set(['a-e']));
+    const withProgress = new InMemoryCmsOutline([trail], new Set(['a-e']));
     const remove = new DeleteOutlineItem(withProgress);
 
     for (const [level, id] of [

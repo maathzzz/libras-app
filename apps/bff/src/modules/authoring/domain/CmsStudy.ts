@@ -6,10 +6,10 @@ import {
 } from '@libras/contracts';
 
 import { DomainError } from '../../../shared/domain/DomainError';
-import { imagesOf } from './DraftExercise';
-import type { DraftSign } from './DraftSignRepository';
+import { imagesOf } from './CmsExercise';
+import type { CmsSign } from './CmsSignRepository';
 
-export interface DraftStudy {
+export interface CmsStudy {
   id: string;
   groupId: string;
   title: string;
@@ -18,20 +18,20 @@ export interface DraftStudy {
 }
 
 // A study as stored, with whether learners see it. Created hidden.
-export type StoredStudy = DraftStudy & { visible: boolean };
+export type StoredStudy = CmsStudy & { visible: boolean };
 
 export const studyNotFound = (id: string) =>
-  new DomainError('STUDY_NOT_FOUND', `Draft study ${id} not found`);
+  new DomainError('STUDY_NOT_FOUND', `Study ${id} not found`);
 
 export const studyGroupNotFound = (id: string) =>
-  new DomainError('STUDY_GROUP_NOT_FOUND', `Draft study group ${id} not found`);
+  new DomainError('STUDY_GROUP_NOT_FOUND', `Study group ${id} not found`);
 
 // The group named in the body of a request, not in its URL.
 export const unknownStudyGroup = (id: string) =>
-  new DomainError('UNKNOWN_STUDY_GROUP', `Draft study group ${id} not found`);
+  new DomainError('UNKNOWN_STUDY_GROUP', `Study group ${id} not found`);
 
 // A sign block as the app receives it, with its own copy of the sign.
-export function signBlock(sign: DraftSign): StudyBlock {
+export function signBlock(sign: CmsSign): StudyBlock {
   const block = {
     type: 'sign' as const,
     signId: sign.id,
@@ -41,7 +41,7 @@ export function signBlock(sign: DraftSign): StudyBlock {
   return sign.description === null ? block : { ...block, description: sign.description };
 }
 
-// The draft signs a study shows, in no particular order.
+// The signs a study shows, in no particular order.
 export function signIdsOf(pages: readonly SaveStudyPage[]): string[] {
   const ids = pages.flatMap((page) =>
     page.blocks.flatMap((block) => (block.type === 'sign' ? [block.signId] : [])),
@@ -53,7 +53,7 @@ export function signIdsOf(pages: readonly SaveStudyPage[]): string[] {
 // gets one from `newPageId`.
 export function buildStudyPages(
   pages: readonly SaveStudyPage[],
-  signs: ReadonlyMap<string, DraftSign>,
+  signs: ReadonlyMap<string, CmsSign>,
   newPageId: () => string,
 ): StudyPage[] {
   return pages.map((page) =>
@@ -71,7 +71,7 @@ export function buildStudyPages(
 }
 
 // The pages with their copy of `sign` brought up to date, after the sign was edited.
-export function withSignInPages(pages: readonly StudyPage[], sign: DraftSign): StudyPage[] {
+export function withSignInPages(pages: readonly StudyPage[], sign: CmsSign): StudyPage[] {
   return pages.map((page) =>
     StudyPage.parse({
       ...page,
@@ -85,7 +85,7 @@ export function withSignInPages(pages: readonly StudyPage[], sign: DraftSign): S
 export type DeleteStudyGroupOutcome = 'deleted' | 'notFound' | 'notEmpty';
 export type UpdateStudyOutcome = 'updated' | 'notFound' | 'groupNotFound';
 
-export interface DraftStudyRepository {
+export interface CmsStudyRepository {
   // Every group (empty ones too) with its studies, both in order.
   listGroups(): Promise<AdminStudyGroup[]>;
   listGroupIds(): Promise<string[]>;
@@ -102,10 +102,10 @@ export interface DraftStudyRepository {
   // Ids of the studies of a group, in order. Null when the group does not exist.
   listStudyIds(groupId: string): Promise<string[] | null>;
   // Adds the study, hidden, at the end of its group. False when the group does not exist.
-  create(study: DraftStudy): Promise<boolean>;
+  create(study: CmsStudy): Promise<boolean>;
   // Replaces every field but the visibility. A study moved to another group goes to the end
   // of that group.
-  update(study: DraftStudy): Promise<UpdateStudyOutcome>;
+  update(study: CmsStudy): Promise<UpdateStudyOutcome>;
   // False when the study does not exist.
   setVisible(id: string, visible: boolean): Promise<boolean>;
   // False when the study does not exist.

@@ -2,11 +2,11 @@ import type { AdminStudyGroup } from '@libras/contracts';
 
 import type {
   DeleteStudyGroupOutcome,
-  DraftStudy,
-  DraftStudyRepository,
+  CmsStudy,
+  CmsStudyRepository,
   StoredStudy,
   UpdateStudyOutcome,
-} from '../domain/DraftStudy';
+} from '../domain/CmsStudy';
 
 interface Group {
   id: string;
@@ -14,7 +14,7 @@ interface Group {
 }
 
 // For tests: the groups and the studies, each list in the order given.
-export class InMemoryDraftStudies implements DraftStudyRepository {
+export class InMemoryCmsStudies implements CmsStudyRepository {
   private groups: Group[];
   private studies: StoredStudy[];
 
@@ -72,13 +72,13 @@ export class InMemoryDraftStudies implements DraftStudyRepository {
     return this.studiesOf(groupId).map((study) => study.id);
   }
 
-  async create(study: DraftStudy): Promise<boolean> {
+  async create(study: CmsStudy): Promise<boolean> {
     if (!this.hasGroup(study.groupId)) return false;
     this.studies.push({ ...structuredClone(study), visible: false });
     return true;
   }
 
-  async update(study: DraftStudy): Promise<UpdateStudyOutcome> {
+  async update(study: CmsStudy): Promise<UpdateStudyOutcome> {
     const index = this.studies.findIndex((candidate) => candidate.id === study.id);
     if (index < 0) return 'notFound';
     if (!this.hasGroup(study.groupId)) return 'groupNotFound';

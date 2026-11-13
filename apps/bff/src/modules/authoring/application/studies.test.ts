@@ -2,15 +2,15 @@ import type { AdminSign, SaveStudyRequest, StudyPage } from '@libras/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { SequentialIdGenerator } from '../../../shared/application/SequentialIdGenerator';
-import { signBlock, withSignInPages } from '../domain/DraftStudy';
-import { InMemoryDraftSigns } from '../testing/InMemoryDraftSigns';
-import { InMemoryDraftStudies } from '../testing/InMemoryDraftStudies';
+import { signBlock, withSignInPages } from '../domain/CmsStudy';
+import { InMemoryCmsSigns } from '../testing/InMemoryCmsSigns';
+import { InMemoryCmsStudies } from '../testing/InMemoryCmsStudies';
 import { CreateStudy } from './CreateStudy';
 import { CreateStudyGroup } from './CreateStudyGroup';
 import { DeleteStudy } from './DeleteStudy';
 import { DeleteStudyGroup } from './DeleteStudyGroup';
-import { GetDraftStudies } from './GetDraftStudies';
-import { GetDraftStudy } from './GetDraftStudy';
+import { GetCmsStudies } from './GetCmsStudies';
+import { GetCmsStudy } from './GetCmsStudy';
 import { RenameStudyGroup } from './RenameStudyGroup';
 import { SetStudyVisibility } from './SetStudyVisibility';
 import { ReorderStudies } from './ReorderStudies';
@@ -33,14 +33,14 @@ const intro: StudyPage = {
   blocks: [{ type: 'text', body: 'Datilologia é soletrar com as mãos.' }],
 };
 
-let studies: InMemoryDraftStudies;
-let signs: InMemoryDraftSigns;
+let studies: InMemoryCmsStudies;
+let signs: InMemoryCmsSigns;
 let ids: SequentialIdGenerator;
 
 beforeEach(() => {
-  signs = new InMemoryDraftSigns([letterA]);
+  signs = new InMemoryCmsSigns([letterA]);
   ids = new SequentialIdGenerator();
-  studies = new InMemoryDraftStudies(
+  studies = new InMemoryCmsStudies(
     [
       { id: 'iniciante', title: 'Primeiros passos' },
       { id: 'vazio', title: 'Vazio' },
@@ -58,7 +58,7 @@ beforeEach(() => {
   );
 });
 
-const groupsNow = async () => (await new GetDraftStudies(studies).execute()).groups;
+const groupsNow = async () => (await new GetCmsStudies(studies).execute()).groups;
 
 const request: SaveStudyRequest = {
   groupId: 'iniciante',
@@ -141,7 +141,7 @@ describe('study use cases', () => {
     const result = await new CreateStudy(studies, signs, ids).execute(request);
 
     expect(result).toEqual({ ok: true, value: { id: 'study-1' } });
-    const found = await new GetDraftStudy(studies).execute({ id: 'study-1' });
+    const found = await new GetCmsStudy(studies).execute({ id: 'study-1' });
     if (!found.ok) throw new Error(found.error.code);
     expect(found.value.pages).toEqual([
       {
@@ -181,7 +181,7 @@ describe('study use cases', () => {
     });
 
     expect(result.ok).toBe(true);
-    const found = await new GetDraftStudy(studies).execute({ id: 'alfabeto' });
+    const found = await new GetCmsStudy(studies).execute({ id: 'alfabeto' });
     expect(found.ok && found.value.pages.map((page) => page.id)).toEqual(['intro', 'page-1']);
     const groups = await groupsNow();
     expect(groups.find((group) => group.id === 'vazio')?.studies.map((s) => s.id)).toEqual([
@@ -192,7 +192,7 @@ describe('study use cases', () => {
   it('reports an unknown study', async () => {
     const updated = await new UpdateStudy(studies, signs, ids).execute({ ...request, id: 'nope' });
     const deleted = await new DeleteStudy(studies).execute({ id: 'nope' });
-    const found = await new GetDraftStudy(studies).execute({ id: 'nope' });
+    const found = await new GetCmsStudy(studies).execute({ id: 'nope' });
 
     for (const result of [updated, deleted, found]) {
       expect(result.ok || result.error.code).toBe('STUDY_NOT_FOUND');
@@ -220,7 +220,7 @@ describe('SetStudyVisibility', () => {
   it('creates studies hidden and keeps the visibility when the study is edited', async () => {
     await new CreateStudy(studies, signs, ids).execute(request);
     const read = async () => {
-      const found = await new GetDraftStudy(studies).execute({ id: 'study-1' });
+      const found = await new GetCmsStudy(studies).execute({ id: 'study-1' });
       if (!found.ok) throw new Error(found.error.code);
       return found.value.visible;
     };

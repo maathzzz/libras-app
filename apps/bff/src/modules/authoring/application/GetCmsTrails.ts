@@ -1,9 +1,9 @@
 import type { AdminTrailsResponse } from '@libras/contracts';
 
-import type { DraftOutlineRepository } from '../domain/DraftOutline';
+import type { CmsOutlineRepository } from '../domain/CmsOutline';
 
-export class GetDraftTrails {
-  constructor(private readonly outline: DraftOutlineRepository) {}
+export class GetCmsTrails {
+  constructor(private readonly outline: CmsOutlineRepository) {}
 
   async execute(): Promise<AdminTrailsResponse> {
     return { trails: await this.outline.listTrails() };
