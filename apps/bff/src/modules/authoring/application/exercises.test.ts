@@ -108,10 +108,16 @@ describe('withSign', () => {
 
 describe('exercise use cases', () => {
   it('lists the exercises of a lesson as the CMS edits them', async () => {
-    expect(await listed()).toEqual([
-      { id: 'ex-1', type: 'sign_to_word', signIds: ['a', 'b'], correctSignId: 'a' },
-      { id: 'ex-2', type: 'word_to_sign', signIds: ['b', 'a'], correctSignId: 'b' },
-    ]);
+    const [first, second] = await listed();
+    expect(first).toMatchObject({
+      id: 'ex-1',
+      type: 'sign_to_word',
+      signIds: ['a', 'b'],
+      correctSignId: 'a',
+    });
+    expect(second).toMatchObject({ id: 'ex-2', signIds: ['b', 'a'], correctSignId: 'b' });
+    // The payload is the exercise as the app receives it, for the preview.
+    expect(second?.payload).toMatchObject({ type: 'word_to_sign', word: 'B' });
   });
 
   it('creates an exercise at the end of the lesson', async () => {
@@ -157,7 +163,7 @@ describe('exercise use cases', () => {
 
     expect(result.ok).toBe(true);
     expect(missing.ok || missing.error.code).toBe('EXERCISE_NOT_FOUND');
-    expect((await listed())[0]).toEqual({
+    expect((await listed())[0]).toMatchObject({
       id: 'ex-1',
       type: 'word_to_sign',
       signIds: ['b', 'oi'],

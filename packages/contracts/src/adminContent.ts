@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { Exercise } from './exercises';
 import { StudyPage } from './study';
 
 // CMS content routes (/v1/admin/*). They edit the content the app reads, so a change to
@@ -151,7 +152,12 @@ function ensureCorrectSignIsAnOption(
 }
 
 export const AdminExercise = z
-  .object({ id: ContentId, ...ExerciseFields })
+  .object({
+    id: ContentId,
+    ...ExerciseFields,
+    // The exercise exactly as the app receives it, for the preview.
+    payload: Exercise,
+  })
   .superRefine(ensureCorrectSignIsAnOption);
 export type AdminExercise = z.infer<typeof AdminExercise>;
 

@@ -31,6 +31,7 @@ export function exerciseFields(exercise: Exercise): AdminExercise {
     type: exercise.type,
     signIds: exercise.options.map((option) => option.id),
     correctSignId: exercise.correctOptionId,
+    payload: exercise,
   };
 }
 

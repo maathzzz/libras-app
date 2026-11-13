@@ -34,6 +34,8 @@ const sign = (id: string, label: string): AdminSign => ({
   studyCount: 0,
 });
 
+const image = (id: string) => ({ url: `https://x.test/${id}.webp`, alt: 'Mão de teste' });
+
 const signs = [sign('a', 'A'), sign('b', 'B'), sign('c', 'C'), sign('a2', 'a')];
 
 beforeEach(() => {
@@ -43,8 +45,38 @@ beforeEach(() => {
     .mockResolvedValue({
       lesson: { id: 'vogais', title: 'Vogais' },
       exercises: [
-        { id: 'ex-1', type: 'sign_to_word', signIds: ['a', 'b'], correctSignId: 'a' },
-        { id: 'ex-2', type: 'word_to_sign', signIds: ['b', 'c'], correctSignId: 'c' },
+        {
+          id: 'ex-1',
+          type: 'sign_to_word',
+          signIds: ['a', 'b'],
+          correctSignId: 'a',
+          payload: {
+            id: 'ex-1',
+            type: 'sign_to_word',
+            images: [image('a')],
+            options: [
+              { id: 'a', label: 'A' },
+              { id: 'b', label: 'B' },
+            ],
+            correctOptionId: 'a',
+          },
+        },
+        {
+          id: 'ex-2',
+          type: 'word_to_sign',
+          signIds: ['b', 'c'],
+          correctSignId: 'c',
+          payload: {
+            id: 'ex-2',
+            type: 'word_to_sign',
+            word: 'C',
+            options: [
+              { id: 'b', images: [image('b')] },
+              { id: 'c', images: [image('c')] },
+            ],
+            correctOptionId: 'c',
+          },
+        },
       ],
     });
   vi.mocked(createExercise).mockReset().mockResolvedValue('exercise-1');
