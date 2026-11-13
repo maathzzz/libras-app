@@ -14,6 +14,7 @@ src/
     home/
     curriculum/        # Trilhas, módulos e lições (/trilhas)
     exercises/         # Exercícios de uma lição (/trilhas/licoes/[lessonId])
+    preview/           # Prévia no celular simulado: lição jogável e estudo página a página
     signs/             # Sinais com upload de imagens (/sinais, /sinais/novo, /sinais/[signId])
     studies/           # Grupos de estudo e estudos (/estudos, /estudos/[studyId], /estudos/grupos/[groupId]/novo)
   shared/
@@ -49,7 +50,7 @@ src/
 
 - Sem rascunho nem publicar: o CMS edita o conteúdo que o app lê. Tudo é criado de uma vez e depois editado; o que é novo nasce oculto e o operador decide quando mostrar.
 - Excluir conteúdo que alunos já fizeram não é permitido: arquivar é ocultar. Some do app, mas progresso, XP e conquistas ficam.
-- Pré-visualização simulada no navegador, com os tokens do app (aproximação, não o app real).
+- Pré-visualização simulada no navegador, com os tokens do app (aproximação, não o app real). A da lição usa o `payload` de cada exercício (o mesmo que o app recebe) e não grava nada. A do estudo mostra o que está no formulário, salvo ou não. Serve para conferir o que está oculto antes de mostrar.
 
 ## Desenvolvimento
 

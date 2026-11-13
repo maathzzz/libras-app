@@ -140,4 +140,25 @@ describe('StudyEditor', () => {
     await user.click(within(second).getByRole('button', { name: 'Remover página' }));
     expect(screen.queryByRole('region', { name: 'Página 2' })).toBeNull();
   });
+
+  it('previews what is in the form, saved or not', async () => {
+    const user = userEvent.setup();
+    render(<StudyEditor studyId="alfabeto" />);
+    await user.click(await screen.findByRole('button', { name: 'Pré-visualizar' }));
+    const phone = within(screen.getByRole('complementary', { name: 'Prévia do estudo' }));
+
+    expect(phone.getByText('Olhe cada imagem.')).toBeTruthy();
+    expect(phone.getByText('Sinal ainda não escolhido')).toBeTruthy();
+
+    await user.type(screen.getByRole('searchbox'), 'a');
+    await user.click(screen.getByRole('button', { name: '+ A' }));
+    expect(phone.queryByText('Sinal ainda não escolhido')).toBeNull();
+    expect(phone.getByText('A')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: '+ Nova página' }));
+    await user.type(screen.getByLabelText('Título da página 2'), 'Dicas');
+    await user.click(phone.getByRole('button', { name: 'Próxima' }));
+    expect(phone.getByText('Dicas')).toBeTruthy();
+    expect(updateStudy).not.toHaveBeenCalled();
+  });
 });

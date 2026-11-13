@@ -1,4 +1,11 @@
-import { SaveStudyRequest, type AdminStudy, type StudyBlock } from '@libras/contracts';
+import {
+  SaveStudyRequest,
+  type AdminSign,
+  type AdminStudy,
+  type StudyBlock,
+} from '@libras/contracts';
+
+import type { PreviewBlock, PreviewPage } from '@/features/preview/StudyPreview';
 
 // What the study editor holds while the operator types. `key` identifies an item on screen
 // (React keys), apart from the page id, which only existing pages have.
@@ -108,4 +115,31 @@ export function movedItem<T>(items: readonly T[], index: number, step: -1 | 1): 
   const [item] = next.splice(index, 1);
   if (item !== undefined) next.splice(to, 0, item);
   return next;
+}
+
+function previewBlock(block: DraftBlock, signsById: ReadonlyMap<string, AdminSign>): PreviewBlock {
+  if (block.type === 'heading') return { type: 'heading', text: block.text };
+  if (block.type !== 'sign') return { type: block.type, body: block.body };
+
+  const sign = block.signId ? signsById.get(block.signId) : undefined;
+  if (!sign) return { type: 'pendingSign' };
+  // The same copy the BFF makes when saving.
+  return {
+    type: 'sign',
+    label: sign.label,
+    images: sign.imageUrls.map((url) => ({ url, alt: sign.alt })),
+    ...(sign.description ? { description: sign.description } : {}),
+  };
+}
+
+// The pages as the app would show them, from what is in the form now (saved or not).
+export function toPreviewPages(
+  draft: StudyDraft,
+  signsById: ReadonlyMap<string, AdminSign>,
+): PreviewPage[] {
+  return draft.pages.map((page) => ({
+    key: page.key,
+    title: page.title,
+    blocks: page.blocks.map((block) => previewBlock(block, signsById)),
+  }));
 }

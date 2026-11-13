@@ -9,6 +9,7 @@ import {
 } from '@libras/contracts';
 import { useState, type FormEvent } from 'react';
 
+import { StudyPreview } from '@/features/preview/StudyPreview';
 import { errorMessage } from '@/shared/api/errorMessage';
 import {
   Button,
@@ -24,6 +25,7 @@ import {
   movedItem,
   newBlock,
   newPage,
+  toPreviewPages,
   toRequest,
   type DraftBlock,
   type DraftBlockType,
@@ -152,6 +154,7 @@ export function StudyForm({ initial, groups, signs, onSave, onCancel }: StudyFor
   const [draft, setDraft] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState(false);
 
   const signsById = new Map(signs.map((sign) => [sign.id, sign]));
   const request = toRequest(draft);
@@ -171,88 +174,108 @@ export function StudyForm({ initial, groups, signs, onSave, onCancel }: StudyFor
   }
 
   return (
-    <form className="grid gap-6" onSubmit={submit} aria-label="Estudo">
-      {error && <ErrorBanner>{error}</ErrorBanner>}
+    <form
+      className={`grid items-start gap-6 ${previewing ? 'xl:grid-cols-[minmax(0,1fr)_380px]' : ''}`}
+      onSubmit={submit}
+      aria-label="Estudo"
+    >
+      <div className="grid gap-6">
+        <Button
+          variant="secondary"
+          className="justify-self-start"
+          onClick={() => setPreviewing((open) => !open)}
+        >
+          {previewing ? 'Fechar prévia' : 'Pré-visualizar'}
+        </Button>
+        {error && <ErrorBanner>{error}</ErrorBanner>}
 
-      <Card className="grid max-w-3xl gap-5">
-        <label className={labelClassName}>
-          Título
-          <input
-            className={inputClassName}
-            value={draft.title}
-            maxLength={80}
-            onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-          />
-        </label>
-        <label className={labelClassName}>
-          Descrição
-          <input
-            className={inputClassName}
-            value={draft.description}
-            maxLength={200}
-            onChange={(event) => setDraft({ ...draft, description: event.target.value })}
-          />
-          <span className={hintClassName}>Uma frase, mostrada na lista da aba “Estudar”.</span>
-        </label>
-        <label className={labelClassName}>
-          Grupo
-          <select
-            className={`${inputClassName} max-w-sm`}
-            value={draft.groupId}
-            onChange={(event) => setDraft({ ...draft, groupId: event.target.value })}
-          >
-            {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.title}
-              </option>
-            ))}
-          </select>
-          <span className={hintClassName}>
-            Mudar de grupo coloca o estudo no fim do novo grupo.
-          </span>
-        </label>
-      </Card>
+        <Card className="grid max-w-3xl gap-5">
+          <label className={labelClassName}>
+            Título
+            <input
+              className={inputClassName}
+              value={draft.title}
+              maxLength={80}
+              onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+            />
+          </label>
+          <label className={labelClassName}>
+            Descrição
+            <input
+              className={inputClassName}
+              value={draft.description}
+              maxLength={200}
+              onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+            />
+            <span className={hintClassName}>Uma frase, mostrada na lista da aba “Estudar”.</span>
+          </label>
+          <label className={labelClassName}>
+            Grupo
+            <select
+              className={`${inputClassName} max-w-sm`}
+              value={draft.groupId}
+              onChange={(event) => setDraft({ ...draft, groupId: event.target.value })}
+            >
+              {groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.title}
+                </option>
+              ))}
+            </select>
+            <span className={hintClassName}>
+              Mudar de grupo coloca o estudo no fim do novo grupo.
+            </span>
+          </label>
+        </Card>
 
-      <ol className="grid gap-4">
-        {draft.pages.map((page, index) => (
-          <PageEditor
-            key={page.key}
-            page={page}
-            number={index + 1}
-            pageCount={draft.pages.length}
-            signs={signs}
-            signsById={signsById}
-            onChange={(next) => setPages(draft.pages.map((item, i) => (i === index ? next : item)))}
-            onMove={(step) => setPages(movedItem(draft.pages, index, step))}
-            onRemove={() => setPages(draft.pages.filter((_, i) => i !== index))}
-          />
-        ))}
-      </ol>
-      <Button
-        variant="secondary"
-        className="justify-self-start"
-        disabled={draft.pages.length >= STUDY_MAX_PAGES}
-        onClick={() => setPages([...draft.pages, newPage()])}
-      >
-        + Nova página
-      </Button>
+        <ol className="grid gap-4">
+          {draft.pages.map((page, index) => (
+            <PageEditor
+              key={page.key}
+              page={page}
+              number={index + 1}
+              pageCount={draft.pages.length}
+              signs={signs}
+              signsById={signsById}
+              onChange={(next) =>
+                setPages(draft.pages.map((item, i) => (i === index ? next : item)))
+              }
+              onMove={(step) => setPages(movedItem(draft.pages, index, step))}
+              onRemove={() => setPages(draft.pages.filter((_, i) => i !== index))}
+            />
+          ))}
+        </ol>
+        <Button
+          variant="secondary"
+          className="justify-self-start"
+          disabled={draft.pages.length >= STUDY_MAX_PAGES}
+          onClick={() => setPages([...draft.pages, newPage()])}
+        >
+          + Nova página
+        </Button>
 
-      <div className="grid gap-2">
-        {!request.success && (
-          <p className={hintClassName}>
-            Para salvar, preencha o título, a descrição, o título de cada página e todos os blocos,
-            e escolha o sinal de cada bloco de sinal.
-          </p>
-        )}
-        <div className="flex gap-2">
-          <Button variant="primary" type="submit" disabled={!request.success || saving}>
-            {saving ? 'Salvando…' : 'Salvar estudo'}
-          </Button>
-          <Button variant="secondary" onClick={onCancel} disabled={saving}>
-            Cancelar
-          </Button>
+        <div className="grid gap-2">
+          {!request.success && (
+            <p className={hintClassName}>
+              Para salvar, preencha o título, a descrição, o título de cada página e todos os
+              blocos, e escolha o sinal de cada bloco de sinal.
+            </p>
+          )}
+          <div className="flex gap-2">
+            <Button variant="primary" type="submit" disabled={!request.success || saving}>
+              {saving ? 'Salvando…' : 'Salvar estudo'}
+            </Button>
+            <Button variant="secondary" onClick={onCancel} disabled={saving}>
+              Cancelar
+            </Button>
+          </div>
         </div>
       </div>
+      {previewing && (
+        <aside className="xl:sticky xl:top-4" aria-label="Prévia do estudo">
+          <StudyPreview title={draft.title} pages={toPreviewPages(draft, signsById)} />
+        </aside>
+      )}
     </form>
   );
 }
