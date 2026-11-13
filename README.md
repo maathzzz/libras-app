@@ -90,10 +90,14 @@ pnpm --filter mobile ios        # Development build no iOS
 
 O app usa bibliotecas com código nativo (como `react-native-mmkv`), então precisa de um **development build**, não do Expo Go.
 
-A URL do BFF é lida de `EXPO_PUBLIC_API_URL`. Em desenvolvimento local:
+A URL do BFF é lida de `EXPO_PUBLIC_API_URL`. Em desenvolvimento local, use `http://localhost:3000` e encaminhe a porta do aparelho para o BFF da máquina:
 
-- Android Emulator: `http://10.0.2.2:<porta>`
-- Dispositivo físico: `http://<ip-da-máquina-na-rede>:<porta>`
+```bash
+adb reverse tcp:3000 tcp:3000   # Vale para o emulador e para o celular via USB
+adb reverse --list              # Confere se o encaminhamento está ativo
+```
+
+O encaminhamento se perde sempre que o emulador reinicia ou o cabo é reconectado, então o comando precisa ser refeito. Sem ele, o app não alcança o BFF e mostra erros como "Não foi possível abrir o estudo". Depois de alterar o `.env`, reinicie o Metro.
 
 ### Rodar o backend (quando disponível)
 
