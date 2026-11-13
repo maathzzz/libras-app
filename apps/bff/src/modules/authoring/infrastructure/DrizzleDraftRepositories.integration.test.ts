@@ -11,8 +11,9 @@ import {
   studies,
   studyGroups,
   units,
+  userLessonProgress,
 } from '../../../shared/infrastructure/db/schema';
-import { signToWordExercise } from '../../../shared/infrastructure/db/testing/fixtures';
+import { insertUser, signToWordExercise } from '../../../shared/infrastructure/db/testing/fixtures';
 import { useTestDatabase } from '../../../shared/infrastructure/db/testing/testDatabase';
 import { buildExercise } from '../domain/DraftExercise';
 import { signBlock } from '../domain/DraftStudy';
@@ -72,16 +73,18 @@ describe('DrizzleDraftOutlineRepository', () => {
       expect(trail).toEqual({
         id: 'it-trail',
         title: 'Trilha IT',
+        visible: false,
         units: [
           {
             id: 'it-unit-1',
             title: 'Módulo 1',
+            visible: false,
             lessons: [
-              { id: 'it-lesson-1', title: 'Lição 1', exerciseCount: 1 },
-              { id: 'it-lesson-2', title: 'Lição 2', exerciseCount: 0 },
+              { id: 'it-lesson-1', title: 'Lição 1', visible: false, exerciseCount: 1 },
+              { id: 'it-lesson-2', title: 'Lição 2', visible: false, exerciseCount: 0 },
             ],
           },
-          { id: 'it-unit-2', title: 'Módulo 2', lessons: [] },
+          { id: 'it-unit-2', title: 'Módulo 2', visible: false, lessons: [] },
         ],
       });
     }),
@@ -138,6 +141,40 @@ describe('DrizzleDraftOutlineRepository', () => {
       expect(await outline.delete('trail', 'it-trail')).toBe(false);
 
       expect(await outline.listIds('lesson', 'it-unit-1')).toBeNull();
+    }),
+  );
+});
+
+describe('DrizzleDraftOutlineRepository visibility and progress', () => {
+  it(
+    'shows and hides an item',
+    inRollback(async (tx) => {
+      await insertDraftOutline(tx);
+      const outline = new DrizzleDraftOutlineRepository(tx);
+
+      expect(await outline.setVisible('unit', 'it-unit-2', true)).toBe(true);
+      expect(await outline.setVisible('lesson', 'it-missing', true)).toBe(false);
+
+      const trail = (await outline.listTrails()).find((item) => item.id === 'it-trail');
+      expect(trail?.units.map((unit) => unit.visible)).toEqual([false, true]);
+    }),
+  );
+
+  it(
+    'keeps a lesson that a learner did, with its unit and trail',
+    inRollback(async (tx) => {
+      await insertDraftOutline(tx);
+      const userId = await insertUser(tx);
+      await tx
+        .insert(userLessonProgress)
+        .values({ userId, lessonId: 'it-lesson-1', lastCompletedAt: new Date() });
+      const outline = new DrizzleDraftOutlineRepository(tx);
+
+      expect(await outline.delete('trail', 'it-trail')).toBe('hasProgress');
+      expect(await outline.delete('unit', 'it-unit-1')).toBe('hasProgress');
+      expect(await outline.delete('lesson', 'it-lesson-1')).toBe('hasProgress');
+      expect(await outline.delete('lesson', 'it-lesson-2')).toBe('deleted');
+      expect(await outline.delete('lesson', 'it-lesson-2')).toBe('notFound');
     }),
   );
 });

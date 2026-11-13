@@ -12,6 +12,7 @@ import { DeleteStudyGroup } from './DeleteStudyGroup';
 import { GetDraftStudies } from './GetDraftStudies';
 import { GetDraftStudy } from './GetDraftStudy';
 import { RenameStudyGroup } from './RenameStudyGroup';
+import { SetStudyVisibility } from './SetStudyVisibility';
 import { ReorderStudies } from './ReorderStudies';
 import { ReorderStudyGroups } from './ReorderStudyGroups';
 import { UpdateStudy } from './UpdateStudy';
@@ -51,6 +52,7 @@ beforeEach(() => {
         title: 'Alfabeto manual',
         description: 'As 26 letras.',
         pages: [intro],
+        visible: true,
       },
     ],
   );
@@ -211,5 +213,30 @@ describe('study use cases', () => {
 
     expect((await new DeleteStudy(studies).execute({ id: 'alfabeto' })).ok).toBe(true);
     expect((await groupsNow())[0]?.studies.map((study) => study.id)).toEqual(['study-1']);
+  });
+});
+
+describe('SetStudyVisibility', () => {
+  it('creates studies hidden and keeps the visibility when the study is edited', async () => {
+    await new CreateStudy(studies, signs, ids).execute(request);
+    const read = async () => {
+      const found = await new GetDraftStudy(studies).execute({ id: 'study-1' });
+      if (!found.ok) throw new Error(found.error.code);
+      return found.value.visible;
+    };
+    expect(await read()).toBe(false);
+
+    expect(
+      (await new SetStudyVisibility(studies).execute({ id: 'study-1', visible: true })).ok,
+    ).toBe(true);
+    await new UpdateStudy(studies, signs, ids).execute({
+      ...request,
+      id: 'study-1',
+      title: 'Novo',
+    });
+    expect(await read()).toBe(true);
+
+    const missing = await new SetStudyVisibility(studies).execute({ id: 'nope', visible: true });
+    expect(missing.ok || missing.error.code).toBe('STUDY_NOT_FOUND');
   });
 });

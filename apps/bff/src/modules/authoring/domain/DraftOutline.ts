@@ -24,8 +24,15 @@ export interface NewOutlineItem {
   title: string;
 }
 
+// A trail, unit or lesson that learners already did cannot leave the database: their
+// progress points to its lessons. It is hidden instead.
+export type DeleteOutlineOutcome = 'deleted' | 'notFound' | 'hasProgress';
+
+export const contentHasProgress = (what: string) =>
+  new DomainError('CONTENT_HAS_PROGRESS', `Learners already did ${what}; hide it instead`);
+
 export interface DraftOutlineRepository {
-  // Every trail with its units and lessons, each list in order.
+  // Every trail, hidden ones too, with its units and lessons, each list in order.
   listTrails(): Promise<AdminTrail[]>;
   // Ids of one list, in order. `parentId` is null for the trails. Null when the parent
   // does not exist.
@@ -34,8 +41,10 @@ export interface DraftOutlineRepository {
   create(level: OutlineLevel, item: NewOutlineItem): Promise<boolean>;
   // False when the item does not exist.
   rename(level: OutlineLevel, id: string, title: string): Promise<boolean>;
-  // Removes the item and everything below it from the draft. False when it does not exist.
-  delete(level: OutlineLevel, id: string): Promise<boolean>;
+  // Shows or hides the item. False when it does not exist.
+  setVisible(level: OutlineLevel, id: string, visible: boolean): Promise<boolean>;
+  // Removes the item and everything below it, unless a learner did one of its lessons.
+  delete(level: OutlineLevel, id: string): Promise<DeleteOutlineOutcome>;
   // Positions 1..n in the order of `ids`, which are exactly the items of the list.
   reorder(level: OutlineLevel, parentId: string | null, ids: readonly string[]): Promise<void>;
 }

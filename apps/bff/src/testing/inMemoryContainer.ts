@@ -16,6 +16,8 @@ import { GetLessonExercises } from '../modules/authoring/application/GetLessonEx
 import { RenameOutlineItem } from '../modules/authoring/application/RenameOutlineItem';
 import { ReorderExercises } from '../modules/authoring/application/ReorderExercises';
 import { ReorderOutlineItems } from '../modules/authoring/application/ReorderOutlineItems';
+import { SetOutlineItemVisibility } from '../modules/authoring/application/SetOutlineItemVisibility';
+import { SetStudyVisibility } from '../modules/authoring/application/SetStudyVisibility';
 import { UpdateExercise } from '../modules/authoring/application/UpdateExercise';
 import { CreateStudy } from '../modules/authoring/application/CreateStudy';
 import { CreateStudyGroup } from '../modules/authoring/application/CreateStudyGroup';
@@ -117,6 +119,7 @@ export function createInMemoryContainer(
     renameOutlineItem: new RenameOutlineItem(outline),
     deleteOutlineItem: new DeleteOutlineItem(outline),
     reorderOutlineItems: new ReorderOutlineItems(outline),
+    setOutlineItemVisibility: new SetOutlineItemVisibility(outline),
     getDraftSigns: new GetDraftSigns(draftSigns),
     createSign: new CreateSign(draftSigns, ids),
     updateSign: new UpdateSign(draftSigns),
@@ -136,6 +139,7 @@ export function createInMemoryContainer(
     updateStudy: new UpdateStudy(draftStudies, draftSigns, ids),
     deleteStudy: new DeleteStudy(draftStudies),
     reorderStudies: new ReorderStudies(draftStudies),
+    setStudyVisibility: new SetStudyVisibility(draftStudies),
     createSignImageUpload: new CreateSignImageUpload(signImages, ids),
     getHome: new GetHome(trails, progress, progress),
     getLesson: new GetLesson(lessons, trails, progress),

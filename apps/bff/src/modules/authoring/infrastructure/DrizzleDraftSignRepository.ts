@@ -3,12 +3,7 @@ import { z } from 'zod';
 import { and, asc, count, eq, inArray, notExists, sql, type SQL } from 'drizzle-orm';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
-import {
-  exercises,
-  exerciseSigns,
-  signs,
-  studies,
-} from '../../../shared/infrastructure/db/schema';
+import { exercises, exerciseSigns, signs, studies } from '../../../shared/infrastructure/db/schema';
 import { withSign } from '../domain/DraftExercise';
 import { withSignInPages } from '../domain/DraftStudy';
 import type {
@@ -115,10 +110,7 @@ export class DrizzleDraftSignRepository implements DraftSignRepository {
       .returning({ id: signs.id });
     if (deleted.length > 0) return 'deleted';
 
-    const [existing] = await this.db
-      .select({ id: signs.id })
-      .from(signs)
-      .where(eq(signs.id, id));
+    const [existing] = await this.db.select({ id: signs.id }).from(signs).where(eq(signs.id, id));
     return existing ? 'inUse' : 'notFound';
   }
 }

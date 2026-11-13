@@ -8,20 +8,23 @@ import { DeleteOutlineItem } from './DeleteOutlineItem';
 import { GetDraftTrails } from './GetDraftTrails';
 import { RenameOutlineItem } from './RenameOutlineItem';
 import { ReorderOutlineItems } from './ReorderOutlineItems';
+import { SetOutlineItemVisibility } from './SetOutlineItemVisibility';
 
 const trail: AdminTrail = {
   id: 'basico',
   title: 'Libras básico',
+  visible: true,
   units: [
     {
       id: 'alfabeto',
       title: 'Alfabeto',
+      visible: true,
       lessons: [
-        { id: 'a-e', title: 'A a E', exerciseCount: 10 },
-        { id: 'f-j', title: 'F a J', exerciseCount: 10 },
+        { id: 'a-e', title: 'A a E', visible: true, exerciseCount: 10 },
+        { id: 'f-j', title: 'F a J', visible: true, exerciseCount: 10 },
       ],
     },
-    { id: 'saudacoes', title: 'Saudações', lessons: [] },
+    { id: 'saudacoes', title: 'Saudações', visible: true, lessons: [] },
   ],
 };
 
@@ -135,5 +138,51 @@ describe('ReorderOutlineItems', () => {
     });
 
     expect(result.ok || result.error.code).toBe('UNIT_NOT_FOUND');
+  });
+});
+
+describe('SetOutlineItemVisibility', () => {
+  it('creates items hidden and shows or hides them', async () => {
+    const { value } = (await new CreateOutlineItem(outline, new SequentialIdGenerator()).execute({
+      level: 'unit',
+      parentId: 'basico',
+      title: 'Cores',
+    })) as { value: { id: string } };
+    const created = (await trailsNow())[0]?.units.find((unit) => unit.id === value.id);
+    expect(created?.visible).toBe(false);
+
+    const show = new SetOutlineItemVisibility(outline);
+    expect((await show.execute({ level: 'unit', id: value.id, visible: true })).ok).toBe(true);
+    await show.execute({ level: 'lesson', id: 'a-e', visible: false });
+
+    const [trail] = await trailsNow();
+    expect(trail?.units.find((unit) => unit.id === value.id)?.visible).toBe(true);
+    expect(trail?.units[0]?.lessons[0]?.visible).toBe(false);
+  });
+
+  it('reports an unknown item', async () => {
+    const result = await new SetOutlineItemVisibility(outline).execute({
+      level: 'trail',
+      id: 'nope',
+      visible: true,
+    });
+    expect(result.ok || result.error.code).toBe('TRAIL_NOT_FOUND');
+  });
+});
+
+describe('DeleteOutlineItem with learner progress', () => {
+  it('keeps a lesson, its unit and its trail once a learner did the lesson', async () => {
+    const withProgress = new InMemoryDraftOutline([trail], new Set(['a-e']));
+    const remove = new DeleteOutlineItem(withProgress);
+
+    for (const [level, id] of [
+      ['lesson', 'a-e'],
+      ['unit', 'alfabeto'],
+      ['trail', 'basico'],
+    ] as const) {
+      const result = await remove.execute({ level, id });
+      expect(result.ok || result.error.code).toBe('CONTENT_HAS_PROGRESS');
+    }
+    expect((await remove.execute({ level: 'lesson', id: 'f-j' })).ok).toBe(true);
   });
 });

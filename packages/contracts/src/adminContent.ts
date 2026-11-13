@@ -2,17 +2,28 @@ import { z } from 'zod';
 
 import { StudyPage } from './study';
 
-// CMS content routes (/v1/admin/*). Everything here reads and writes the draft: learners
-// only see it after "Publicar alterações". In the interface a unit is a "módulo".
+// CMS content routes (/v1/admin/*). They edit the content the app reads, so a change to
+// something visible reaches learners at once. Trails, units, lessons and studies are created
+// hidden and shown with PUT .../visibility. In the interface a unit is a "módulo".
 
 const ContentId = z.string().min(1).max(80);
 
 // Title of a trail, unit or lesson.
 export const ContentTitle = z.string().trim().min(1).max(80);
 
+// Whether learners see the item. Content created in the CMS starts hidden. A visible lesson
+// still stays out of the app while it has no exercises, and anything inside a hidden trail or
+// unit is hidden with it.
+const Visible = z.boolean();
+
+// PUT /v1/admin/{trails,units,lessons,studies}/:id/visibility
+export const SetVisibilityRequest = z.object({ visible: Visible });
+export type SetVisibilityRequest = z.infer<typeof SetVisibilityRequest>;
+
 export const AdminLesson = z.object({
   id: ContentId,
   title: ContentTitle,
+  visible: Visible,
   exerciseCount: z.number().int().nonnegative(),
 });
 export type AdminLesson = z.infer<typeof AdminLesson>;
@@ -20,6 +31,7 @@ export type AdminLesson = z.infer<typeof AdminLesson>;
 export const AdminUnit = z.object({
   id: ContentId,
   title: ContentTitle,
+  visible: Visible,
   lessons: z.array(AdminLesson),
 });
 export type AdminUnit = z.infer<typeof AdminUnit>;
@@ -27,11 +39,12 @@ export type AdminUnit = z.infer<typeof AdminUnit>;
 export const AdminTrail = z.object({
   id: ContentId,
   title: ContentTitle,
+  visible: Visible,
   units: z.array(AdminUnit),
 });
 export type AdminTrail = z.infer<typeof AdminTrail>;
 
-// GET /v1/admin/trails — every draft trail with its units and lessons, each list in order.
+// GET /v1/admin/trails — every trail, hidden ones too, with its units and lessons in order.
 export const AdminTrailsResponse = z.object({ trails: z.array(AdminTrail) });
 export type AdminTrailsResponse = z.infer<typeof AdminTrailsResponse>;
 
@@ -75,13 +88,13 @@ const SignFields = {
 export const AdminSign = z.object({
   id: ContentId,
   ...SignFields,
-  // Draft exercises and studies that show the sign. A sign in use cannot be deleted.
+  // Exercises and studies that show the sign. A sign in use cannot be deleted.
   exerciseCount: z.number().int().nonnegative(),
   studyCount: z.number().int().nonnegative(),
 });
 export type AdminSign = z.infer<typeof AdminSign>;
 
-// GET /v1/admin/signs — every draft sign, by label.
+// GET /v1/admin/signs — every sign, by label.
 export const AdminSignsResponse = z.object({ signs: z.array(AdminSign) });
 export type AdminSignsResponse = z.infer<typeof AdminSignsResponse>;
 
@@ -103,7 +116,7 @@ export type SignImageUploadResponse = z.infer<typeof SignImageUploadResponse>;
 
 // Exercises
 
-// The exercise types the CMS edits. Both show signs from the draft as options: sign_to_word
+// The exercise types the CMS edits. Both show registered signs as options: sign_to_word
 // shows the correct sign and asks for its label; word_to_sign shows the label and asks for
 // the sign.
 export const AdminExerciseType = z.enum(['sign_to_word', 'word_to_sign']);
@@ -115,7 +128,7 @@ export const EXERCISE_MAX_OPTIONS = 4;
 
 const ExerciseFields = {
   type: AdminExerciseType,
-  // Draft signs shown as the options, in the order the learner sees them.
+  // Signs shown as the options, in the order the learner sees them.
   signIds: z
     .array(ContentId)
     .min(EXERCISE_MIN_OPTIONS)
@@ -142,7 +155,7 @@ export const AdminExercise = z
   .superRefine(ensureCorrectSignIsAnOption);
 export type AdminExercise = z.infer<typeof AdminExercise>;
 
-// GET /v1/admin/lessons/:lessonId/exercises — the draft lesson and its exercises in order.
+// GET /v1/admin/lessons/:lessonId/exercises — the lesson and its exercises in order.
 export const AdminLessonExercisesResponse = z.object({
   lesson: z.object({ id: ContentId, title: ContentTitle }),
   exercises: z.array(AdminExercise),
@@ -163,6 +176,7 @@ export type SaveExerciseRequest = z.infer<typeof SaveExerciseRequest>;
 export const AdminStudySummary = z.object({
   id: ContentId,
   title: ContentTitle,
+  visible: Visible,
   description: z.string().min(1),
   pageCount: z.number().int().nonnegative(),
 });
@@ -175,19 +189,20 @@ export const AdminStudyGroup = z.object({
 });
 export type AdminStudyGroup = z.infer<typeof AdminStudyGroup>;
 
-// GET /v1/admin/studies — every draft group with its studies, both in order. Groups are
+// GET /v1/admin/studies — every group with its studies (hidden ones too), in order. Groups are
 // created with POST /v1/admin/study-groups (SaveTitleRequest), renamed with PATCH and
 // deleted with DELETE /v1/admin/study-groups/:groupId (409 STUDY_GROUP_NOT_EMPTY while it
 // has studies), reordered with PUT /v1/admin/study-groups/order.
 export const AdminStudiesResponse = z.object({ groups: z.array(AdminStudyGroup) });
 export type AdminStudiesResponse = z.infer<typeof AdminStudiesResponse>;
 
-// GET /v1/admin/studies/:studyId — a draft study as stored, pages in the format the app
+// GET /v1/admin/studies/:studyId — a study as stored, pages in the format the app
 // receives. Sign blocks without `signId` came from before the CMS and must be picked again.
 export const AdminStudy = z.object({
   id: ContentId,
   groupId: ContentId,
   title: ContentTitle,
+  visible: Visible,
   description: z.string().min(1),
   pages: z.array(StudyPage),
 });
@@ -198,7 +213,7 @@ export const STUDY_PAGE_MAX_BLOCKS = 60;
 
 const BlockText = z.string().trim().min(1).max(2000);
 
-// A block as the CMS sends it. A sign block names a draft sign; the BFF copies its label,
+// A block as the CMS sends it. A sign block names a registered sign; the BFF copies its label,
 // images and description into the page, as it does for exercises.
 export const SaveStudyBlock = z.discriminatedUnion('type', [
   z.object({ type: z.literal('heading'), text: z.string().trim().min(1).max(80) }),

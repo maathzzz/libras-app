@@ -29,8 +29,14 @@ const groups: AdminStudyGroup[] = [
     id: 'iniciante',
     title: 'Primeiros passos',
     studies: [
-      { id: 'alfabeto', title: 'Alfabeto manual', description: 'As 26 letras.', pageCount: 6 },
-      { id: 'numeros', title: 'Números', description: 'De 0 a 10.', pageCount: 1 },
+      {
+        id: 'alfabeto',
+        title: 'Alfabeto manual',
+        visible: true,
+        description: 'As 26 letras.',
+        pageCount: 6,
+      },
+      { id: 'numeros', title: 'Números', visible: true, description: 'De 0 a 10.', pageCount: 1 },
     ],
   },
   { id: 'vazio', title: 'Cotidiano', studies: [] },

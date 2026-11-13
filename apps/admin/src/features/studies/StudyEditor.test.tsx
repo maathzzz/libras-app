@@ -37,6 +37,7 @@ const alphabet: AdminStudy = {
   id: 'alfabeto',
   groupId: 'iniciante',
   title: 'Alfabeto manual',
+  visible: true,
   description: 'As 26 letras.',
   pages: [
     {

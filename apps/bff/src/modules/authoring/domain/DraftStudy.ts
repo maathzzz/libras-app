@@ -17,6 +17,9 @@ export interface DraftStudy {
   pages: StudyPage[];
 }
 
+// A study as stored, with whether learners see it. Created hidden.
+export type StoredStudy = DraftStudy & { visible: boolean };
+
 export const studyNotFound = (id: string) =>
   new DomainError('STUDY_NOT_FOUND', `Draft study ${id} not found`);
 
@@ -95,13 +98,16 @@ export interface DraftStudyRepository {
   // Positions 1..n in the order of `ids`, which are exactly the groups.
   reorderGroups(ids: readonly string[]): Promise<void>;
 
-  find(id: string): Promise<DraftStudy | null>;
+  find(id: string): Promise<StoredStudy | null>;
   // Ids of the studies of a group, in order. Null when the group does not exist.
   listStudyIds(groupId: string): Promise<string[] | null>;
-  // Adds the study at the end of its group. False when the group does not exist.
+  // Adds the study, hidden, at the end of its group. False when the group does not exist.
   create(study: DraftStudy): Promise<boolean>;
-  // Replaces every field. A study moved to another group goes to the end of that group.
+  // Replaces every field but the visibility. A study moved to another group goes to the end
+  // of that group.
   update(study: DraftStudy): Promise<UpdateStudyOutcome>;
+  // False when the study does not exist.
+  setVisible(id: string, visible: boolean): Promise<boolean>;
   // False when the study does not exist.
   delete(id: string): Promise<boolean>;
   // Positions 1..n in the order of `ids`, which are exactly the studies of the group.

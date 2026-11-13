@@ -41,9 +41,10 @@ describe('authoring routes', () => {
       {
         id: 'basico',
         title: 'Libras básico',
+        visible: true,
         units: [
-          { id: 'alfabeto', title: 'Alfabeto', lessons: [] },
-          { id: 'numeros', title: 'Números', lessons: [] },
+          { id: 'alfabeto', title: 'Alfabeto', visible: true, lessons: [] },
+          { id: 'numeros', title: 'Números', visible: true, lessons: [] },
         ],
       },
     ]);
@@ -118,7 +119,7 @@ describe('authoring routes', () => {
     expect(response.statusCode).toBe(201);
     const { id } = CreatedResponse.parse(response.json());
     const lessons = (await trails()).trails[0]?.units[0]?.lessons;
-    expect(lessons).toEqual([{ id, title: 'A a E', exerciseCount: 0 }]);
+    expect(lessons).toEqual([{ id, title: 'A a E', visible: false, exerciseCount: 0 }]);
   });
 
   it('creates a trail and a unit inside it', async () => {
@@ -142,7 +143,7 @@ describe('authoring routes', () => {
     expect((await send('DELETE', '/v1/admin/units/alfabeto')).statusCode).toBe(204);
 
     expect((await trails()).trails[0]?.units).toEqual([
-      { id: 'numeros', title: 'Numerais', lessons: [] },
+      { id: 'numeros', title: 'Numerais', visible: true, lessons: [] },
     ]);
   });
 
@@ -152,6 +153,15 @@ describe('authoring routes', () => {
 
     expect([missing.statusCode, errorCode(missing)]).toEqual([404, 'LESSON_NOT_FOUND']);
     expect([stale.statusCode, errorCode(stale)]).toEqual([422, 'INVALID_ORDER']);
+  });
+
+  it('shows and hides a unit', async () => {
+    const shown = await send('PUT', '/v1/admin/units/numeros/visibility', { visible: false });
+    const missing = await send('PUT', '/v1/admin/lessons/nope/visibility', { visible: true });
+
+    expect(shown.statusCode).toBe(204);
+    expect((await trails()).trails[0]?.units[1]?.visible).toBe(false);
+    expect([missing.statusCode, errorCode(missing)]).toEqual([404, 'LESSON_NOT_FOUND']);
   });
 
   it('answers 400 for an empty title', async () => {
@@ -295,6 +305,17 @@ describe('authoring routes', () => {
       expect([notEmpty.statusCode, errorCode(notEmpty)]).toEqual([409, 'STUDY_GROUP_NOT_EMPTY']);
       expect(deleted.statusCode).toBe(204);
       expect((await groups()).map((item) => item.id)).toEqual([other.id]);
+    });
+
+    it('creates a study hidden and shows it', async () => {
+      const { id } = CreatedResponse.parse((await send('POST', '/v1/admin/studies', study)).json());
+      const read = async () =>
+        AdminStudy.parse((await send('GET', `/v1/admin/studies/${id}`)).json()).visible;
+
+      expect(await read()).toBe(false);
+      const shown = await send('PUT', `/v1/admin/studies/${id}/visibility`, { visible: true });
+      expect(shown.statusCode).toBe(204);
+      expect(await read()).toBe(true);
     });
 
     it('reorders and deletes studies', async () => {

@@ -3,11 +3,7 @@ import { asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import type { DbExecutor } from '../../../shared/infrastructure/db/client';
-import {
-  exercises,
-  exerciseSigns,
-  lessons,
-} from '../../../shared/infrastructure/db/schema';
+import { exercises, exerciseSigns, lessons } from '../../../shared/infrastructure/db/schema';
 import {
   exerciseFields,
   type DraftExerciseRepository,

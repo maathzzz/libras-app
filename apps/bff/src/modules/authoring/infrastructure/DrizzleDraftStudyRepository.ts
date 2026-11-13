@@ -8,6 +8,7 @@ import type {
   DeleteStudyGroupOutcome,
   DraftStudy,
   DraftStudyRepository,
+  StoredStudy,
   UpdateStudyOutcome,
 } from '../domain/DraftStudy';
 
@@ -42,6 +43,7 @@ export class DrizzleDraftStudyRepository implements DraftStudyRepository {
         id: studies.id,
         groupId: studies.groupId,
         title: studies.title,
+        visible: studies.visible,
         description: studies.description,
         pageCount: sql<number>`jsonb_array_length(${studies.pages})::integer`,
       })
@@ -52,7 +54,13 @@ export class DrizzleDraftStudyRepository implements DraftStudyRepository {
       ...group,
       studies: studyRows
         .filter((study) => study.groupId === group.id)
-        .map(({ id, title, description, pageCount }) => ({ id, title, description, pageCount })),
+        .map(({ id, title, visible, description, pageCount }) => ({
+          id,
+          title,
+          visible,
+          description,
+          pageCount,
+        })),
     }));
   }
 
@@ -109,13 +117,14 @@ export class DrizzleDraftStudyRepository implements DraftStudyRepository {
     `);
   }
 
-  async find(id: string): Promise<DraftStudy | null> {
+  async find(id: string): Promise<StoredStudy | null> {
     const [row] = await this.db
       .select({
         id: studies.id,
         groupId: studies.groupId,
         title: studies.title,
         description: studies.description,
+        visible: studies.visible,
         pages: studies.pages,
       })
       .from(studies)
@@ -176,6 +185,15 @@ export class DrizzleDraftStudyRepository implements DraftStudyRepository {
       .from(studies)
       .where(eq(studies.id, id));
     return existing ? 'groupNotFound' : 'notFound';
+  }
+
+  async setVisible(id: string, visible: boolean): Promise<boolean> {
+    const rows = await this.db
+      .update(studies)
+      .set({ visible })
+      .where(eq(studies.id, id))
+      .returning({ id: studies.id });
+    return rows.length > 0;
   }
 
   async delete(id: string): Promise<boolean> {

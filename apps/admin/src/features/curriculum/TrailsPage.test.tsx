@@ -22,16 +22,18 @@ const trails: AdminTrail[] = [
   {
     id: 'basico',
     title: 'Libras básico',
+    visible: true,
     units: [
       {
         id: 'alfabeto',
         title: 'Alfabeto',
+        visible: true,
         lessons: [
-          { id: 'a-e', title: 'A a E', exerciseCount: 10 },
-          { id: 'f-j', title: 'F a J', exerciseCount: 1 },
+          { id: 'a-e', title: 'A a E', visible: true, exerciseCount: 10 },
+          { id: 'f-j', title: 'F a J', visible: true, exerciseCount: 1 },
         ],
       },
-      { id: 'saudacoes', title: 'Saudações', lessons: [] },
+      { id: 'saudacoes', title: 'Saudações', visible: true, lessons: [] },
     ],
   },
 ];

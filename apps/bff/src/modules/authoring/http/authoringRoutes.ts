@@ -12,6 +12,7 @@ import {
   SaveSignRequest,
   SaveStudyRequest,
   SaveTitleRequest,
+  SetVisibilityRequest,
   SignImageUploadResponse,
 } from '@libras/contracts';
 import type { FastifyReply } from 'fastify';
@@ -34,6 +35,8 @@ import type { GetLessonExercises } from '../application/GetLessonExercises';
 import type { RenameOutlineItem } from '../application/RenameOutlineItem';
 import type { ReorderExercises } from '../application/ReorderExercises';
 import type { ReorderOutlineItems } from '../application/ReorderOutlineItems';
+import type { SetOutlineItemVisibility } from '../application/SetOutlineItemVisibility';
+import type { SetStudyVisibility } from '../application/SetStudyVisibility';
 import type { UpdateExercise } from '../application/UpdateExercise';
 import type { UpdateSign } from '../application/UpdateSign';
 import type { CreateStudy } from '../application/CreateStudy';
@@ -54,6 +57,7 @@ export interface AuthoringUseCases {
   renameOutlineItem: RenameOutlineItem;
   deleteOutlineItem: DeleteOutlineItem;
   reorderOutlineItems: ReorderOutlineItems;
+  setOutlineItemVisibility: SetOutlineItemVisibility;
   getDraftSigns: GetDraftSigns;
   createSign: CreateSign;
   updateSign: UpdateSign;
@@ -74,11 +78,12 @@ export interface AuthoringUseCases {
   updateStudy: UpdateStudy;
   deleteStudy: DeleteStudy;
   reorderStudies: ReorderStudies;
+  setStudyVisibility: SetStudyVisibility;
 }
 
 function statusOf(code: string): 404 | 409 | 422 {
   if (code.endsWith('_NOT_FOUND')) return 404;
-  if (code === 'SIGN_IN_USE' || code === 'STUDY_GROUP_NOT_EMPTY') return 409;
+  if (['SIGN_IN_USE', 'STUDY_GROUP_NOT_EMPTY', 'CONTENT_HAS_PROGRESS'].includes(code)) return 409;
   return 422;
 }
 
@@ -112,7 +117,7 @@ export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsync
   const { deleteExercise, reorderExercises } = useCases;
   const { getDraftStudies, createStudyGroup, renameStudyGroup, deleteStudyGroup } = useCases;
   const { reorderStudyGroups, getDraftStudy, createStudy, updateStudy, deleteStudy } = useCases;
-  const { reorderStudies } = useCases;
+  const { reorderStudies, setOutlineItemVisibility, setStudyVisibility } = useCases;
 
   return async (app) => {
     app.get('/trails', { schema: { response: { 200: AdminTrailsResponse } } }, async () =>
@@ -196,6 +201,20 @@ export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsync
               level,
               id: idOf(request.params),
               title: request.body.title,
+            }),
+          ),
+      );
+
+      app.put(
+        `/${path}/:${param}/visibility`,
+        { schema: { params, body: SetVisibilityRequest, response: errors } },
+        async (request, reply) =>
+          sendEmpty(
+            reply,
+            await setOutlineItemVisibility.execute({
+              level,
+              id: idOf(request.params),
+              visible: request.body.visible,
             }),
           ),
       );
@@ -387,6 +406,19 @@ export function authoringRoutes(useCases: AuthoringUseCases): FastifyPluginAsync
         sendEmpty(
           reply,
           await updateStudy.execute({ id: studyIdOf(request.params), ...request.body }),
+        ),
+    );
+
+    app.put(
+      '/studies/:studyId/visibility',
+      { schema: { params: studyParams, body: SetVisibilityRequest, response: errors } },
+      async (request, reply) =>
+        sendEmpty(
+          reply,
+          await setStudyVisibility.execute({
+            id: studyIdOf(request.params),
+            visible: request.body.visible,
+          }),
         ),
     );
 
